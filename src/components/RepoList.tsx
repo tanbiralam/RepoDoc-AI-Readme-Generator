@@ -87,22 +87,22 @@ export default function RepoList({ onRepoSelect, selectedRepo, onGenerateReadme,
   );
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-col space-y-2">
-        <h2 className="text-xl font-bold">GitHub Repositories</h2>
+    <div className="space-y-6">
+      <div className="flex flex-col space-y-3">
+        <h2 className="text-2xl font-bold text-gray-900">GitHub Repositories</h2>
         
         {!githubToken && (
           <div className="flex space-x-2">
             <input
               type="text"
               placeholder="GitHub Username"
-              className="flex-1 p-2 border rounded-md"
+              className="flex-1 p-2.5 border-2 border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
               value={githubUsername}
               onChange={(e) => setGithubUsername(e.target.value)}
             />
             <button 
               onClick={loadPublicRepos}
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+              className="px-4 py-2.5 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 shadow-sm transition-colors focus:ring focus:ring-blue-200 focus:ring-opacity-50 focus:outline-none"
               disabled={loading}
             >
               {loading ? 'Loading...' : 'Load Repos'}
@@ -114,12 +114,12 @@ export default function RepoList({ onRepoSelect, selectedRepo, onGenerateReadme,
           <input
             type="text"
             placeholder="Search repositories..."
-            className="w-full p-2 pl-10 border rounded-md"
+            className="w-full p-2.5 pl-10 border-2 border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
           <svg
-            className="absolute left-3 top-2.5 h-5 w-5 text-gray-400"
+            className="absolute left-3 top-3 h-5 w-5 text-gray-500"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -136,56 +136,58 @@ export default function RepoList({ onRepoSelect, selectedRepo, onGenerateReadme,
       </div>
 
       {error && (
-        <div className="p-3 text-sm rounded-md bg-red-50 text-red-600">
+        <div className="p-4 text-sm font-medium rounded-md bg-red-100 text-red-700 border border-red-200">
           {error}
         </div>
       )}
 
       {loading ? (
-        <div className="flex justify-center items-center py-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <div className="flex justify-center items-center py-12">
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-t-2 border-blue-600"></div>
         </div>
       ) : (
-        <div className="border rounded-md overflow-hidden bg-white shadow">
+        <div className="border-2 border-gray-200 rounded-lg overflow-hidden bg-white shadow-md">
           {filteredRepos.length === 0 ? (
-            <div className="p-4 text-center text-gray-500">
+            <div className="p-6 text-center text-gray-600 font-medium">
               {repos.length === 0 
                 ? 'No repositories found. Please load repositories first.' 
                 : 'No repositories match your search.'}
             </div>
           ) : (
-            <ul className="divide-y">
+            <ul className="divide-y divide-gray-200">
               {filteredRepos.map((repo) => (
                 <li
                   key={repo.id}
-                  className={`p-4 hover:bg-gray-50 ${selectedRepo?.id === repo.id ? 'bg-blue-50' : ''}`}
+                  className={`p-5 hover:bg-gray-50 transition-colors ${selectedRepo?.id === repo.id ? 'bg-blue-50 border-l-4 border-blue-500' : ''}`}
                 >
                   <div className="flex flex-col">
                     <div className="flex justify-between items-start mb-3">
                       <div className="flex-1">
                         <div className="flex items-center">
-                          <h3 className="font-medium text-lg text-gray-900">{repo.name}</h3>
+                          <h3 className="font-semibold text-lg text-gray-900">{repo.name}</h3>
                           {repo.private && (
-                            <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 border border-yellow-200">
+                            <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 border border-yellow-300">
                               Private
                             </span>
                           )}
                         </div>
-                        <p className="text-sm text-gray-600 mt-1">{repo.description || 'No description'}</p>
+                        <p className="text-sm text-gray-700 mt-1.5 font-medium">
+                          {repo.description || 'No description'}
+                        </p>
                       </div>
                     </div>
                     
-                    <div className="flex items-center justify-between mt-2">
+                    <div className="flex items-center justify-between mt-3">
                       <div className="flex items-center space-x-4">
                         {repo.language && (
-                          <span className="flex items-center text-xs bg-gray-100 px-2 py-1 rounded-md">
-                            <span className="w-2 h-2 rounded-full bg-blue-600 mr-1"></span>
+                          <span className="flex items-center text-xs font-semibold bg-gray-100 px-2.5 py-1 rounded-md text-gray-800 border border-gray-200">
+                            <span className="w-2.5 h-2.5 rounded-full bg-blue-600 mr-1.5"></span>
                             {repo.language}
                           </span>
                         )}
-                        <span className="flex items-center text-xs bg-gray-100 px-2 py-1 rounded-md">
+                        <span className="flex items-center text-xs font-semibold bg-gray-100 px-2.5 py-1 rounded-md text-gray-800 border border-gray-200">
                           <svg
-                            className="w-4 h-4 mr-1"
+                            className="w-4 h-4 mr-1.5 text-amber-500"
                             fill="currentColor"
                             viewBox="0 0 24 24"
                             xmlns="http://www.w3.org/2000/svg"
@@ -197,42 +199,46 @@ export default function RepoList({ onRepoSelect, selectedRepo, onGenerateReadme,
                           </svg>
                           {repo.stargazers_count}
                         </span>
-                        <span className="flex items-center text-xs bg-gray-100 px-2 py-1 rounded-md">
+                        <span className="flex items-center text-xs font-semibold bg-gray-100 px-2.5 py-1 rounded-md text-gray-800 border border-gray-200">
                           <svg
-                            className="w-4 h-4 mr-1"
+                            className="w-4 h-4 mr-1.5 text-blue-500"
                             fill="currentColor"
                             viewBox="0 0 24 24"
                             xmlns="http://www.w3.org/2000/svg"
                           >
                             <path
-                              fillRule="evenodd"
-                              d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-3-11l3 3-3 3m0-6h6"
+                              d="M5 10.2C5 5.22 9.2 2 12 2c3.36 0 5.97 2.33 6.8 5M3 19a5 5 0 015-5c2.67 0 4.33 1.43 5 4 .67-2.57 2.33-4 5-4a5 5 0 015 5"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              fill="none"
                             ></path>
                           </svg>
                           {repo.forks_count}
                         </span>
                       </div>
                       
-                      <div className="flex space-x-2">
+                      <div className="flex space-x-3">
                         <button 
                           onClick={() => onRepoSelect(repo)}
-                          className="px-3 py-1.5 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-md transition-colors text-sm font-medium"
+                          className="px-3.5 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-md transition-colors text-sm font-semibold shadow-sm border border-gray-300"
                         >
                           Select
                         </button>
                         <button 
                           onClick={() => handleGenerateReadmeClick(repo)}
                           disabled={isGenerating}
-                          className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors text-sm font-medium inline-flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors text-sm font-semibold inline-flex items-center disabled:opacity-60 disabled:cursor-not-allowed shadow-sm border border-blue-700"
                         >
                           {isGenerating && selectedRepo?.id === repo.id ? (
                             <>
-                              <div className="animate-spin rounded-full h-4 w-4 mr-1 border-2 border-white"></div>
+                              <div className="animate-spin rounded-full h-4 w-4 mr-2 border-2 border-white border-t-transparent"></div>
                               Generating...
                             </>
                           ) : (
                             <>
-                              <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                              <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
                               </svg>
                               Generate README
@@ -250,20 +256,20 @@ export default function RepoList({ onRepoSelect, selectedRepo, onGenerateReadme,
       )}
       
       {selectedRepo && onGenerateReadme && (
-        <div className="sticky bottom-4 left-0 right-0 mt-4 p-3 bg-blue-50 border border-blue-200 rounded-md shadow-lg">
+        <div className="sticky bottom-4 left-0 right-0 mt-4 p-4 bg-blue-100 border-2 border-blue-300 rounded-md shadow-lg">
           <div className="flex items-center justify-between">
             <div>
-              <span className="text-sm font-medium">Selected: {selectedRepo.name}</span>
+              <span className="text-sm font-semibold text-blue-800">Selected: <span className="font-bold">{selectedRepo.name}</span></span>
             </div>
             <button
               id="generate-readme-btn"
               onClick={onGenerateReadme}
               disabled={isGenerating}
-              className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors text-sm font-semibold disabled:opacity-60 disabled:cursor-not-allowed shadow-sm border border-blue-700"
             >
               {isGenerating ? (
                 <>
-                  <div className="inline-block animate-spin rounded-full h-4 w-4 mr-1 border-2 border-white"></div>
+                  <div className="inline-block animate-spin rounded-full h-4 w-4 mr-2 border-2 border-white border-t-transparent"></div>
                   Generating...
                 </>
               ) : (

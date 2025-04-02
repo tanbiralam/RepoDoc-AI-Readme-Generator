@@ -41,6 +41,8 @@ export interface ReadmeGenerationRequest {
   packageJson?: string;
   mainFiles?: string[];
   currentReadme?: string;
+  topics?: string[];
+  isPrivate?: boolean;
 }
 
 export interface ReadmeGenerationResult {
@@ -50,6 +52,6 @@ export interface ReadmeGenerationResult {
 
 export interface ReadmeSection {
   title: string;
+  level: number;
   content: string;
-  level: number; // Added level property to indicate heading level (0 = intro, 1 = h1, 2 = h2)
 }

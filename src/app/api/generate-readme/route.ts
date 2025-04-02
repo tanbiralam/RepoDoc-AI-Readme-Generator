@@ -1,25 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import Anthropic from '@anthropic-ai/sdk';
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import OpenAI from 'openai';
 import { ReadmeGenerationRequest, ReadmeGenerationResult, ReadmeSection } from '@/types';
 
-// Initialize API keys from environment variables
+// Initialize API key from environment variables
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
-const CLAUDE_API_KEY = process.env.CLAUDE_API_KEY || '';
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY || '';
 
-// Initialize AI clients
+// Initialize AI client
 const geminiAI = GEMINI_API_KEY ? new GoogleGenerativeAI(GEMINI_API_KEY) : null;
-const anthropic = CLAUDE_API_KEY ? new Anthropic({ apiKey: CLAUDE_API_KEY }) : null;
-const openai = OPENAI_API_KEY ? new OpenAI({ apiKey: OPENAI_API_KEY }) : null;
-
-// Track available models
-const availableModels = [
-  { name: 'gemini', available: !!GEMINI_API_KEY && !!geminiAI },
-  { name: 'claude', available: !!CLAUDE_API_KEY && !!anthropic },
-  { name: 'openai', available: !!OPENAI_API_KEY && !!openai },
-];
 
 // Create a simple server-side logging function
 const logAI = (stage: string, message: string, data?: any) => {
@@ -34,22 +21,18 @@ export async function POST(request: NextRequest) {
   const requestStartTime = Date.now();
   logAI('REQUEST', 'Received README generation request');
   
-  // Check if any API keys are available
-  const hasAnyModelAvailable = availableModels.some(model => model.available);
-  if (!hasAnyModelAvailable) {
-    logAI('CONFIG_ERROR', 'No AI model API keys are configured');
+  // Check if API key is available
+  if (!GEMINI_API_KEY || !geminiAI) {
+    logAI('CONFIG_ERROR', 'Gemini API key is missing');
     return NextResponse.json(
       { 
-        error: 'No AI model API keys are configured. Please add at least one of GEMINI_API_KEY, CLAUDE_API_KEY, or OPENAI_API_KEY to environment variables.'
+        error: 'Gemini API key is not configured. Please add GEMINI_API_KEY to environment variables.'
       },
       { status: 500 }
     );
   }
   
-  logAI('MODELS', 'Available AI models', {
-    models: availableModels.map(m => ({ name: m.name, available: m.available })),
-    defaultModel: availableModels.find(m => m.available)?.name || 'none'
-  });
+  logAI('MODEL', 'Using Gemini model for README generation');
   
   try {
     // Parse request body
@@ -97,7 +80,7 @@ export async function POST(request: NextRequest) {
     });
     
     // Construct the prompt for README generation
-    logAI('PROMPT_BUILD', 'Building prompt for AI models');
+    logAI('PROMPT_BUILD', 'Building prompt for Gemini model');
     let prompt = `Generate a comprehensive, professional README.md for a GitHub repository with the following details:\n\n`;
     
     prompt += `Repository Name: ${repoName}\n`;
@@ -140,103 +123,36 @@ export async function POST(request: NextRequest) {
       promptPreview: prompt.substring(0, 200) + '...' 
     });
 
-    // Try each available model in sequence
+    // Generate README with Gemini
     let content = '';
-    let modelUsed = '';
-    let aiErrors: string[] = [];
     
-    for (const model of availableModels) {
-      if (!model.available) continue;
+    try {
+      logAI('GEMINI_CALL', 'Calling Gemini API', { model: 'gemini-1.5-pro' });
+      const aiCallStartTime = Date.now();
       
-      try {
-        modelUsed = model.name;
-        logAI('MODEL_ATTEMPT', `Attempting to use ${model.name} model`);
-        const aiCallStartTime = Date.now();
-        
-        if (model.name === 'gemini') {
-          logAI('GEMINI_CALL', 'Calling Gemini API');
-          const geminiModel = geminiAI!.getGenerativeModel({ model: 'gemini-1.5-pro' });
-          
-          const result = await geminiModel.generateContent(prompt);
-          const response = result.response;
-          content = response.text();
-          
-          const aiCallDuration = Date.now() - aiCallStartTime;
-          logAI('GEMINI_RESPONSE', `Received response from Gemini in ${aiCallDuration}ms`, { 
-            contentLength: content.length
-          });
-        } 
-        else if (model.name === 'claude') {
-          logAI('CLAUDE_CALL', 'Calling Claude API', { model: 'claude-3-5-sonnet-20240620' });
-          
-          const message = await anthropic!.messages.create({
-            model: 'claude-3-5-sonnet-20240620',
-            max_tokens: 4000,
-            system: 'You are an expert software developer that creates professional README.md files for GitHub repositories.',
-            messages: [{ role: 'user', content: prompt }],
-          });
-          
-          content = message.content.find(c => c.type === 'text')?.text || '';
-          
-          const aiCallDuration = Date.now() - aiCallStartTime;
-          logAI('CLAUDE_RESPONSE', `Received response from Claude in ${aiCallDuration}ms`, { 
-            responseId: message.id,
-            contentLength: content.length
-          });
-        } 
-        else if (model.name === 'openai') {
-          logAI('OPENAI_CALL', 'Calling OpenAI API', { model: 'gpt-4-turbo' });
-          
-          const completion = await openai!.chat.completions.create({
-            model: 'gpt-4-turbo',
-            messages: [
-              {
-                role: 'system',
-                content: 'You are an expert software developer that creates professional README.md files for GitHub repositories.'
-              },
-              { role: 'user', content: prompt }
-            ],
-          });
-          
-          content = completion.choices[0].message.content || '';
-          
-          const aiCallDuration = Date.now() - aiCallStartTime;
-          logAI('OPENAI_RESPONSE', `Received response from OpenAI in ${aiCallDuration}ms`, { 
-            contentLength: content.length
-          });
-        }
-        
-        // If we got content, break out of the loop
-        if (content && content.trim().length > 0) {
-          logAI('MODEL_SUCCESS', `Successfully generated content with ${model.name} model`, {
-            contentLength: content.length
-          });
-          break;
-        } else {
-          // Empty response, try next model
-          logAI('MODEL_EMPTY', `Empty response from ${model.name} model, trying next model`);
-          aiErrors.push(`${model.name}: Empty response`);
-          continue;
-        }
-      } catch (error) {
-        // Log the error and try the next model
-        const errorMessage = error instanceof Error ? error.message : String(error);
-        logAI('MODEL_ERROR', `Error using ${model.name} model: ${errorMessage}`, {
-          error: errorMessage,
-          stack: error instanceof Error ? error.stack : undefined
-        });
-        aiErrors.push(`${model.name}: ${errorMessage}`);
-        continue;
-      }
-    }
-    
-    // If no models succeeded, fall back to template
-    if (!content || content.trim().length === 0) {
-      logAI('ALL_MODELS_FAILED', 'All available AI models failed to generate content', {
-        errors: aiErrors
+      // Initialize model and generate content
+      const geminiModel = geminiAI.getGenerativeModel({ model: 'gemini-1.5-pro' });
+      const result = await geminiModel.generateContent(prompt);
+      const response = result.response;
+      content = response.text();
+      
+      const aiCallDuration = Date.now() - aiCallStartTime;
+      logAI('GEMINI_RESPONSE', `Received response from Gemini in ${aiCallDuration}ms`, { 
+        contentLength: content.length,
+        contentPreview: content.substring(0, 200) + '...'
       });
       
-      // Fall back to basic template
+      // Check if we got a valid response
+      if (!content || content.trim().length === 0) {
+        throw new Error('Empty response from Gemini API');
+      }
+    } catch (aiError) {
+      logAI('GEMINI_ERROR', 'Error calling Gemini API', {
+        error: aiError instanceof Error ? aiError.message : String(aiError),
+        stack: aiError instanceof Error ? aiError.stack : undefined
+      });
+      
+      // Fall back to template
       const basicTemplate = generateBasicReadmeTemplate(
         repoName, 
         repoDescription, 
@@ -246,7 +162,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { 
           result: basicTemplate, 
-          error: `Failed to generate README with AI models: ${aiErrors.join('; ')}` 
+          error: `Error calling Gemini API: ${aiError instanceof Error ? aiError.message : String(aiError)}` 
         },
         { status: 500 }
       );
@@ -267,8 +183,7 @@ export async function POST(request: NextRequest) {
     };
     
     const totalDuration = Date.now() - requestStartTime;
-    logAI('SUCCESS', `Successfully generated README with ${modelUsed} in ${totalDuration}ms`, { 
-      modelUsed,
+    logAI('SUCCESS', `Successfully generated README with Gemini in ${totalDuration}ms`, { 
       totalTime: totalDuration,
       contentLength: content.length,
       sectionCount: sections.length
@@ -321,7 +236,7 @@ export async function POST(request: NextRequest) {
     });
     
     return NextResponse.json(
-      { result: basicTemplate, error: 'Failed to generate README with AI. Using basic template instead.' },
+      { result: basicTemplate, error: 'Failed to generate README with Gemini. Using basic template instead.' },
       { status: 500 }
     );
   }
