@@ -1,21 +1,103 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
+import { GoogleGenerativeAI } from '@google/generative-ai';
+import OpenAI from 'openai';
 import { ReadmeGenerationRequest, ReadmeGenerationResult, ReadmeSection } from '@/types';
 
-// Initialize Anthropic client with Claude API key from environment variables
-const anthropic = new Anthropic({
-  apiKey: process.env.CLAUDE_API_KEY || '',
-});
+// Initialize API keys from environment variables
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
+const CLAUDE_API_KEY = process.env.CLAUDE_API_KEY || '';
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY || '';
+
+// Initialize AI clients
+const geminiAI = GEMINI_API_KEY ? new GoogleGenerativeAI(GEMINI_API_KEY) : null;
+const anthropic = CLAUDE_API_KEY ? new Anthropic({ apiKey: CLAUDE_API_KEY }) : null;
+const openai = OPENAI_API_KEY ? new OpenAI({ apiKey: OPENAI_API_KEY }) : null;
+
+// Track available models
+const availableModels = [
+  { name: 'gemini', available: !!GEMINI_API_KEY && !!geminiAI },
+  { name: 'claude', available: !!CLAUDE_API_KEY && !!anthropic },
+  { name: 'openai', available: !!OPENAI_API_KEY && !!openai },
+];
+
+// Create a simple server-side logging function
+const logAI = (stage: string, message: string, data?: any) => {
+  const timestamp = new Date().toISOString();
+  console.log(`[SERVER-AI][${timestamp}][${stage}] ${message}`, data ? JSON.stringify(data) : '');
+};
 
 /**
  * API route handler for README generation
  */
 export async function POST(request: NextRequest) {
+  const requestStartTime = Date.now();
+  logAI('REQUEST', 'Received README generation request');
+  
+  // Check if any API keys are available
+  const hasAnyModelAvailable = availableModels.some(model => model.available);
+  if (!hasAnyModelAvailable) {
+    logAI('CONFIG_ERROR', 'No AI model API keys are configured');
+    return NextResponse.json(
+      { 
+        error: 'No AI model API keys are configured. Please add at least one of GEMINI_API_KEY, CLAUDE_API_KEY, or OPENAI_API_KEY to environment variables.'
+      },
+      { status: 500 }
+    );
+  }
+  
+  logAI('MODELS', 'Available AI models', {
+    models: availableModels.map(m => ({ name: m.name, available: m.available })),
+    defaultModel: availableModels.find(m => m.available)?.name || 'none'
+  });
+  
   try {
-    const body = await request.json() as ReadmeGenerationRequest;
+    // Parse request body
+    let body: ReadmeGenerationRequest;
+    try {
+      const requestBody = await request.text();
+      logAI('REQUEST_BODY', 'Parsed request body', { 
+        size: requestBody.length,
+        bodyPreview: requestBody.substring(0, 200) + '...' 
+      });
+      
+      body = JSON.parse(requestBody) as ReadmeGenerationRequest;
+    } catch (parseError) {
+      logAI('PARSE_ERROR', 'Failed to parse request body', {
+        error: parseError instanceof Error ? parseError.message : String(parseError)
+      });
+      
+      return NextResponse.json(
+        { error: 'Invalid request body format' },
+        { status: 400 }
+      );
+    }
+    
     const { repoName, repoDescription, repoLanguage, packageJson, mainFiles, currentReadme } = body;
     
+    // Validate required fields
+    if (!repoName) {
+      logAI('VALIDATION_ERROR', 'Missing required field: repoName');
+      return NextResponse.json(
+        { error: 'Missing required field: repoName' },
+        { status: 400 }
+      );
+    }
+    
+    logAI('REQUEST_PARSED', 'Extracted request parameters', { 
+      repoName,
+      hasDescription: !!repoDescription,
+      language: repoLanguage || 'not specified',
+      hasPackageJson: !!packageJson,
+      packageJsonSize: packageJson?.length || 0,
+      hasMainFiles: !!mainFiles?.length,
+      mainFilesCount: mainFiles?.length || 0,
+      hasCurrentReadme: !!currentReadme,
+      currentReadmeSize: currentReadme?.length || 0
+    });
+    
     // Construct the prompt for README generation
+    logAI('PROMPT_BUILD', 'Building prompt for AI models');
     let prompt = `Generate a comprehensive, professional README.md for a GitHub repository with the following details:\n\n`;
     
     prompt += `Repository Name: ${repoName}\n`;
@@ -53,29 +135,153 @@ export async function POST(request: NextRequest) {
     prompt += `Format the README using proper Markdown syntax with headings, code blocks, lists, and emphasis where appropriate.\n`;
     prompt += `Make it professional, comprehensive, and visually structured.`;
 
-    // Call Claude API to generate the README
-    const message = await anthropic.messages.create({
-      model: 'claude-3-5-sonnet-20240620',
-      max_tokens: 4000,
-      system: 'You are an expert software developer that creates professional README.md files for GitHub repositories.',
-      messages: [
-        { role: 'user', content: prompt }
-      ],
+    logAI('PROMPT_COMPLETE', 'Prompt construction complete', { 
+      promptLength: prompt.length,
+      promptPreview: prompt.substring(0, 200) + '...' 
     });
 
-    // Parse the response content
-    const content = message.content.find(c => c.type === 'text')?.text || '';
+    // Try each available model in sequence
+    let content = '';
+    let modelUsed = '';
+    let aiErrors: string[] = [];
+    
+    for (const model of availableModels) {
+      if (!model.available) continue;
+      
+      try {
+        modelUsed = model.name;
+        logAI('MODEL_ATTEMPT', `Attempting to use ${model.name} model`);
+        const aiCallStartTime = Date.now();
+        
+        if (model.name === 'gemini') {
+          logAI('GEMINI_CALL', 'Calling Gemini API');
+          const geminiModel = geminiAI!.getGenerativeModel({ model: 'gemini-1.5-pro' });
+          
+          const result = await geminiModel.generateContent(prompt);
+          const response = result.response;
+          content = response.text();
+          
+          const aiCallDuration = Date.now() - aiCallStartTime;
+          logAI('GEMINI_RESPONSE', `Received response from Gemini in ${aiCallDuration}ms`, { 
+            contentLength: content.length
+          });
+        } 
+        else if (model.name === 'claude') {
+          logAI('CLAUDE_CALL', 'Calling Claude API', { model: 'claude-3-5-sonnet-20240620' });
+          
+          const message = await anthropic!.messages.create({
+            model: 'claude-3-5-sonnet-20240620',
+            max_tokens: 4000,
+            system: 'You are an expert software developer that creates professional README.md files for GitHub repositories.',
+            messages: [{ role: 'user', content: prompt }],
+          });
+          
+          content = message.content.find(c => c.type === 'text')?.text || '';
+          
+          const aiCallDuration = Date.now() - aiCallStartTime;
+          logAI('CLAUDE_RESPONSE', `Received response from Claude in ${aiCallDuration}ms`, { 
+            responseId: message.id,
+            contentLength: content.length
+          });
+        } 
+        else if (model.name === 'openai') {
+          logAI('OPENAI_CALL', 'Calling OpenAI API', { model: 'gpt-4-turbo' });
+          
+          const completion = await openai!.chat.completions.create({
+            model: 'gpt-4-turbo',
+            messages: [
+              {
+                role: 'system',
+                content: 'You are an expert software developer that creates professional README.md files for GitHub repositories.'
+              },
+              { role: 'user', content: prompt }
+            ],
+          });
+          
+          content = completion.choices[0].message.content || '';
+          
+          const aiCallDuration = Date.now() - aiCallStartTime;
+          logAI('OPENAI_RESPONSE', `Received response from OpenAI in ${aiCallDuration}ms`, { 
+            contentLength: content.length
+          });
+        }
+        
+        // If we got content, break out of the loop
+        if (content && content.trim().length > 0) {
+          logAI('MODEL_SUCCESS', `Successfully generated content with ${model.name} model`, {
+            contentLength: content.length
+          });
+          break;
+        } else {
+          // Empty response, try next model
+          logAI('MODEL_EMPTY', `Empty response from ${model.name} model, trying next model`);
+          aiErrors.push(`${model.name}: Empty response`);
+          continue;
+        }
+      } catch (error) {
+        // Log the error and try the next model
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        logAI('MODEL_ERROR', `Error using ${model.name} model: ${errorMessage}`, {
+          error: errorMessage,
+          stack: error instanceof Error ? error.stack : undefined
+        });
+        aiErrors.push(`${model.name}: ${errorMessage}`);
+        continue;
+      }
+    }
+    
+    // If no models succeeded, fall back to template
+    if (!content || content.trim().length === 0) {
+      logAI('ALL_MODELS_FAILED', 'All available AI models failed to generate content', {
+        errors: aiErrors
+      });
+      
+      // Fall back to basic template
+      const basicTemplate = generateBasicReadmeTemplate(
+        repoName, 
+        repoDescription, 
+        repoLanguage
+      );
+      
+      return NextResponse.json(
+        { 
+          result: basicTemplate, 
+          error: `Failed to generate README with AI models: ${aiErrors.join('; ')}` 
+        },
+        { status: 500 }
+      );
+    }
     
     // Parse the generated README into sections
+    logAI('SECTION_PARSE', 'Parsing README into sections');
     const sections = parseReadmeSections(content);
+    
+    logAI('SECTION_COMPLETE', 'Parsed README sections', { 
+      sectionCount: sections.length,
+      sectionTitles: sections.map(s => s.title)
+    });
     
     const result: ReadmeGenerationResult = {
       content,
       sections,
     };
     
+    const totalDuration = Date.now() - requestStartTime;
+    logAI('SUCCESS', `Successfully generated README with ${modelUsed} in ${totalDuration}ms`, { 
+      modelUsed,
+      totalTime: totalDuration,
+      contentLength: content.length,
+      sectionCount: sections.length
+    });
+    
     return NextResponse.json({ result, error: null });
   } catch (error) {
+    const errorTime = Date.now() - requestStartTime;
+    logAI('ERROR', `Error generating README after ${errorTime}ms`, { 
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined
+    });
+    
     console.error('Error generating README:', error);
     
     // Get request body for fallback template
@@ -84,18 +290,35 @@ export async function POST(request: NextRequest) {
     let repoLanguage = '';
     
     try {
-      const requestBody = await request.json() as ReadmeGenerationRequest;
-      repoName = requestBody.repoName;
-      repoDescription = requestBody.repoDescription || '';
-      repoLanguage = requestBody.repoLanguage || '';
-    } catch {}
+      const requestBody = await request.text();
+      const body = JSON.parse(requestBody) as ReadmeGenerationRequest;
+      repoName = body.repoName;
+      repoDescription = body.repoDescription || '';
+      repoLanguage = body.repoLanguage || '';
+      
+      logAI('FALLBACK_PARAMS', 'Recovered parameters for fallback template', { 
+        repoName, 
+        hasDescription: !!repoDescription, 
+        language: repoLanguage || 'not specified'
+      });
+    } catch (parseError) {
+      logAI('FALLBACK_ERROR', 'Could not parse request for fallback template', { 
+        error: parseError instanceof Error ? parseError.message : String(parseError)
+      });
+    }
     
     // Fallback to basic template if AI generation fails
+    logAI('FALLBACK', 'Generating basic README template as fallback');
     const basicTemplate = generateBasicReadmeTemplate(
       repoName, 
       repoDescription, 
       repoLanguage
     );
+    
+    logAI('FALLBACK_COMPLETE', 'Generated fallback template', { 
+      contentLength: basicTemplate.content.length,
+      sectionCount: basicTemplate.sections.length
+    });
     
     return NextResponse.json(
       { result: basicTemplate, error: 'Failed to generate README with AI. Using basic template instead.' },
@@ -108,10 +331,17 @@ export async function POST(request: NextRequest) {
  * Parse the generated README into sections
  */
 function parseReadmeSections(content: string): ReadmeSection[] {
+  const sectionStartTime = Date.now();
+  logAI('SECTION_PARSE_START', 'Starting README section parsing', { 
+    contentLength: content.length,
+    lineCount: content.split('\n').length
+  });
+  
   const sections: ReadmeSection[] = [];
   const lines = content.split('\n');
   
   let currentSection: ReadmeSection | null = null;
+  let sectionCount = 0;
   
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
@@ -121,6 +351,7 @@ function parseReadmeSections(content: string): ReadmeSection[] {
       // If we already have a current section, add it to the list
       if (currentSection) {
         sections.push(currentSection);
+        sectionCount++;
       }
       
       // Start a new section with an H1 heading
@@ -129,10 +360,13 @@ function parseReadmeSections(content: string): ReadmeSection[] {
         content: line + '\n',
         level: 1,
       };
+      
+      logAI('SECTION_H1', `Found H1 section: ${currentSection.title}`, { lineNumber: i });
     } else if (line.startsWith('## ')) {
       // If we already have a current section, add it to the list
       if (currentSection) {
         sections.push(currentSection);
+        sectionCount++;
       }
       
       // Start a new section with an H2 heading
@@ -141,6 +375,8 @@ function parseReadmeSections(content: string): ReadmeSection[] {
         content: line + '\n',
         level: 2,
       };
+      
+      logAI('SECTION_H2', `Found H2 section: ${currentSection.title}`, { lineNumber: i });
     } else if (currentSection) {
       // Add this line to the current section's content
       currentSection.content += line + '\n';
@@ -151,13 +387,22 @@ function parseReadmeSections(content: string): ReadmeSection[] {
         content: line + '\n',
         level: 0,
       };
+      
+      logAI('SECTION_INTRO', 'Created introduction section for content without heading', { lineNumber: i });
     }
   }
   
   // Add the last section if there is one
   if (currentSection) {
     sections.push(currentSection);
+    sectionCount++;
   }
+  
+  const sectionDuration = Date.now() - sectionStartTime;
+  logAI('SECTION_PARSE_COMPLETE', `Completed README section parsing in ${sectionDuration}ms`, { 
+    sectionCount: sections.length,
+    parsingTime: sectionDuration
+  });
   
   return sections;
 }
@@ -170,6 +415,12 @@ function generateBasicReadmeTemplate(
   description?: string,
   language?: string
 ): ReadmeGenerationResult {
+  logAI('BASIC_TEMPLATE', 'Generating basic README template', {
+    repoName,
+    hasDescription: !!description,
+    language: language || 'not specified'
+  });
+  
   const content = `# ${repoName}\n\n${
     description ? description + '\n\n' : ''
   }## Features\n\n- Feature 1\n- Feature 2\n- Feature 3\n\n## Installation\n\n\`\`\`bash\n${
@@ -186,7 +437,15 @@ function generateBasicReadmeTemplate(
       : ''
   }\n// Example code\n\`\`\`\n\n## Contributing\n\nContributions are welcome!\n\n## License\n\nMIT\n`;
 
+  logAI('BASIC_CONTENT', 'Generated basic README content', {
+    contentLength: content.length
+  });
+
   const sections = parseReadmeSections(content);
+
+  logAI('BASIC_COMPLETE', 'Completed basic README template generation', {
+    sectionCount: sections.length
+  });
 
   return {
     content,

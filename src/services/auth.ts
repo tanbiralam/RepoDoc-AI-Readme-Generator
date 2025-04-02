@@ -218,31 +218,42 @@ export const getCurrentUser = async (): Promise<{ user: User | null; error: Erro
           // If profile doesn't exist, try to create it
           if (profileError.code === 'PGRST116') {
             console.log('Profile not found, creating new profile...');
-            const { data: newProfile, error: insertError } = await supabase
-              .from('profiles')
-              .insert({
-                id: data.user.id,
-                email: data.user.email,
-                subscription_tier: 'free',
-                readme_generations_count: 0
-              })
-              .select('*')
-              .single();
+            try {
+              const { data: newProfile, error: insertError } = await supabase
+                .from('profiles')
+                .insert({
+                  id: data.user.id,
+                  email: data.user.email,
+                  subscription_tier: 'free',
+                  readme_generations_count: 0
+                })
+                .select('*')
+                .single();
 
-            if (insertError) {
-              console.error('Error creating profile:', insertError);
-              // Return just the user data if we can't create a profile
+              if (insertError) {
+                console.error('Error creating profile, details:', insertError);
+                // Return just the user data if we can't create a profile
+                // Don't throw here, we still want to return the user
+                return { user: data.user as User, error: null };
+              }
+
+              console.log('Profile created successfully:', newProfile);
+              return { 
+                user: { 
+                  ...data.user,
+                  ...newProfile
+                } as User, 
+                error: null 
+              };
+            } catch (createError) {
+              console.error('Exception during profile creation:', createError);
+              // Don't throw, return user but with a note
               return { user: data.user as User, error: null };
             }
-
-            console.log('Profile created successfully:', newProfile);
-            return { 
-              user: { 
-                ...data.user,
-                ...newProfile
-              } as User, 
-              error: null 
-            };
+          } else if (profileError) {
+            console.error('Error fetching profile:', profileError);
+            // Return just the user data if we can't fetch a profile
+            return { user: data.user as User, error: null };
           }
         }
 
@@ -255,7 +266,7 @@ export const getCurrentUser = async (): Promise<{ user: User | null; error: Erro
           error: null 
         };
       } catch (profileError) {
-        console.log('Profile data not found, returning just user data');
+        console.log('Error handling profile data:', profileError);
         // If profile doesn't exist yet but user is authenticated, return just the user data
         return { user: data.user as User, error: null };
       }

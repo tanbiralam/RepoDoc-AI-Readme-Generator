@@ -1,5 +1,20 @@
 import { ReadmeGenerationRequest, ReadmeGenerationResult, ReadmeSection } from '@/types';
 
+// Helper function for consistent logging
+const logReadmeGen = (stage: string, message: string, data?: any) => {
+  const timestamp = new Date().toISOString();
+  console.log(`[README-GEN][${timestamp}][${stage}] ${message}`, data || '');
+  
+  // Store in localStorage for debugging purposes
+  try {
+    const logs = JSON.parse(localStorage.getItem('readme_ai_logs') || '[]');
+    logs.push({ timestamp, stage, message, data: data || null });
+    localStorage.setItem('readme_ai_logs', JSON.stringify(logs));
+  } catch (e) {
+    console.error('Error storing log in localStorage:', e);
+  }
+};
+
 /**
  * Generate a README using Claude AI based on repo information
  * This service calls the server-side API endpoint
@@ -7,7 +22,18 @@ import { ReadmeGenerationRequest, ReadmeGenerationResult, ReadmeSection } from '
 export const generateReadmeWithAI = async (
   request: ReadmeGenerationRequest
 ): Promise<{ result: ReadmeGenerationResult | null; error: Error | null }> => {
+  logReadmeGen('START', 'Beginning README generation with AI', { request });
+  
   try {
+    logReadmeGen('API_CALL', 'Sending request to /api/generate-readme endpoint', {
+      requestSize: JSON.stringify(request).length,
+      hasPackageJson: !!request.packageJson,
+      packageJsonLength: request.packageJson?.length || 0,
+      hasCurrentReadme: !!request.currentReadme,
+      currentReadmeLength: request.currentReadme?.length || 0
+    });
+    
+    const startTime = Date.now();
     const response = await fetch('/api/generate-readme', {
       method: 'POST',
       headers: {
@@ -15,14 +41,96 @@ export const generateReadmeWithAI = async (
       },
       body: JSON.stringify(request),
     });
+    const requestDuration = Date.now() - startTime;
+    
+    logReadmeGen('API_RESPONSE', `Received response from API in ${requestDuration}ms`, {
+      status: response.status,
+      statusText: response.statusText,
+      duration: requestDuration
+    });
 
-    if (!response.ok) {
-      throw new Error(`API returned status: ${response.status}`);
+    // Get the response text first for logging
+    const responseText = await response.text();
+    
+    // Try to parse JSON from response text
+    let data: any;
+    try {
+      data = JSON.parse(responseText);
+      logReadmeGen('PARSE_JSON', 'Successfully parsed JSON from response', {
+        hasResult: !!data.result,
+        hasError: !!data.error,
+        contentLength: data.result?.content?.length || 0,
+      });
+    } catch (parseError) {
+      logReadmeGen('PARSE_ERROR', 'Failed to parse JSON from response', {
+        responseText: responseText.substring(0, 200) + '...',
+        error: parseError instanceof Error ? parseError.message : String(parseError)
+      });
+      throw new Error(`Failed to parse API response: ${parseError instanceof Error ? parseError.message : String(parseError)}`);
+    }
+    
+    // Handle error response (even with 200 status code)
+    if (data.error && !data.result) {
+      logReadmeGen('API_ERROR', 'API returned error in response body', {
+        error: data.error,
+        status: response.status
+      });
+      throw new Error(`API error: ${data.error}`);
     }
 
-    const data = await response.json();
-    return data;
+    // Handle case where the API returns a 500 status but still includes a fallback template
+    if (!response.ok) {
+      // If the response has a result from the fallback template, use it but also log the error
+      if (data.result) {
+        logReadmeGen('FALLBACK_FROM_SERVER', 'Using fallback template from server', {
+          error: data.error,
+          status: response.status,
+          templateSections: data.result.sections?.length || 0
+        });
+        
+        return {
+          result: data.result,
+          error: new Error(data.error || `API returned status ${response.status}`)
+        };
+      }
+      
+      // Otherwise throw an error
+      logReadmeGen('API_ERROR_STATUS', `API returned error status: ${response.status}`, {
+        status: response.status,
+        statusText: response.statusText,
+        responsePreview: responseText.substring(0, 200) + '...'
+      });
+      throw new Error(`API returned status: ${response.status} - ${responseText}`);
+    }
+
+    // Log successful parsing
+    logReadmeGen('PARSE_SUCCESS', `Processed API response successfully`, {
+      hasResult: !!data.result,
+      contentLength: data.result?.content?.length || 0,
+      sectionCount: data.result?.sections?.length || 0
+    });
+    
+    logReadmeGen('COMPLETE', 'Successfully generated README', {
+      totalTime: Date.now() - startTime,
+      contentLength: data.result?.content?.length || 0
+    });
+    
+    return {
+      result: data.result,
+      error: null
+    };
   } catch (error) {
+    logReadmeGen('ERROR', 'Error generating README with AI', {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined
+    });
+    
+    logReadmeGen('FALLBACK', 'Falling back to basic README template', {
+      repoName: request.repoName,
+      hasDescription: !!request.repoDescription,
+      language: request.repoLanguage || 'unknown'
+    });
+    
     console.error('Error generating README:', error);
     return { 
       result: generateBasicReadmeTemplate(
@@ -39,6 +147,11 @@ export const generateReadmeWithAI = async (
  * Parse the generated README into sections
  */
 export const parseReadmeSections = (content: string): ReadmeSection[] => {
+  logReadmeGen('PARSE_SECTIONS', 'Parsing README content into sections', {
+    contentLength: content.length,
+    lineCount: content.split('\n').length
+  });
+  
   const sections: ReadmeSection[] = [];
   const lines = content.split('\n');
   
@@ -52,6 +165,10 @@ export const parseReadmeSections = (content: string): ReadmeSection[] => {
       // If we already have a current section, add it to the list
       if (currentSection) {
         sections.push(currentSection);
+        logReadmeGen('SECTION_ADDED', `Added section: ${currentSection.title}`, {
+          level: currentSection.level,
+          contentLength: currentSection.content.length
+        });
       }
       
       // Start a new section with an H1 heading
@@ -60,10 +177,15 @@ export const parseReadmeSections = (content: string): ReadmeSection[] => {
         content: line + '\n',
         level: 1,
       };
+      logReadmeGen('SECTION_STARTED', `Started new H1 section: ${currentSection.title}`, { lineNumber: i });
     } else if (line.startsWith('## ')) {
       // If we already have a current section, add it to the list
       if (currentSection) {
         sections.push(currentSection);
+        logReadmeGen('SECTION_ADDED', `Added section: ${currentSection.title}`, {
+          level: currentSection.level,
+          contentLength: currentSection.content.length
+        });
       }
       
       // Start a new section with an H2 heading
@@ -72,6 +194,7 @@ export const parseReadmeSections = (content: string): ReadmeSection[] => {
         content: line + '\n',
         level: 2,
       };
+      logReadmeGen('SECTION_STARTED', `Started new H2 section: ${currentSection.title}`, { lineNumber: i });
     } else if (currentSection) {
       // Add this line to the current section's content
       currentSection.content += line + '\n';
@@ -82,13 +205,22 @@ export const parseReadmeSections = (content: string): ReadmeSection[] => {
         content: line + '\n',
         level: 0,
       };
+      logReadmeGen('SECTION_STARTED', 'Started introduction section (no heading)', { lineNumber: i });
     }
   }
   
   // Add the last section if there is one
   if (currentSection) {
     sections.push(currentSection);
+    logReadmeGen('SECTION_ADDED', `Added final section: ${currentSection.title}`, {
+      level: currentSection.level,
+      contentLength: currentSection.content.length
+    });
   }
+  
+  logReadmeGen('PARSE_COMPLETE', `Parsed ${sections.length} sections from README content`, {
+    sectionCount: sections.length
+  });
   
   return sections;
 };
@@ -101,6 +233,12 @@ export const generateBasicReadmeTemplate = (
   description?: string,
   language?: string
 ): ReadmeGenerationResult => {
+  logReadmeGen('TEMPLATE', 'Generating basic README template', {
+    repoName,
+    description: description || 'none provided',
+    language: language || 'unknown'
+  });
+  
   const content = `# ${repoName}\n\n${
     description ? description + '\n\n' : ''
   }## Features\n\n- Feature 1\n- Feature 2\n- Feature 3\n\n## Installation\n\n\`\`\`bash\n${
@@ -117,7 +255,16 @@ export const generateBasicReadmeTemplate = (
       : ''
   }\n// Example code\n\`\`\`\n\n## Contributing\n\nContributions are welcome!\n\n## License\n\nMIT\n`;
 
+  logReadmeGen('TEMPLATE_CONTENT', 'Generated basic README content', {
+    contentLength: content.length,
+    lineCount: content.split('\n').length
+  });
+
   const sections = parseReadmeSections(content);
+
+  logReadmeGen('TEMPLATE_COMPLETE', 'Completed basic README template generation', {
+    sectionCount: sections.length
+  });
 
   return {
     content,

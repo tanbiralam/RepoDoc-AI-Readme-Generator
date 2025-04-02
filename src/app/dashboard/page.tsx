@@ -12,6 +12,18 @@ import RepoList from '@/components/RepoList';
 import ReadmeEditor from '@/components/ReadmeEditor';
 import ExportButtons from '@/components/ExportButtons';
 
+// Create a utility to help log with timestamps
+const logWithTime = (message: string, data?: any) => {
+  const timestamp = new Date().toISOString();
+  const logEntry = { timestamp, message, ...data };
+  console.log(`[${timestamp}] ${message}`, data || '');
+  
+  // You can also store logs in localStorage for persistence
+  const logs = JSON.parse(localStorage.getItem('readme_generation_logs') || '[]');
+  logs.push(logEntry);
+  localStorage.setItem('readme_generation_logs', JSON.stringify(logs));
+};
+
 export default function Dashboard() {
   const router = useRouter();
   const { user, loading: authLoading, githubToken } = useAuth();
@@ -31,6 +43,7 @@ export default function Dashboard() {
   }, [user, authLoading, router]);
 
   const handleRepoSelect = (repo: GitHubRepo) => {
+    logWithTime(`Repository selected: ${repo.name}`, { repoId: repo.id, repoFullName: repo.full_name });
     setSelectedRepo(repo);
     setReadmeResult(null);
     setReadmeContent('');
@@ -38,34 +51,74 @@ export default function Dashboard() {
   };
 
   const handleGenerateReadme = async () => {
-    if (!selectedRepo || !user) return;
+    if (!selectedRepo || !user) {
+      logWithTime('Cannot generate README: No repository selected or user not logged in', { 
+        hasSelectedRepo: !!selectedRepo, 
+        isUserLoggedIn: !!user 
+      });
+      return;
+    }
+    
     if (!canGenerateReadme()) {
-      setError(`You've reached your limit of ${plan.readme_generations_limit} README generations for your ${plan.name} plan. Please upgrade to generate more READMEs.`);
+      const errorMessage = `You've reached your limit of ${plan.readme_generations_limit} README generations for your ${plan.name} plan. Please upgrade to generate more READMEs.`;
+      logWithTime('Cannot generate README: Generation limit reached', { 
+        plan: plan.name, 
+        limit: plan.readme_generations_limit,
+        remaining: readmeGenerationsRemaining
+      });
+      setError(errorMessage);
       return;
     }
 
     try {
+      logWithTime('Starting README generation process', { 
+        repoName: selectedRepo.name, 
+        repoId: selectedRepo.id,
+        repoFullName: selectedRepo.full_name
+      });
+      
       setGeneratingReadme(true);
       setError(null);
 
       // Extract owner and repo name
       const [owner, repo] = selectedRepo.full_name.split('/');
+      logWithTime('Extracted repository info', { owner, repo });
 
       // Get package.json content if available
+      logWithTime('Fetching package.json content');
       const { content: packageJsonContent } = await getPackageJson(
         owner, 
         repo, 
         githubToken || undefined
       );
+      
+      logWithTime('Package.json fetch result', { 
+        hasPackageJson: !!packageJsonContent,
+        packageJsonLength: packageJsonContent ? packageJsonContent.length : 0 
+      });
 
       // Get current README.md content if available
+      logWithTime('Fetching current README.md content');
       const { content: currentReadmeContent } = await getReadmeContent(
         owner, 
         repo, 
         githubToken || undefined
       );
+      
+      logWithTime('Current README.md fetch result', { 
+        hasReadme: !!currentReadmeContent,
+        readmeLength: currentReadmeContent ? currentReadmeContent.length : 0 
+      });
 
       // Generate README using AI
+      logWithTime('Sending data to AI for README generation', {
+        repoName: selectedRepo.name,
+        hasDescription: !!selectedRepo.description,
+        hasLanguage: !!selectedRepo.language,
+        hasPackageJson: !!packageJsonContent,
+        hasCurrentReadme: !!currentReadmeContent
+      });
+      
       const { result, error } = await generateReadmeWithAI({
         repoName: selectedRepo.name,
         repoDescription: selectedRepo.description || undefined,
@@ -74,36 +127,60 @@ export default function Dashboard() {
         currentReadme: currentReadmeContent || undefined,
       });
 
-      if (error) throw error;
+      if (error) {
+        logWithTime('Error during AI README generation', { error: error.message });
+        throw error;
+      }
 
       if (result) {
+        logWithTime('Successfully received AI generated README', { 
+          contentLength: result.content.length,
+          sectionCount: result.sections?.length || 0 
+        });
+        
         setReadmeResult(result);
         setReadmeContent(result.content);
         
         // Increment README generation count
+        logWithTime('Incrementing README generation count');
         await incrementReadmeGeneration(user.id);
+        
         // Refresh subscription info
+        logWithTime('Refreshing subscription information');
         await refreshSubscription();
+        
+        logWithTime('README generation process completed successfully');
       } else {
+        logWithTime('AI generation returned no result, falling back to basic template');
         // Fallback to basic template
         const basicTemplate = generateBasicReadmeTemplate(
           selectedRepo.name,
           selectedRepo.description || undefined,
           selectedRepo.language || undefined
         );
+        logWithTime('Generated basic template fallback', { contentLength: basicTemplate.content.length });
+        
         setReadmeResult(basicTemplate);
         setReadmeContent(basicTemplate.content);
       }
     } catch (err) {
-      setError('Failed to generate README. Please try again.');
+      const errorMessage = 'Failed to generate README. Please try again.';
+      logWithTime('Error in README generation process', { 
+        error: err instanceof Error ? err.message : String(err),
+        stack: err instanceof Error ? err.stack : undefined 
+      });
+      
+      setError(errorMessage);
       console.error('Error generating README:', err);
     } finally {
+      logWithTime('README generation process finished', { success: !error });
       setGeneratingReadme(false);
     }
   };
 
   const handleReadmeContentChange = (content: string) => {
     setReadmeContent(content);
+    logWithTime('README content edited by user', { newLength: content.length });
   };
 
   if (authLoading) {
@@ -143,26 +220,26 @@ export default function Dashboard() {
           <div className="lg:col-span-1">
             <div className="bg-white shadow rounded-lg p-6 sticky top-6">
               <h2 className="text-lg font-medium text-gray-900 mb-4">Select a Repository</h2>
-              <RepoList onRepoSelect={handleRepoSelect} selectedRepo={selectedRepo} />
+              <RepoList 
+                onRepoSelect={handleRepoSelect} 
+                selectedRepo={selectedRepo} 
+                onGenerateReadme={handleGenerateReadme}
+                isGenerating={generatingReadme}
+              />
+              
+              {/* Add a button to view logs */}
               {selectedRepo && (
-                <div className="mt-6">
+                <div className="mt-3">
                   <button
-                    onClick={handleGenerateReadme}
-                    disabled={generatingReadme}
-                    className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    onClick={() => {
+                      const logs = JSON.parse(localStorage.getItem('readme_generation_logs') || '[]');
+                      console.log('README Generation Logs:', logs);
+                      alert('Logs printed to console. Press F12 to view them.');
+                    }}
+                    className="w-full text-xs text-gray-500 hover:text-gray-700"
                   >
-                    {generatingReadme ? (
-                      <>
-                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                        Generating README...
-                      </>
-                    ) : (
-                      <>Generate README</>
-                    )}
+                    View Debug Logs in Console (F12)
                   </button>
-                  <p className="text-xs text-gray-500 mt-2 text-center">
-                    This will use 1 of your {readmeGenerationsRemaining} remaining generations
-                  </p>
                 </div>
               )}
             </div>

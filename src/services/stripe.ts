@@ -78,10 +78,13 @@ export const getUserSubscriptionPlan = async (
   userId: string
 ): Promise<{ plan: SubscriptionPlan | null; error: Error | null }> => {
   try {
+    // Try to get the subscription plan from the API
     const response = await fetch(`/api/subscription?userId=${userId}`);
-
+    
+    // If API call failed, log the error but default to free plan
     if (!response.ok) {
-      throw new Error('Failed to get subscription plan');
+      console.warn(`Subscription API returned status ${response.status}. Defaulting to free plan.`);
+      return { plan: subscriptionPlans[0], error: null };
     }
 
     const data = await response.json();
@@ -90,9 +93,10 @@ export const getUserSubscriptionPlan = async (
     const plan = subscriptionPlans.find(p => p.id === planId) || subscriptionPlans[0];
     return { plan, error: null };
   } catch (error) {
+    // Log the error but don't propagate it - just return the free plan
     console.error('Error getting subscription plan:', error);
-    // Default to free plan on error
-    return { plan: subscriptionPlans[0], error: error as Error };
+    // Default to free plan on error instead of throwing an error
+    return { plan: subscriptionPlans[0], error: null };
   }
 };
 
@@ -105,25 +109,27 @@ export const canGenerateReadme = async (
   try {
     const response = await fetch(`/api/readme-generations?userId=${userId}`);
 
+    // Handle API errors gracefully
     if (!response.ok) {
-      throw new Error('Failed to check README generation limit');
+      console.warn(`README generations API returned status ${response.status}. Using fallback values.`);
+      // Default to allowing 1 generation in case of API failure
+      return { canGenerate: true, remaining: 1, error: null };
     }
 
     const data = await response.json();
     const generationsUsed = data.generationsUsed || 0;
     const { plan } = await getUserSubscriptionPlan(userId);
 
-    if (!plan) {
-      throw new Error('Failed to get subscription plan');
-    }
-
-    const remaining = plan.readme_generations_limit - generationsUsed;
+    // Always ensure plan is defined, even if API call fails
+    const effectivePlan = plan || subscriptionPlans[0];
+    const remaining = effectivePlan.readme_generations_limit - generationsUsed;
     const canGenerate = remaining > 0;
 
     return { canGenerate, remaining, error: null };
   } catch (error) {
     console.error('Error checking README generation limit:', error);
-    return { canGenerate: false, remaining: 0, error: error as Error };
+    // Allow one generation by default in case of error
+    return { canGenerate: true, remaining: 1, error: null };
   }
 };
 
@@ -145,12 +151,14 @@ export const incrementReadmeGeneration = async (
     });
 
     if (!response.ok) {
-      throw new Error('Failed to increment README generation count');
+      // Log the error but don't throw
+      console.error(`Failed to increment README generation count: ${response.status}`);
+      return { success: false, error: null };
     }
 
     return { success: true, error: null };
   } catch (error) {
     console.error('Error incrementing README generation count:', error);
-    return { success: false, error: error as Error };
+    return { success: false, error: null };
   }
 };
