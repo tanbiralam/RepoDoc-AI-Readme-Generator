@@ -1,36 +1,107 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# GitHub README Generator
+
+A full-stack application that uses AI to generate professional READMEs for GitHub repositories. Built with React, TypeScript, Next.js, Supabase, and Tailwind CSS.
+
+## Features
+
+- **Authentication**: Sign in with GitHub, Google, or email/password via Supabase Auth
+- **Repository Access**: Fetch public GitHub repositories or access private repos with permission
+- **AI-Powered Generation**: Uses Claude 3.7 Sonnet to analyze repos and generate high-quality READMEs
+- **Live Editor**: Edit and preview generated READMEs in real-time
+- **Export Options**: Download as Markdown or commit directly to GitHub repositories
+- **Subscription Tiers**: Free, Pro, and Enterprise plans with usage limits
+
+## Tech Stack
+
+- **Frontend**: React with TypeScript
+- **Framework**: Next.js 14 with App Router
+- **Styling**: Tailwind CSS with ShadCN UI components
+- **Backend**: Supabase for authentication and database
+- **APIs**: GitHub API, Claude/OpenAI/Gemini for AI generation
+- **Payments**: Stripe for subscription management
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+
+- Node.js 18.0.0 or later
+- npm or yarn
+- Supabase account
+- GitHub OAuth App
+- Stripe account (for payments)
+- AI API keys (Claude, OpenAI, or Gemini)
+
+### Installation
+
+1. Clone the repository
+
+```bash
+git clone https://github.com/yourusername/github-readme-generator.git
+cd github-readme-generator
+```
+
+2. Install dependencies
+
+```bash
+npm install
+# or
+yarn install
+```
+
+3. Create a `.env.local` file in the root directory with the following variables:
+
+```
+# Supabase
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+
+# Stripe
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=your_stripe_publishable_key
+STRIPE_SECRET_KEY=your_stripe_secret_key
+
+# AI APIs
+CLAUDE_API_KEY=your_claude_api_key
+OPENAI_API_KEY=your_openai_api_key
+GEMINI_API_KEY=your_gemini_api_key
+
+# Base URL
+NEXT_PUBLIC_BASE_URL=http://localhost:3000
+```
+
+4. Start the development server
 
 ```bash
 npm run dev
 # or
 yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+5. Open [http://localhost:3000](http://localhost:3000) in your browser
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Database Setup
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Create the following tables in your Supabase project:
 
-## Learn More
+### profiles
+- id: uuid (primary key, references auth.users.id)
+- email: text
+- created_at: timestamptz
+- updated_at: timestamptz
+- subscription_tier: text
+- readme_generations_count: integer
 
-To learn more about Next.js, take a look at the following resources:
+### subscriptions
+- id: uuid (primary key)
+- user_id: uuid (references profiles.id)
+- plan_id: text
+- status: text
+- created_at: timestamptz
+- current_period_end: timestamptz
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Contributing
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Contributions are welcome! Please feel free to submit a Pull Request.
 
-## Deploy on Vercel
+## License
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+This project is licensed under the MIT License - see the LICENSE file for details.
