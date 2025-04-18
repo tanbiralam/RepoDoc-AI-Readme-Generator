@@ -1,6 +1,6 @@
 "use client";
 
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 
 // Initialize Supabase client with proper setup for Next.js App Router
 const supabase = createClientComponentClient({
@@ -10,7 +10,7 @@ const supabase = createClientComponentClient({
 
 // Add debug logging for auth state
 supabase.auth.onAuthStateChange((event, session) => {
-  console.log('[Supabase Auth Debug]', { event, hasSession: !!session });
+  console.log("[Supabase Auth Debug]", { event, hasSession: !!session });
 });
 
 export default supabase;
