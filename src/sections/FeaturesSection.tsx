@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { Code, FileCode, Zap, Layout, BarChart3, Award } from "lucide-react";
 
 export default function FeaturesSection() {
   const features = [
@@ -9,132 +10,42 @@ export default function FeaturesSection() {
       title: "AI-Powered Generation",
       description:
         "Advanced AI algorithms analyze your repository to create tailored README content.",
-      icon: (
-        <svg
-          className="w-6 h-6"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth="2"
-            d="M13 10V3L4 14h7v7l9-11h-7z"
-          />
-        </svg>
-      ),
+      icon: <Zap className="w-5 h-5" />,
     },
     {
       id: 2,
       title: "Live Editor",
       description:
         "Edit and preview your README in real-time with our intuitive markdown editor.",
-      icon: (
-        <svg
-          className="w-6 h-6"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth="2"
-            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-          />
-        </svg>
-      ),
+      icon: <Code className="w-5 h-5" />,
     },
     {
       id: 3,
       title: "One-Click Commit",
       description:
         "Push your new README directly to GitHub with a single click.",
-      icon: (
-        <svg
-          className="w-6 h-6"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth="2"
-            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-          />
-        </svg>
-      ),
+      icon: <FileCode className="w-5 h-5" />,
     },
     {
       id: 4,
       title: "Multiple Templates",
       description:
         "Choose from a variety of professional templates to match your project style.",
-      icon: (
-        <svg
-          className="w-6 h-6"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth="2"
-            d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"
-          />
-        </svg>
-      ),
+      icon: <Layout className="w-5 h-5" />,
     },
     {
       id: 5,
       title: "Smart Analysis",
       description:
         "Our tool automatically detects languages, frameworks, and features in your repository.",
-      icon: (
-        <svg
-          className="w-6 h-6"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth="2"
-            d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-          />
-        </svg>
-      ),
+      icon: <BarChart3 className="w-5 h-5" />,
     },
     {
       id: 6,
       title: "Badge Integration",
       description:
         "Automatically add relevant badges to showcase your project's status and compatibility.",
-      icon: (
-        <svg
-          className="w-6 h-6"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth="2"
-            d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"
-          />
-        </svg>
-      ),
+      icon: <Award className="w-5 h-5" />,
     },
   ];
 
@@ -158,8 +69,18 @@ export default function FeaturesSection() {
   };
 
   return (
-    <section id="features" className="py-20 bg-white">
-      <div className="container mx-auto px-4">
+    <section
+      id="features"
+      className="relative overflow-hidden bg-gray-950 py-24"
+    >
+      {/* Background decorative elements */}
+      <div className="absolute inset-0 bg-grid-white/[0.02] bg-[size:60px_60px]" />
+      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-gray-700 to-transparent" />
+      <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-gray-700 to-transparent" />
+      <div className="absolute top-1/4 right-0 w-96 h-96 rounded-full bg-blue-600/10 blur-3xl"></div>
+      <div className="absolute bottom-1/4 left-0 w-96 h-96 rounded-full bg-indigo-600/10 blur-3xl"></div>
+
+      <div className="container relative z-10 mx-auto px-4">
         <motion.div
           className="text-center mb-16"
           initial={{ opacity: 0, y: 20 }}
@@ -167,20 +88,40 @@ export default function FeaturesSection() {
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
         >
-          <span className="inline-block bg-blue-100 text-blue-700 rounded-full px-4 py-1.5 text-sm font-medium mb-4">
-            Features
-          </span>
-          <h2 className="text-3xl md:text-4xl font-semibold text-gray-900 mb-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.4 }}
+            className="flex items-center justify-center gap-2 mb-3"
+          >
+            <div className="flex items-center rounded-full border border-gray-800 bg-gray-900 px-3 py-1 text-sm font-medium text-gray-300">
+              <span className="text-blue-400">Features</span>
+            </div>
+          </motion.div>
+          <motion.h2
+            className="text-4xl font-bold bg-gradient-to-br from-white to-gray-400 bg-clip-text text-transparent mb-4"
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+          >
             Everything You Need
-          </h2>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+          </motion.h2>
+          <motion.p
+            className="text-lg text-gray-400 max-w-2xl mx-auto"
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+          >
             Powerful tools to create professional README files that make your
             projects stand out
-          </p>
+          </motion.p>
         </motion.div>
 
         <motion.div
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
           variants={containerVariants}
           initial="hidden"
           whileInView="visible"
@@ -192,41 +133,69 @@ export default function FeaturesSection() {
               variants={itemVariants}
               whileHover={{
                 y: -5,
-                boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1)",
+                boxShadow: "0 15px 30px -5px rgba(0, 0, 0, 0.7)",
               }}
-              className="bg-white p-8 rounded-lg shadow-sm border border-gray-100 transition-all duration-300"
+              transition={{ duration: 0.3 }}
+              className="bg-gray-900/50 backdrop-blur-sm p-8 rounded-xl border border-gray-800 transition-all duration-300 group relative overflow-hidden"
             >
-              <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center mb-6">
-                {feature.icon}
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-600/5 to-indigo-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <div className="absolute -inset-px rounded-xl opacity-0 group-hover:opacity-100 bg-gradient-to-r from-blue-500 to-indigo-600 blur-sm group-hover:blur transition-all duration-300" />
+              <div className="relative z-10">
+                <motion.div
+                  className="w-12 h-12 bg-blue-500/10 text-blue-400 rounded-xl flex items-center justify-center mb-5 group-hover:bg-blue-500/20 transition-colors duration-300"
+                  whileHover={{ scale: 1.05 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  {feature.icon}
+                </motion.div>
+                <h3 className="text-xl font-semibold text-white mb-3 group-hover:text-blue-400 transition-colors duration-300">
+                  {feature.title}
+                </h3>
+                <p className="text-gray-400">{feature.description}</p>
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-3">
-                {feature.title}
-              </h3>
-              <p className="text-gray-600">{feature.description}</p>
             </motion.div>
           ))}
         </motion.div>
 
         <motion.div
-          className="mt-20 bg-white rounded-xl shadow-md overflow-hidden border border-gray-100"
+          className="mt-20 bg-gray-900/50 backdrop-blur-sm rounded-xl shadow-xl border border-gray-800 overflow-hidden relative"
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.7, delay: 0.2 }}
         >
+          <div className="absolute -inset-px rounded-xl opacity-0 group-hover:opacity-10 bg-gradient-to-r from-blue-500 to-indigo-600 blur-sm transition-all duration-300" />
           <div className="flex flex-col lg:flex-row">
-            <div className="w-full lg:w-1/2 p-8 lg:p-12 flex flex-col justify-center">
-              <span className="text-blue-600 font-medium">
+            <div className="w-full lg:w-1/2 p-8 lg:p-10 flex flex-col justify-center relative z-10">
+              <motion.span
+                className="text-blue-400 font-medium"
+                initial={{ opacity: 0 }}
+                whileInView={{ opacity: 1 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5 }}
+              >
                 Enhanced Features
-              </span>
-              <h3 className="text-2xl font-semibold text-gray-900 mt-2 mb-4">
+              </motion.span>
+              <motion.h3
+                className="text-2xl font-bold text-white mt-2 mb-4"
+                initial={{ opacity: 0 }}
+                whileInView={{ opacity: 1 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: 0.1 }}
+              >
                 Beautifully Designed Templates
-              </h3>
-              <p className="text-gray-600 mb-6">
+              </motion.h3>
+              <motion.p
+                className="text-gray-400 mb-6"
+                initial={{ opacity: 0 }}
+                whileInView={{ opacity: 1 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+              >
                 Choose from a wide range of professionally designed templates
                 that match your project&apos;s style and purpose. Each template
                 is optimized for readability and visual appeal.
-              </p>
+              </motion.p>
               <motion.ul
                 className="space-y-3"
                 initial="hidden"
@@ -261,7 +230,7 @@ export default function FeaturesSection() {
                     }}
                   >
                     <svg
-                      className="flex-shrink-0 h-5 w-5 text-blue-500 mt-1"
+                      className="flex-shrink-0 h-5 w-5 text-blue-400 mt-1"
                       fill="currentColor"
                       viewBox="0 0 20 20"
                     >
@@ -271,12 +240,12 @@ export default function FeaturesSection() {
                         clipRule="evenodd"
                       />
                     </svg>
-                    <span className="ml-3 text-gray-600">{item} Template</span>
+                    <span className="ml-3 text-gray-300">{item} Template</span>
                   </motion.li>
                 ))}
               </motion.ul>
             </div>
-            <div className="w-full lg:w-1/2 bg-gray-50 p-8 flex items-center justify-center">
+            <div className="w-full lg:w-1/2 bg-gradient-to-br from-gray-900 to-gray-800 p-8 flex items-center justify-center">
               <motion.div
                 className="grid grid-cols-2 gap-4 w-full max-w-md"
                 initial="hidden"
@@ -291,29 +260,27 @@ export default function FeaturesSection() {
                   },
                 }}
               >
-                {[1, 2, 3, 4].map((index) => (
+                {[1, 2, 3, 4].map((i) => (
                   <motion.div
-                    key={index}
-                    className="bg-white p-4 rounded-lg shadow-sm aspect-[3/4] flex items-center justify-center"
+                    key={i}
+                    className="aspect-[4/3] rounded-lg overflow-hidden"
                     variants={{
-                      hidden: { opacity: 0, scale: 0.9 },
+                      hidden: { opacity: 0, y: 20 },
                       visible: {
                         opacity: 1,
-                        scale: 1,
-                        transition: { duration: 0.4 },
+                        y: 0,
+                        transition: { duration: 0.5 },
                       },
                     }}
-                    whileHover={{
-                      y: -5,
-                      boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.05)",
-                    }}
+                    whileHover={{ y: -5 }}
                   >
-                    <div className="space-y-2 w-full">
-                      <div className="h-3 bg-blue-100 rounded w-1/2 mx-auto"></div>
-                      <div className="h-2 bg-gray-100 rounded w-3/4 mx-auto"></div>
-                      <div className="h-2 bg-gray-100 rounded w-full mx-auto"></div>
-                      <div className="h-2 bg-gray-100 rounded w-3/4 mx-auto"></div>
-                      <div className="h-10 bg-gray-50 rounded w-full mx-auto mt-4"></div>
+                    <div className="w-full h-full bg-gradient-to-br from-blue-500/20 to-indigo-500/20 border border-gray-700 p-3 flex flex-col">
+                      <div className="w-1/2 h-2 bg-blue-500/30 rounded mb-2"></div>
+                      <div className="flex-1 space-y-2">
+                        <div className="w-full h-1.5 bg-gray-700 rounded"></div>
+                        <div className="w-3/4 h-1.5 bg-gray-700 rounded"></div>
+                        <div className="w-5/6 h-1.5 bg-gray-700 rounded"></div>
+                      </div>
                     </div>
                   </motion.div>
                 ))}

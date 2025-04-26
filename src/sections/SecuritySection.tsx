@@ -110,48 +110,78 @@ export default function SecuritySection() {
   };
 
   return (
-    <section id="security" className="py-20 bg-gray-50">
-      <div className="container mx-auto px-4">
+    <section
+      id="security"
+      className="relative overflow-hidden bg-gradient-to-b from-gray-50 to-white py-16"
+    >
+      {/* Decorative elements */}
+      <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-blue-50 rounded-full opacity-30 blur-xl -translate-y-1/4 translate-x-1/4"></div>
+      <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-indigo-50 rounded-full opacity-30 blur-xl translate-y-1/4 -translate-x-1/4"></div>
+
+      <div className="container relative z-10 mx-auto px-4">
         <motion.div
-          className="text-center mb-16"
+          className="text-center mb-12"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
         >
-          <span className="inline-block bg-blue-100 text-blue-700 rounded-full px-4 py-1.5 text-sm font-medium mb-4">
+          <motion.span
+            className="inline-block bg-blue-100 text-blue-700 rounded-full px-4 py-1.5 text-sm font-medium mb-3"
+            initial={{ opacity: 0, scale: 0.9 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.4 }}
+          >
             Security & Privacy
-          </span>
-          <h2 className="text-3xl md:text-4xl font-semibold text-gray-900 mb-4">
+          </motion.span>
+          <motion.h2
+            className="text-3xl md:text-4xl font-semibold text-gray-900 mb-3"
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+          >
             Your Data, Protected
-          </h2>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+          </motion.h2>
+          <motion.p
+            className="text-lg text-gray-600 max-w-2xl mx-auto"
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+          >
             We take the security and privacy of your GitHub repositories
             seriously
-          </p>
+          </motion.p>
         </motion.div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
           <motion.div
             variants={containerVariants}
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, margin: "-50px" }}
           >
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {securityFeatures.map((feature, index) => (
                 <motion.div
                   key={index}
                   variants={itemVariants}
                   whileHover={{
                     y: -5,
-                    boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1)",
+                    boxShadow: "0 15px 30px -10px rgba(0, 0, 0, 0.1)",
                   }}
-                  className="bg-white p-6 rounded-lg shadow-sm border border-gray-100 transition-all duration-300"
+                  transition={{ duration: 0.3 }}
+                  className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 transition-all duration-300"
                 >
-                  <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center mb-4">
+                  <motion.div
+                    className="w-10 h-10 bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-600 rounded-xl flex items-center justify-center mb-3"
+                    whileHover={{ scale: 1.05 }}
+                    transition={{ duration: 0.2 }}
+                  >
                     {feature.icon}
-                  </div>
+                  </motion.div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">
                     {feature.title}
                   </h3>
@@ -162,18 +192,24 @@ export default function SecuritySection() {
           </motion.div>
 
           <motion.div
-            className="bg-white p-8 rounded-lg shadow-md border border-gray-100"
+            className="bg-white p-6 rounded-xl shadow-md border border-gray-100"
             initial={{ opacity: 0, x: 30 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.7, delay: 0.3 }}
           >
-            <h3 className="text-xl font-semibold text-gray-900 mb-6">
+            <motion.h3
+              className="text-xl font-semibold text-gray-900 mb-4"
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.4 }}
+            >
               Our Security Commitment
-            </h3>
+            </motion.h3>
 
             <motion.div
-              className="space-y-6"
+              className="space-y-4"
               initial="hidden"
               whileInView="visible"
               viewport={{ once: true }}
@@ -191,8 +227,9 @@ export default function SecuritySection() {
                   hidden: { opacity: 0, y: 10 },
                   visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
                 }}
+                className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-lg"
               >
-                <h4 className="text-lg font-medium text-gray-800 mb-2 flex items-center">
+                <h4 className="text-lg font-medium text-gray-800 mb-1 flex items-center">
                   <svg
                     className="w-5 h-5 mr-2 text-blue-600"
                     fill="currentColor"
@@ -218,8 +255,9 @@ export default function SecuritySection() {
                   hidden: { opacity: 0, y: 10 },
                   visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
                 }}
+                className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-lg"
               >
-                <h4 className="text-lg font-medium text-gray-800 mb-2 flex items-center">
+                <h4 className="text-lg font-medium text-gray-800 mb-1 flex items-center">
                   <svg
                     className="w-5 h-5 mr-2 text-blue-600"
                     fill="currentColor"
@@ -245,8 +283,9 @@ export default function SecuritySection() {
                   hidden: { opacity: 0, y: 10 },
                   visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
                 }}
+                className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-lg"
               >
-                <h4 className="text-lg font-medium text-gray-800 mb-2 flex items-center">
+                <h4 className="text-lg font-medium text-gray-800 mb-1 flex items-center">
                   <svg
                     className="w-5 h-5 mr-2 text-blue-600"
                     fill="currentColor"

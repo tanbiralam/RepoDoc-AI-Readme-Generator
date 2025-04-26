@@ -67,28 +67,53 @@ export default function PricingSection() {
   };
 
   return (
-    <section id="pricing" className="py-20 bg-gray-50">
-      <div className="container mx-auto px-4">
+    <section
+      id="pricing"
+      className="relative overflow-hidden bg-gradient-to-b from-white to-gray-50 py-16"
+    >
+      {/* Decorative elements */}
+      <div className="absolute top-20 left-0 -translate-x-1/4 w-[500px] h-[500px] rounded-full bg-blue-50 opacity-40 blur-xl"></div>
+      <div className="absolute bottom-0 right-0 translate-x-1/4 w-[400px] h-[400px] rounded-full bg-indigo-50 opacity-30 blur-xl"></div>
+
+      <div className="container relative z-10 mx-auto px-4">
         <motion.div
-          className="text-center mb-16"
+          className="text-center mb-12"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
         >
-          <span className="inline-block bg-blue-100 text-blue-700 rounded-full px-4 py-1.5 text-sm font-medium mb-4">
+          <motion.span
+            className="inline-block bg-blue-100 text-blue-700 rounded-full px-4 py-1.5 text-sm font-medium mb-3"
+            initial={{ opacity: 0, scale: 0.9 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.4 }}
+          >
             Pricing
-          </span>
-          <h2 className="text-3xl md:text-4xl font-semibold text-gray-900 mb-4">
+          </motion.span>
+          <motion.h2
+            className="text-3xl md:text-4xl font-semibold text-gray-900 mb-3"
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+          >
             Simple, Transparent Pricing
-          </h2>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+          </motion.h2>
+          <motion.p
+            className="text-lg text-gray-600 max-w-2xl mx-auto"
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+          >
             Choose the plan that&apos;s right for you
-          </p>
+          </motion.p>
         </motion.div>
 
         <motion.div
-          className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto"
+          className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto"
           variants={container}
           initial="hidden"
           whileInView="visible"
@@ -98,36 +123,40 @@ export default function PricingSection() {
             <motion.div
               key={plan.id}
               variants={item}
-              whileHover={{ y: -5 }}
-              className={`relative rounded-xl overflow-hidden border ${
+              whileHover={{
+                y: -8,
+                boxShadow: "0 15px 30px -10px rgba(0, 0, 0, 0.1)",
+              }}
+              transition={{ duration: 0.3 }}
+              className={`relative rounded-xl overflow-hidden bg-white ${
                 plan.popular
-                  ? "border-blue-500 shadow-md"
-                  : "border-gray-200 shadow-sm"
+                  ? "border-2 border-blue-500 shadow-lg"
+                  : "border border-gray-200 shadow-sm"
               }`}
             >
               {plan.popular && (
                 <div className="absolute top-0 inset-x-0">
                   <div className="flex justify-center transform -translate-y-1/2">
-                    <span className="inline-flex rounded-full bg-blue-600 px-4 py-1 text-sm font-medium text-white">
+                    <span className="inline-flex rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-1 text-sm font-medium text-white shadow-sm">
                       Most Popular
                     </span>
                   </div>
                 </div>
               )}
-              <div className="p-8">
+              <div className="p-6">
                 <h3 className="text-2xl font-semibold text-gray-900">
                   {plan.name}
                 </h3>
-                <div className="mt-4 flex items-baseline">
+                <div className="mt-3 flex items-baseline">
                   <span className="text-4xl font-bold text-gray-900">
                     ${plan.price}
                   </span>
                   <span className="ml-1 text-xl text-gray-500">/month</span>
                 </div>
-                <p className="mt-4 text-gray-600">{plan.description}</p>
+                <p className="mt-3 text-gray-600">{plan.description}</p>
 
-                <div className="mt-8">
-                  <ul className="space-y-4">
+                <div className="mt-6">
+                  <ul className="space-y-3">
                     {plan.features.map((feature, idx) => (
                       <motion.li
                         key={idx}
@@ -138,7 +167,7 @@ export default function PricingSection() {
                         transition={{ duration: 0.3, delay: idx * 0.1 }}
                       >
                         <svg
-                          className="flex-shrink-0 h-5 w-5 text-blue-500 mt-1"
+                          className="flex-shrink-0 h-5 w-5 text-blue-500 mt-0.5"
                           fill="currentColor"
                           viewBox="0 0 20 20"
                         >
@@ -148,26 +177,30 @@ export default function PricingSection() {
                             clipRule="evenodd"
                           />
                         </svg>
-                        <span className="ml-3 text-gray-600">{feature}</span>
+                        <span className="ml-2 text-gray-600">{feature}</span>
                       </motion.li>
                     ))}
                   </ul>
                 </div>
 
-                <div className="mt-8">
+                <div className="mt-6">
                   <Link href="/auth">
                     <motion.div
                       whileHover={{ scale: 1.03 }}
                       whileTap={{ scale: 0.98 }}
                     >
                       <Button
-                        className={`w-full py-3 ${
+                        className={`w-full py-2 ${
                           plan.popular
-                            ? "bg-blue-600 text-white hover:bg-blue-700"
+                            ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700"
                             : "bg-white border border-gray-200 text-gray-900 hover:bg-gray-50"
                         }`}
                       >
-                        {plan.popular ? "Get Started" : "Choose Plan"}
+                        {plan.id === "free"
+                          ? "Get Started Free"
+                          : plan.popular
+                          ? "Get Started"
+                          : "Choose Plan"}
                       </Button>
                     </motion.div>
                   </Link>
@@ -178,31 +211,47 @@ export default function PricingSection() {
         </motion.div>
 
         <motion.div
-          className="mt-16 max-w-3xl mx-auto"
+          className="mt-12 max-w-3xl mx-auto"
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5, delay: 0.2 }}
         >
-          <div className="bg-blue-50 rounded-xl p-8 border border-blue-100">
-            <h3 className="text-xl font-semibold text-gray-900 mb-3">
-              Need a custom plan?
-            </h3>
-            <p className="text-gray-600 mb-6">
-              Contact us for custom pricing plans tailored to your specific
-              requirements.
-            </p>
-            <div>
-              <Link href="/contact">
-                <motion.div
-                  whileHover={{ scale: 1.03 }}
-                  whileTap={{ scale: 0.98 }}
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-100">
+            <div className="flex flex-col md:flex-row md:items-center">
+              <div className="flex-1">
+                <motion.h3
+                  className="text-xl font-semibold text-gray-900 mb-2"
+                  initial={{ opacity: 0 }}
+                  whileInView={{ opacity: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.4 }}
                 >
-                  <Button className="bg-blue-600 text-white hover:bg-blue-700">
-                    Contact Sales
-                  </Button>
-                </motion.div>
-              </Link>
+                  Need a custom plan?
+                </motion.h3>
+                <motion.p
+                  className="text-gray-600 mb-6 md:mb-0"
+                  initial={{ opacity: 0 }}
+                  whileInView={{ opacity: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.4, delay: 0.1 }}
+                >
+                  Contact us for custom pricing plans tailored to your specific
+                  requirements.
+                </motion.p>
+              </div>
+              <div className="flex-shrink-0">
+                <Link href="/contact">
+                  <motion.div
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    <Button className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700 shadow-md">
+                      Contact Sales
+                    </Button>
+                  </motion.div>
+                </Link>
+              </div>
             </div>
           </div>
         </motion.div>
