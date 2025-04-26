@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { Shield, Lock, FileCode, Eye, CheckCircle } from "lucide-react";
 
 export default function SecuritySection() {
   const securityFeatures = [
@@ -8,85 +9,25 @@ export default function SecuritySection() {
       title: "Secure GitHub Authentication",
       description:
         "We use OAuth to authenticate with GitHub, ensuring we never store your credentials.",
-      icon: (
-        <svg
-          className="w-6 h-6"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-          />
-        </svg>
-      ),
+      icon: <Lock className="w-6 h-6" />,
     },
     {
       title: "Data Encryption",
       description:
         "All data transferred between your browser and our servers is encrypted using TLS/SSL.",
-      icon: (
-        <svg
-          className="w-6 h-6"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-          />
-        </svg>
-      ),
+      icon: <Shield className="w-6 h-6" />,
     },
     {
       title: "Limited Repository Access",
       description:
         "We only request the permissions necessary to provide our service - nothing more.",
-      icon: (
-        <svg
-          className="w-6 h-6"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"
-          />
-        </svg>
-      ),
+      icon: <FileCode className="w-6 h-6" />,
     },
     {
       title: "No Code Storage",
       description:
         "We don't store your repository code on our servers - all analysis is done in real-time.",
-      icon: (
-        <svg
-          className="w-6 h-6"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
-          />
-        </svg>
-      ),
+      icon: <Eye className="w-6 h-6" />,
     },
   ];
 
@@ -112,13 +53,19 @@ export default function SecuritySection() {
   return (
     <section
       id="security"
-      className="relative overflow-hidden bg-gradient-to-b from-gray-50 to-white py-16"
+      className="relative overflow-hidden bg-gray-950 py-24"
     >
-      {/* Decorative elements */}
-      <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-blue-50 rounded-full opacity-30 blur-xl -translate-y-1/4 translate-x-1/4"></div>
-      <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-indigo-50 rounded-full opacity-30 blur-xl translate-y-1/4 -translate-x-1/4"></div>
+      {/* Background decorative elements */}
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(37,99,235,0.05),transparent_70%)]" />
+      <div className="absolute inset-0 bg-grid-white/[0.02] bg-[size:50px_50px]" />
+      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/30 to-transparent" />
+      <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/20 to-transparent" />
 
-      <div className="container relative z-10 mx-auto px-4">
+      {/* Decorative glows */}
+      <div className="absolute top-1/3 right-0 w-96 h-96 rounded-full bg-blue-600/10 blur-3xl transform translate-x-1/2"></div>
+      <div className="absolute bottom-1/3 left-0 w-96 h-96 rounded-full bg-indigo-600/10 blur-3xl transform -translate-x-1/2"></div>
+
+      <div className="container relative z-10 mx-auto px-6 lg:px-8">
         <motion.div
           className="text-center mb-12"
           initial={{ opacity: 0, y: 20 }}
@@ -127,7 +74,7 @@ export default function SecuritySection() {
           transition={{ duration: 0.6 }}
         >
           <motion.span
-            className="inline-block bg-blue-100 text-blue-700 rounded-full px-4 py-1.5 text-sm font-medium mb-3"
+            className="inline-block bg-blue-500/10 text-blue-400 rounded-full px-4 py-1.5 text-sm font-medium mb-3"
             initial={{ opacity: 0, scale: 0.9 }}
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
@@ -136,7 +83,7 @@ export default function SecuritySection() {
             Security & Privacy
           </motion.span>
           <motion.h2
-            className="text-3xl md:text-4xl font-semibold text-gray-900 mb-3"
+            className="text-3xl md:text-4xl font-bold text-white mb-3"
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
@@ -145,7 +92,7 @@ export default function SecuritySection() {
             Your Data, Protected
           </motion.h2>
           <motion.p
-            className="text-lg text-gray-600 max-w-2xl mx-auto"
+            className="text-lg text-gray-300 max-w-2xl mx-auto"
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
@@ -170,36 +117,38 @@ export default function SecuritySection() {
                   variants={itemVariants}
                   whileHover={{
                     y: -5,
-                    boxShadow: "0 15px 30px -10px rgba(0, 0, 0, 0.1)",
+                    boxShadow: "0 15px 30px -10px rgba(59, 130, 246, 0.15)",
                   }}
                   transition={{ duration: 0.3 }}
-                  className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 transition-all duration-300"
+                  className="bg-gray-900/80 backdrop-blur-sm p-5 rounded-xl border border-gray-800/50 transition-all duration-300 group relative overflow-hidden"
                 >
+                  <div className="absolute inset-0 bg-gradient-to-br from-blue-600/5 to-blue-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
                   <motion.div
-                    className="w-10 h-10 bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-600 rounded-xl flex items-center justify-center mb-3"
+                    className="w-10 h-10 bg-blue-500/10 text-blue-400 rounded-xl flex items-center justify-center mb-3 group-hover:bg-blue-500/20 transition-all duration-300"
                     whileHover={{ scale: 1.05 }}
                     transition={{ duration: 0.2 }}
                   >
                     {feature.icon}
                   </motion.div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  <h3 className="text-lg font-semibold text-white mb-2 group-hover:text-blue-400 transition-colors duration-300">
                     {feature.title}
                   </h3>
-                  <p className="text-gray-600 text-sm">{feature.description}</p>
+                  <p className="text-gray-400 text-sm">{feature.description}</p>
                 </motion.div>
               ))}
             </div>
           </motion.div>
 
           <motion.div
-            className="bg-white p-6 rounded-xl shadow-md border border-gray-100"
+            className="bg-gray-900/60 backdrop-blur-sm p-6 rounded-xl border border-gray-800/50"
             initial={{ opacity: 0, x: 30 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.7, delay: 0.3 }}
           >
             <motion.h3
-              className="text-xl font-semibold text-gray-900 mb-4"
+              className="text-xl font-semibold text-white mb-4"
               initial={{ opacity: 0 }}
               whileInView={{ opacity: 1 }}
               viewport={{ once: true }}
@@ -227,24 +176,13 @@ export default function SecuritySection() {
                   hidden: { opacity: 0, y: 10 },
                   visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
                 }}
-                className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-lg"
+                className="bg-gradient-to-r from-blue-900/20 to-blue-800/20 p-4 rounded-lg"
               >
-                <h4 className="text-lg font-medium text-gray-800 mb-1 flex items-center">
-                  <svg
-                    className="w-5 h-5 mr-2 text-blue-600"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
+                <h4 className="text-lg font-medium text-white mb-1 flex items-center">
+                  <CheckCircle className="w-5 h-5 mr-2 text-blue-400" />
                   Regular Security Audits
                 </h4>
-                <p className="text-gray-600 ml-7">
+                <p className="text-gray-400 ml-7">
                   Our systems undergo regular security assessments and
                   penetration testing by independent security experts.
                 </p>
@@ -255,24 +193,13 @@ export default function SecuritySection() {
                   hidden: { opacity: 0, y: 10 },
                   visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
                 }}
-                className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-lg"
+                className="bg-gradient-to-r from-blue-900/20 to-blue-800/20 p-4 rounded-lg"
               >
-                <h4 className="text-lg font-medium text-gray-800 mb-1 flex items-center">
-                  <svg
-                    className="w-5 h-5 mr-2 text-blue-600"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
+                <h4 className="text-lg font-medium text-white mb-1 flex items-center">
+                  <CheckCircle className="w-5 h-5 mr-2 text-blue-400" />
                   Compliance with Standards
                 </h4>
-                <p className="text-gray-600 ml-7">
+                <p className="text-gray-400 ml-7">
                   We follow industry best practices and comply with relevant
                   data protection regulations.
                 </p>
@@ -283,24 +210,13 @@ export default function SecuritySection() {
                   hidden: { opacity: 0, y: 10 },
                   visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
                 }}
-                className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-lg"
+                className="bg-gradient-to-r from-blue-900/20 to-blue-800/20 p-4 rounded-lg"
               >
-                <h4 className="text-lg font-medium text-gray-800 mb-1 flex items-center">
-                  <svg
-                    className="w-5 h-5 mr-2 text-blue-600"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
+                <h4 className="text-lg font-medium text-white mb-1 flex items-center">
+                  <CheckCircle className="w-5 h-5 mr-2 text-blue-400" />
                   Transparent Privacy Policy
                 </h4>
-                <p className="text-gray-600 ml-7">
+                <p className="text-gray-400 ml-7">
                   Our privacy policy clearly explains how we handle your data,
                   with no hidden surprises.
                 </p>

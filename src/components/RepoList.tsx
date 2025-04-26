@@ -103,7 +103,7 @@ export default function RepoList({
           <input
             type="text"
             placeholder="GitHub Username"
-            className="flex-1 p-2.5 border border-gray-200 rounded-lg shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 text-sm placeholder-gray-400"
+            className="flex-1 p-2.5 border border-gray-200 rounded-lg shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 text-sm placeholder-gray-400 text-black"
             value={githubUsername}
             onChange={(e) => setGithubUsername(e.target.value)}
           />

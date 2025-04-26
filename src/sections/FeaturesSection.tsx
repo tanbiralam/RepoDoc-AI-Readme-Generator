@@ -1,53 +1,48 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Code, FileCode, Zap, Layout, BarChart3, Award } from "lucide-react";
+import {
+  Terminal,
+  ArrowRight,
+  Eye,
+  ArrowUpRight,
+  Award,
+  Zap,
+  Code,
+  FileCode,
+  Layout,
+  BarChart3,
+} from "lucide-react";
+import Link from "next/link";
+import { useState } from "react";
+import { features, templates, Feature, Template } from "@/utils/constants";
+import TemplatePreviewModal from "@/components/TemplatePreviewModal";
 
 export default function FeaturesSection() {
-  const features = [
-    {
-      id: 1,
-      title: "AI-Powered Generation",
-      description:
-        "Advanced AI algorithms analyze your repository to create tailored README content.",
-      icon: <Zap className="w-5 h-5" />,
-    },
-    {
-      id: 2,
-      title: "Live Editor",
-      description:
-        "Edit and preview your README in real-time with our intuitive markdown editor.",
-      icon: <Code className="w-5 h-5" />,
-    },
-    {
-      id: 3,
-      title: "One-Click Commit",
-      description:
-        "Push your new README directly to GitHub with a single click.",
-      icon: <FileCode className="w-5 h-5" />,
-    },
-    {
-      id: 4,
-      title: "Multiple Templates",
-      description:
-        "Choose from a variety of professional templates to match your project style.",
-      icon: <Layout className="w-5 h-5" />,
-    },
-    {
-      id: 5,
-      title: "Smart Analysis",
-      description:
-        "Our tool automatically detects languages, frameworks, and features in your repository.",
-      icon: <BarChart3 className="w-5 h-5" />,
-    },
-    {
-      id: 6,
-      title: "Badge Integration",
-      description:
-        "Automatically add relevant badges to showcase your project's status and compatibility.",
-      icon: <Award className="w-5 h-5" />,
-    },
-  ];
+  const [previewModal, setPreviewModal] = useState<{
+    isOpen: boolean;
+    template: Template | null;
+  }>({
+    isOpen: false,
+    template: null,
+  });
+
+  // Map to associate icons with each feature based on ID
+  const getFeatureIcon = (feature: Feature) => {
+    const iconMap = {
+      1: <Zap className="w-5 h-5" />, // AI-Powered Generation
+      2: <Code className="w-5 h-5" />, // Live Editor
+      3: <FileCode className="w-5 h-5" />, // One-Click Commit
+      4: <Layout className="w-5 h-5" />, // Multiple Templates
+      5: <BarChart3 className="w-5 h-5" />, // Smart Analysis
+    };
+
+    return (
+      iconMap[feature.id as keyof typeof iconMap] || (
+        <Terminal className="w-5 h-5" />
+      )
+    );
+  };
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -68,19 +63,32 @@ export default function FeaturesSection() {
     },
   };
 
+  const handleOpenPreview = (template: Template | null) => {
+    setPreviewModal({
+      isOpen: true,
+      template,
+    });
+  };
+
+  const handleClosePreview = () => {
+    setPreviewModal({
+      isOpen: false,
+      template: null,
+    });
+  };
+
   return (
     <section
       id="features"
       className="relative overflow-hidden bg-gray-950 py-24"
     >
       {/* Background decorative elements */}
-      <div className="absolute inset-0 bg-grid-white/[0.02] bg-[size:60px_60px]" />
-      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-gray-700 to-transparent" />
-      <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-gray-700 to-transparent" />
-      <div className="absolute top-1/4 right-0 w-96 h-96 rounded-full bg-blue-600/10 blur-3xl"></div>
-      <div className="absolute bottom-1/4 left-0 w-96 h-96 rounded-full bg-indigo-600/10 blur-3xl"></div>
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(37,99,235,0.05),transparent_70%)]" />
+      <div className="absolute inset-0 bg-grid-white/[0.02] bg-[size:50px_50px]" />
+      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/30 to-transparent" />
+      <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/20 to-transparent" />
 
-      <div className="container relative z-10 mx-auto px-4">
+      <div className="container relative z-10 mx-auto px-6 lg:px-8">
         <motion.div
           className="text-center mb-16"
           initial={{ opacity: 0, y: 20 }}
@@ -95,12 +103,12 @@ export default function FeaturesSection() {
             transition={{ duration: 0.4 }}
             className="flex items-center justify-center gap-2 mb-3"
           >
-            <div className="flex items-center rounded-full border border-gray-800 bg-gray-900 px-3 py-1 text-sm font-medium text-gray-300">
+            <div className="flex items-center rounded-full border border-blue-500/30 bg-blue-500/10 px-4 py-1.5 text-sm font-medium text-white">
               <span className="text-blue-400">Features</span>
             </div>
           </motion.div>
           <motion.h2
-            className="text-4xl font-bold bg-gradient-to-br from-white to-gray-400 bg-clip-text text-transparent mb-4"
+            className="text-4xl font-bold text-white mb-4"
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
@@ -109,7 +117,7 @@ export default function FeaturesSection() {
             Everything You Need
           </motion.h2>
           <motion.p
-            className="text-lg text-gray-400 max-w-2xl mx-auto"
+            className="text-lg text-gray-300 max-w-2xl mx-auto"
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
@@ -120,8 +128,9 @@ export default function FeaturesSection() {
           </motion.p>
         </motion.div>
 
+        {/* Bento Grid Layout */}
         <motion.div
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-16"
           variants={containerVariants}
           initial="hidden"
           whileInView="visible"
@@ -133,162 +142,197 @@ export default function FeaturesSection() {
               variants={itemVariants}
               whileHover={{
                 y: -5,
-                boxShadow: "0 15px 30px -5px rgba(0, 0, 0, 0.7)",
+                boxShadow: "0 15px 30px -10px rgba(59, 130, 246, 0.15)",
               }}
               transition={{ duration: 0.3 }}
-              className="bg-gray-900/50 backdrop-blur-sm p-8 rounded-xl border border-gray-800 transition-all duration-300 group relative overflow-hidden"
+              className={`bg-gray-900/80 backdrop-blur-sm rounded-2xl border border-gray-800/50 transition-all duration-300 group relative overflow-hidden flex flex-col
+                ${
+                  feature.size === "large"
+                    ? "lg:col-span-2 md:row-span-1 p-8"
+                    : "p-6"
+                }`}
             >
-              <div className="absolute inset-0 bg-gradient-to-br from-blue-600/5 to-indigo-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-              <div className="absolute -inset-px rounded-xl opacity-0 group-hover:opacity-100 bg-gradient-to-r from-blue-500 to-indigo-600 blur-sm group-hover:blur transition-all duration-300" />
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-600/5 to-blue-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 bg-gradient-to-r from-blue-500/5 via-blue-500/5 to-blue-500/5 transition-all duration-500" />
+
               <div className="relative z-10">
                 <motion.div
                   className="w-12 h-12 bg-blue-500/10 text-blue-400 rounded-xl flex items-center justify-center mb-5 group-hover:bg-blue-500/20 transition-colors duration-300"
                   whileHover={{ scale: 1.05 }}
                   transition={{ duration: 0.2 }}
                 >
-                  {feature.icon}
+                  {getFeatureIcon(feature)}
                 </motion.div>
                 <h3 className="text-xl font-semibold text-white mb-3 group-hover:text-blue-400 transition-colors duration-300">
                   {feature.title}
                 </h3>
-                <p className="text-gray-400">{feature.description}</p>
+                <p className="text-gray-300">{feature.description}</p>
               </div>
             </motion.div>
           ))}
         </motion.div>
 
+        {/* Templates Section */}
         <motion.div
-          className="mt-20 bg-gray-900/50 backdrop-blur-sm rounded-xl shadow-xl border border-gray-800 overflow-hidden relative"
+          className="mt-20 bg-gray-900/60 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-800/50 overflow-hidden"
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.7, delay: 0.2 }}
+          transition={{ duration: 0.7 }}
         >
-          <div className="absolute -inset-px rounded-xl opacity-0 group-hover:opacity-10 bg-gradient-to-r from-blue-500 to-indigo-600 blur-sm transition-all duration-300" />
-          <div className="flex flex-col lg:flex-row">
-            <div className="w-full lg:w-1/2 p-8 lg:p-10 flex flex-col justify-center relative z-10">
-              <motion.span
-                className="text-blue-400 font-medium"
-                initial={{ opacity: 0 }}
-                whileInView={{ opacity: 1 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5 }}
-              >
-                Enhanced Features
-              </motion.span>
-              <motion.h3
-                className="text-2xl font-bold text-white mt-2 mb-4"
-                initial={{ opacity: 0 }}
-                whileInView={{ opacity: 1 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: 0.1 }}
-              >
-                Beautifully Designed Templates
-              </motion.h3>
-              <motion.p
-                className="text-gray-400 mb-6"
-                initial={{ opacity: 0 }}
-                whileInView={{ opacity: 1 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: 0.2 }}
-              >
-                Choose from a wide range of professionally designed templates
-                that match your project&apos;s style and purpose. Each template
-                is optimized for readability and visual appeal.
-              </motion.p>
-              <motion.ul
-                className="space-y-3"
-                initial="hidden"
-                whileInView="visible"
-                viewport={{ once: true }}
-                variants={{
-                  hidden: {},
-                  visible: {
-                    transition: {
-                      staggerChildren: 0.1,
-                    },
-                  },
-                }}
-              >
-                {[
-                  "Project Showcase",
-                  "Documentation-focused",
-                  "Developer Portfolio",
-                  "Open Source Project",
-                  "API Documentation",
-                ].map((item, index) => (
-                  <motion.li
-                    key={index}
-                    className="flex items-start"
-                    variants={{
-                      hidden: { opacity: 0, x: -10 },
-                      visible: {
-                        opacity: 1,
-                        x: 0,
-                        transition: { duration: 0.3 },
-                      },
-                    }}
-                  >
-                    <svg
-                      className="flex-shrink-0 h-5 w-5 text-blue-400 mt-1"
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                    <span className="ml-3 text-gray-300">{item} Template</span>
-                  </motion.li>
-                ))}
-              </motion.ul>
-            </div>
-            <div className="w-full lg:w-1/2 bg-gradient-to-br from-gray-900 to-gray-800 p-8 flex items-center justify-center">
+          <div className="p-8 md:p-10">
+            <div className="flex flex-col md:flex-row md:items-center justify-between mb-10">
+              <div>
+                <motion.span
+                  className="text-blue-400 font-medium"
+                  initial={{ opacity: 0 }}
+                  whileInView={{ opacity: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.5 }}
+                >
+                  Premium Templates
+                </motion.span>
+                <motion.h3
+                  className="text-2xl font-bold text-white mt-2"
+                  initial={{ opacity: 0 }}
+                  whileInView={{ opacity: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.5, delay: 0.1 }}
+                >
+                  Beautiful README Templates
+                </motion.h3>
+                <motion.p
+                  className="text-gray-300 mt-2 md:max-w-xl"
+                  initial={{ opacity: 0 }}
+                  whileInView={{ opacity: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.5, delay: 0.2 }}
+                >
+                  Choose from professionally designed templates that match your
+                  project&apos;s style and purpose. Each template is optimized
+                  for readability and visual appeal.
+                </motion.p>
+              </div>
+
               <motion.div
-                className="grid grid-cols-2 gap-4 w-full max-w-md"
-                initial="hidden"
-                whileInView="visible"
+                initial={{ opacity: 0, x: 20 }}
+                whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
-                variants={{
-                  hidden: {},
-                  visible: {
-                    transition: {
-                      staggerChildren: 0.1,
-                    },
-                  },
-                }}
+                transition={{ duration: 0.5, delay: 0.3 }}
+                className="mt-6 md:mt-0"
               >
-                {[1, 2, 3, 4].map((i) => (
-                  <motion.div
-                    key={i}
-                    className="aspect-[4/3] rounded-lg overflow-hidden"
-                    variants={{
-                      hidden: { opacity: 0, y: 20 },
-                      visible: {
-                        opacity: 1,
-                        y: 0,
-                        transition: { duration: 0.5 },
-                      },
-                    }}
-                    whileHover={{ y: -5 }}
-                  >
-                    <div className="w-full h-full bg-gradient-to-br from-blue-500/20 to-indigo-500/20 border border-gray-700 p-3 flex flex-col">
-                      <div className="w-1/2 h-2 bg-blue-500/30 rounded mb-2"></div>
-                      <div className="flex-1 space-y-2">
-                        <div className="w-full h-1.5 bg-gray-700 rounded"></div>
-                        <div className="w-3/4 h-1.5 bg-gray-700 rounded"></div>
-                        <div className="w-5/6 h-1.5 bg-gray-700 rounded"></div>
-                      </div>
-                    </div>
-                  </motion.div>
-                ))}
+                <Link
+                  href="#templates"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-blue-600 hover:bg-blue-500 text-white font-medium transition-all duration-200"
+                >
+                  Browse All Templates
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
               </motion.div>
             </div>
+
+            {/* Template Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+              {templates.map((template) => (
+                <motion.div
+                  key={template.id}
+                  className="relative group rounded-xl overflow-hidden bg-gray-800/50 border border-gray-800/40 h-80 flex flex-col"
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.5, delay: 0.1 * template.id }}
+                  whileHover={{ y: -5 }}
+                >
+                  {/* Preview Image */}
+                  <div className="p-2 pt-3 h-44 overflow-hidden relative">
+                    <div className="absolute top-2 right-2 z-20 flex gap-1.5">
+                      {template.tags.map((tag: string, i: number) => (
+                        <span
+                          key={i}
+                          className="px-2 py-0.5 bg-blue-500/20 text-blue-400 text-xs rounded-full"
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+
+                    <div className="w-full h-full rounded-lg overflow-hidden bg-gray-900/80 border border-gray-700/50 relative flex items-center justify-center">
+                      {/* Placeholder for template image */}
+                      <div className="w-full h-full bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center">
+                        <Terminal className="w-10 h-10 text-gray-700" />
+                      </div>
+
+                      {/* When you have real template images, use this: */}
+                      {/* <Image 
+                        src={template.image}
+                        alt={template.name}
+                        fill
+                        className="object-cover"
+                      /> */}
+                    </div>
+                  </div>
+
+                  {/* Template Info */}
+                  <div className="p-4 flex-1 flex flex-col">
+                    <h4 className="text-white font-medium text-lg">
+                      {template.name}
+                    </h4>
+                    <p className="text-gray-400 text-sm mt-1 flex-1">
+                      {template.description}
+                    </p>
+
+                    <div className="flex justify-between items-center mt-3">
+                      <button
+                        onClick={() => handleOpenPreview(template)}
+                        className="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1"
+                      >
+                        <Eye className="w-3.5 h-3.5" />
+                        Preview
+                      </button>
+
+                      <Link
+                        href="#use-template"
+                        className="inline-flex items-center gap-1 text-xs font-medium text-white bg-blue-600 hover:bg-blue-500 px-3 py-1.5 rounded-full transition-colors duration-200"
+                      >
+                        Use Template
+                        <ArrowUpRight className="w-3 h-3" />
+                      </Link>
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+
+            {/* Customization Note */}
+            <motion.div
+              className="mt-8 p-4 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-start gap-3"
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: 0.5 }}
+            >
+              <div className="rounded-full bg-blue-500/20 p-1.5 mt-0.5">
+                <Award className="w-4 h-4 text-blue-400" />
+              </div>
+              <div>
+                <p className="text-sm text-blue-100">
+                  <span className="font-medium">Pro tip:</span> All templates
+                  are fully customizable. You can easily modify colors,
+                  sections, and layouts to match your project&apos;s branding
+                  and requirements.
+                </p>
+              </div>
+            </motion.div>
           </div>
         </motion.div>
       </div>
+
+      {/* Template Preview Modal */}
+      <TemplatePreviewModal
+        isOpen={previewModal.isOpen}
+        onClose={handleClosePreview}
+        template={previewModal.template}
+      />
     </section>
   );
 }

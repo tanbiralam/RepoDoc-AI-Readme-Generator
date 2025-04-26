@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { GitHubRepo, ReadmeGenerationResult } from "@/types";
 import { useAuth } from "@/context/AuthContext";
 import { useSubscription } from "@/context/SubscriptionContext";
@@ -14,6 +13,7 @@ import { incrementReadmeGeneration } from "@/services/stripe";
 import RepoList from "@/components/RepoList";
 import ReadmeEditor from "@/components/ReadmeEditor";
 import ExportButtons from "@/components/ExportButtons";
+import GitHubConnectionPrompt from "@/components/GitHubConnectionPrompt";
 
 // Create a utility to help log with timestamps
 const logWithTime = (message: string, data?: Record<string, unknown>) => {
@@ -30,8 +30,7 @@ const logWithTime = (message: string, data?: Record<string, unknown>) => {
 };
 
 export default function Dashboard() {
-  const router = useRouter();
-  const { user, loading: authLoading, githubToken } = useAuth();
+  const { user, githubToken, hasGithubConnection } = useAuth();
   const {
     plan,
     canGenerateReadme,
@@ -46,6 +45,7 @@ export default function Dashboard() {
   const [generatingReadme, setGeneratingReadme] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [showLogs, setShowLogs] = useState<boolean>(false);
+  const [showGitHubPrompt, setShowGitHubPrompt] = useState<boolean>(true);
 
   // Add global styles for animations
   useEffect(() => {
@@ -67,13 +67,6 @@ export default function Dashboard() {
       document.head.removeChild(styleEl);
     };
   }, []);
-
-  // Redirect to auth page if not logged in
-  useEffect(() => {
-    if (!authLoading && !user) {
-      router.push("/auth");
-    }
-  }, [user, authLoading, router]);
 
   const handleRepoSelect = (repo: GitHubRepo) => {
     logWithTime(`Repository selected: ${repo.name}`, {
@@ -236,75 +229,32 @@ export default function Dashboard() {
     setReadmeContent(content);
   };
 
-  if (authLoading) {
-    return (
-      <div className="flex justify-center items-center min-h-screen bg-gray-50">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
-      </div>
-    );
-  }
-
   const toggleLogs = () => {
     setShowLogs(!showLogs);
   };
 
+  const handleDismissGitHubPrompt = () => {
+    setShowGitHubPrompt(false);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
-      {/* Modern top navigation bar */}
-      <header className="bg-white border-b border-gray-100 sticky top-0 z-10 backdrop-blur-sm bg-white/90">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center">
-              <h1 className="text-xl font-bold text-indigo-600">
-                GitHub README Generator
-              </h1>
-            </div>
-
-            {user && (
-              <div className="flex items-center space-x-3">
-                <button
-                  onClick={() => router.push("/subscription")}
-                  className="px-4 py-2 text-sm bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-md hover:from-indigo-700 hover:to-purple-700 shadow-sm transition-all duration-200 font-medium"
-                >
-                  {plan.name === "Free"
-                    ? "Upgrade Plan"
-                    : "Manage Subscription"}
-                </button>
-
-                <div className="flex items-center space-x-3 pl-4 border-l border-gray-200">
-                  <div className="text-right text-sm">
-                    <span className="block text-gray-700 font-medium">
-                      {user.email}
-                    </span>
-                    <div className="flex items-center mt-0.5">
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
-                        {plan.name} Plan
-                      </span>
-                      <span className="ml-2 text-gray-500 text-xs">
-                        {readmeGenerationsRemaining} generations left
-                      </span>
-                    </div>
-                  </div>
-                  <div className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-full w-9 h-9 flex items-center justify-center font-medium shadow-sm">
-                    {user.email?.charAt(0).toUpperCase()}
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </header>
-
       <main className="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
-        {/* Subtle intro section */}
+        {/* Intro section */}
         <div className="mb-8">
           <h2 className="text-2xl font-bold text-gray-900 mb-2">
-            Welcome to your dashboard
+            Welcome
+            {user?.full_name ? `, ${user.full_name}` : " to your dashboard"}
           </h2>
           <p className="text-gray-600">
             Generate professional READMEs for your repositories in seconds.
           </p>
         </div>
+
+        {/* Show GitHub connection prompt if needed */}
+        {!hasGithubConnection && showGitHubPrompt && (
+          <GitHubConnectionPrompt onDismiss={handleDismissGitHubPrompt} />
+        )}
 
         {error && (
           <div className="mb-8 p-4 rounded-lg bg-red-50 border border-red-200 text-red-700 font-medium animate-fadeIn">
@@ -326,8 +276,63 @@ export default function Dashboard() {
           </div>
         )}
 
+        {!hasGithubConnection && !showGitHubPrompt && (
+          <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-sm border border-gray-100 p-8 mb-8">
+            <div className="text-center">
+              <div className="flex justify-center mb-4">
+                <div className="p-3 bg-indigo-100 rounded-full">
+                  <svg
+                    className="w-8 h-8 text-indigo-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M13 10V3L4 14h7v7l9-11h-7z"
+                    ></path>
+                  </svg>
+                </div>
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                Connect Your GitHub Account
+              </h3>
+              <p className="text-gray-600 mb-6 max-w-md mx-auto">
+                To generate READMEs for your repositories, you need to connect
+                your GitHub account. This will allow us to access your
+                repositories.
+              </p>
+              <button
+                onClick={() => {
+                  import("@/services/auth").then(({ connectGitHub }) =>
+                    connectGitHub()
+                  );
+                }}
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+              >
+                <svg
+                  className="h-5 w-5 mr-2"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    fillRule="evenodd"
+                    clipRule="evenodd"
+                    d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"
+                  />
+                </svg>
+                Connect GitHub
+              </button>
+            </div>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Repository selection panel with glassmorphism effect */}
+          {/* Repository selection panel */}
           <div className="lg:col-span-1">
             <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-sm border border-gray-100 p-6 sticky top-24 transition-all duration-300 hover:shadow-md">
               <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
@@ -348,14 +353,30 @@ export default function Dashboard() {
                 Repositories
               </h2>
 
-              <RepoList
-                onRepoSelect={handleRepoSelect}
-                selectedRepo={selectedRepo}
-                onGenerateReadme={handleGenerateReadme}
-                isGenerating={generatingReadme}
-              />
+              {hasGithubConnection ? (
+                <RepoList
+                  onRepoSelect={handleRepoSelect}
+                  selectedRepo={selectedRepo}
+                  onGenerateReadme={handleGenerateReadme}
+                  isGenerating={generatingReadme}
+                />
+              ) : (
+                <div className="p-4 text-center bg-gray-50 rounded-lg border border-gray-100">
+                  <p className="text-sm text-gray-600">
+                    Connect your GitHub account to see your repositories.
+                  </p>
+                  {!showGitHubPrompt && (
+                    <button
+                      onClick={() => setShowGitHubPrompt(true)}
+                      className="mt-3 text-sm text-indigo-600 hover:text-indigo-800 font-medium"
+                    >
+                      Show GitHub connection prompt
+                    </button>
+                  )}
+                </div>
+              )}
 
-              {/* Debug logs toggle with improved design */}
+              {/* Debug logs toggle */}
               {selectedRepo && (
                 <div className="mt-5 pt-4 border-t border-gray-100">
                   <button
@@ -502,8 +523,9 @@ export default function Dashboard() {
                       Ready to Generate README
                     </h3>
                     <p className="mt-2 text-gray-600 max-w-md mx-auto">
-                      Click the "Generate README" button in the repository panel
-                      to create a README for {selectedRepo.name}.
+                      Click the &quot;Generate README&quot; button in the
+                      repository panel to create a README for{" "}
+                      {selectedRepo.name}.
                     </p>
                     <button
                       onClick={handleGenerateReadme}
@@ -515,7 +537,7 @@ export default function Dashboard() {
                   </>
                 )}
               </div>
-            ) : (
+            ) : hasGithubConnection ? (
               <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-sm border border-gray-100 p-16 text-center transition-all duration-300 hover:shadow-md animate-fadeIn">
                 <div className="mx-auto h-24 w-24 text-indigo-400 rounded-full bg-indigo-50 flex items-center justify-center mb-4">
                   <svg
@@ -540,6 +562,40 @@ export default function Dashboard() {
                   Choose a repository from the list to get started with
                   generating a professional README.
                 </p>
+              </div>
+            ) : (
+              <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-sm border border-gray-100 p-16 text-center transition-all duration-300 hover:shadow-md animate-fadeIn">
+                <div className="mx-auto h-24 w-24 text-amber-400 rounded-full bg-amber-50 flex items-center justify-center mb-4">
+                  <svg
+                    className="h-12 w-12"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    ></path>
+                  </svg>
+                </div>
+                <h3 className="text-xl font-medium text-gray-900">
+                  GitHub Connection Required
+                </h3>
+                <p className="mt-2 text-gray-600 max-w-md mx-auto">
+                  To generate README files, you need to connect your GitHub
+                  account. This allows us to access your repositories.
+                </p>
+                {!showGitHubPrompt && (
+                  <button
+                    onClick={() => setShowGitHubPrompt(true)}
+                    className="mt-6 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors shadow-sm"
+                  >
+                    Connect GitHub
+                  </button>
+                )}
               </div>
             )}
           </div>

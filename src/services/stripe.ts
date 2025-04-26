@@ -1,42 +1,35 @@
-import { SubscriptionPlan } from '@/types';
+import { SubscriptionPlan } from "@/types";
+import { README_GENERATION_LIMITS } from "@/utils/constants";
 
 // Define available subscription plans
 export const subscriptionPlans: SubscriptionPlan[] = [
   {
-    id: 'free',
-    name: 'Free',
-    price: 0,
+    id: "free",
+    name: "Free",
+    price: "0",
+    description: "Perfect for trying out the service",
     features: [
-      'Generate up to 5 READMEs',
-      'Basic templates',
-      'Export as Markdown file',
+      `Generate up to ${README_GENERATION_LIMITS.FREE} READMEs`,
+      "Basic templates",
+      "Export as Markdown file",
     ],
-    readme_generations_limit: 5,
+    readme_generations_limit: README_GENERATION_LIMITS.FREE,
+    popular: false,
   },
   {
-    id: 'pro',
-    name: 'Pro',
-    price: 9.99,
+    id: "pro",
+    name: "Pro",
+    price: "9.99",
+    description: "For regular GitHub users",
     features: [
-      'Generate up to 15 READMEs',
-      'Advanced templates',
-      'Export as Markdown file',
-      'Commit to GitHub repository',
+      "Unlimited README generations",
+      "Advanced templates",
+      "Export as Markdown file",
+      "Commit to GitHub repository",
+      "Priority support",
     ],
-    readme_generations_limit: 15,
-  },
-  {
-    id: 'enterprise',
-    name: 'Enterprise',
-    price: 19.99,
-    features: [
-      'Unlimited README generations',
-      'Premium templates',
-      'Export as Markdown file',
-      'Commit to GitHub repository',
-      'Priority support',
-    ],
-    readme_generations_limit: Infinity,
+    readme_generations_limit: README_GENERATION_LIMITS.PRO,
+    popular: true,
   },
 ];
 
@@ -48,10 +41,10 @@ export const createCheckoutSession = async (
   userId: string
 ): Promise<{ sessionId: string | null; error: Error | null }> => {
   try {
-    const response = await fetch('/api/create-checkout-session', {
-      method: 'POST',
+    const response = await fetch("/api/create-checkout-session", {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({
         planId,
@@ -60,13 +53,19 @@ export const createCheckoutSession = async (
     });
 
     if (!response.ok) {
-      throw new Error('Failed to create checkout session');
+      throw new Error("Failed to create checkout session");
     }
 
     const data = await response.json();
+
+    // Handle free plan
+    if (data.success) {
+      return { sessionId: null, error: null };
+    }
+
     return { sessionId: data.sessionId, error: null };
   } catch (error) {
-    console.error('Error creating checkout session:', error);
+    console.error("Error creating checkout session:", error);
     return { sessionId: null, error: error as Error };
   }
 };
@@ -80,21 +79,24 @@ export const getUserSubscriptionPlan = async (
   try {
     // Try to get the subscription plan from the API
     const response = await fetch(`/api/subscription?userId=${userId}`);
-    
+
     // If API call failed, log the error but default to free plan
     if (!response.ok) {
-      console.warn(`Subscription API returned status ${response.status}. Defaulting to free plan.`);
+      console.warn(
+        `Subscription API returned status ${response.status}. Defaulting to free plan.`
+      );
       return { plan: subscriptionPlans[0], error: null };
     }
 
     const data = await response.json();
-    const planId = data.planId || 'free';
+    const planId = data.planId || "free";
 
-    const plan = subscriptionPlans.find(p => p.id === planId) || subscriptionPlans[0];
+    const plan =
+      subscriptionPlans.find((p) => p.id === planId) || subscriptionPlans[0];
     return { plan, error: null };
   } catch (error) {
     // Log the error but don't propagate it - just return the free plan
-    console.error('Error getting subscription plan:', error);
+    console.error("Error getting subscription plan:", error);
     // Default to free plan on error instead of throwing an error
     return { plan: subscriptionPlans[0], error: null };
   }
@@ -105,13 +107,19 @@ export const getUserSubscriptionPlan = async (
  */
 export const canGenerateReadme = async (
   userId: string
-): Promise<{ canGenerate: boolean; remaining: number; error: Error | null }> => {
+): Promise<{
+  canGenerate: boolean;
+  remaining: number;
+  error: Error | null;
+}> => {
   try {
     const response = await fetch(`/api/readme-generations?userId=${userId}`);
 
     // Handle API errors gracefully
     if (!response.ok) {
-      console.warn(`README generations API returned status ${response.status}. Using fallback values.`);
+      console.warn(
+        `README generations API returned status ${response.status}. Using fallback values.`
+      );
       // Default to allowing 1 generation in case of API failure
       return { canGenerate: true, remaining: 1, error: null };
     }
@@ -127,7 +135,7 @@ export const canGenerateReadme = async (
 
     return { canGenerate, remaining, error: null };
   } catch (error) {
-    console.error('Error checking README generation limit:', error);
+    console.error("Error checking README generation limit:", error);
     // Allow one generation by default in case of error
     return { canGenerate: true, remaining: 1, error: null };
   }
@@ -140,10 +148,10 @@ export const incrementReadmeGeneration = async (
   userId: string
 ): Promise<{ success: boolean; error: Error | null }> => {
   try {
-    const response = await fetch('/api/increment-readme-generation', {
-      method: 'POST',
+    const response = await fetch("/api/increment-readme-generation", {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({
         userId,
@@ -152,13 +160,15 @@ export const incrementReadmeGeneration = async (
 
     if (!response.ok) {
       // Log the error but don't throw
-      console.error(`Failed to increment README generation count: ${response.status}`);
+      console.error(
+        `Failed to increment README generation count: ${response.status}`
+      );
       return { success: false, error: null };
     }
 
     return { success: true, error: null };
   } catch (error) {
-    console.error('Error incrementing README generation count:', error);
+    console.error("Error incrementing README generation count:", error);
     return { success: false, error: null };
   }
 };

@@ -5,7 +5,7 @@ export interface User {
   avatar_url?: string;
   full_name?: string;
   github_username?: string;
-  subscription_tier?: 'free' | 'pro' | 'enterprise';
+  subscription_tier?: "free" | "pro";
   readme_generations_count?: number;
 }
 
@@ -27,10 +27,12 @@ export interface GitHubRepo {
 // Subscription related types
 export interface SubscriptionPlan {
   id: string;
-  name: 'Free' | 'Pro' | 'Enterprise';
-  price: number;
+  name: string;
+  price: string | number;
+  description?: string;
   features: string[];
   readme_generations_limit: number;
+  popular?: boolean;
 }
 
 // AI README generation related types

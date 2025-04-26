@@ -1,130 +1,346 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { ArrowRight, Github, Star } from "lucide-react";
+import {
+  ArrowRight,
+  Star,
+  Check,
+  Terminal,
+  RefreshCw,
+  Download,
+} from "lucide-react";
 import Link from "next/link";
+import { useState, useEffect } from "react";
 
 export default function HeroSection() {
+  const [currentStep, setCurrentStep] = useState(0);
+  const [typing, setTyping] = useState(false);
+  const [generationComplete, setGenerationComplete] = useState(false);
+
+  // Steps text content
+  const steps = [
+    { text: "Detecting repository language...", lang: "TypeScript" },
+    { text: "Analyzing project structure...", files: 42 },
+    { text: "Identifying key features...", features: 7 },
+    { text: "Generating README content...", sections: 8 },
+  ];
+
+  // Auto advance through the steps with looping
+  useEffect(() => {
+    let timer: NodeJS.Timeout | undefined;
+
+    if (currentStep < steps.length) {
+      timer = setTimeout(() => {
+        setCurrentStep((c) => c + 1);
+        setTyping(true);
+
+        // Set generation complete when reaching last step
+        if (currentStep === steps.length - 1) {
+          const completeTimer = setTimeout(() => {
+            setGenerationComplete(true);
+            setTyping(false);
+
+            // Reset after showing completion for a moment
+            const resetTimer = setTimeout(() => {
+              setCurrentStep(0);
+              setGenerationComplete(false);
+            }, 3000);
+
+            return () => clearTimeout(resetTimer);
+          }, 2000);
+
+          return () => clearTimeout(completeTimer);
+        }
+      }, 1800);
+    }
+
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
+  }, [currentStep, steps.length]);
+
+  // Reset typing animation
+  useEffect(() => {
+    if (typing) {
+      const typingTimer = setTimeout(() => {
+        setTyping(false);
+      }, 800);
+      return () => clearTimeout(typingTimer);
+    }
+  }, [typing]);
+
   return (
-    <div className="relative overflow-hidden bg-gray-950 pt-16 pb-32">
+    <div className="relative overflow-hidden bg-gray-950 pt-24 pb-24 min-h-screen flex items-center">
       {/* Background elements */}
-      <div className="absolute inset-0 bg-grid-white/[0.02] bg-[size:60px_60px]" />
-      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-gray-700 to-transparent" />
-      <div className="absolute inset-0 flex items-center justify-center">
-        <div className="h-[500px] w-[500px] rounded-full bg-blue-500/20 opacity-20 blur-3xl" />
-      </div>
-      <div className="absolute h-40 w-full bg-gradient-to-b from-gray-950 to-transparent bottom-0 z-10" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(37,99,235,0.15),transparent_50%)]" />
+      <div className="absolute inset-0 bg-grid-white/[0.02] bg-[size:50px_50px]" />
+      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/30 to-transparent" />
+      <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/20 to-transparent" />
 
-      <div className="container relative z-20 mx-auto px-4">
-        <div className="mx-auto max-w-4xl text-center">
+      <div className="container relative z-20 mx-auto px-6 lg:px-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
+          {/* Left Column - Text content */}
+          <div className="space-y-8 max-w-2xl">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4 }}
+              className="flex items-center gap-2"
+            >
+              <div className="flex items-center rounded-full border border-blue-500/30 bg-blue-500/10 px-4 py-1.5 text-sm font-medium text-white">
+                <Star className="mr-1.5 h-3.5 w-3.5 text-blue-400" />
+                <span>AI-Powered README Generation</span>
+              </div>
+            </motion.div>
+
+            <motion.h1
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: 0.1 }}
+              className="text-4xl md:text-5xl xl:text-6xl font-bold tracking-tight text-white"
+            >
+              GitHub README Generator
+            </motion.h1>
+
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: 0.2 }}
+              className="text-lg text-gray-300 leading-relaxed"
+            >
+              Create impressive GitHub README files in seconds with our
+              AI-powered generator. Highlight your projects effectively and make
+              your repositories shine.
+            </motion.p>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: 0.3 }}
+            >
+              <Link
+                href="#generate"
+                className="group inline-flex items-center justify-center rounded-full bg-blue-600 hover:bg-blue-500 px-8 py-3 text-base font-semibold text-white shadow-lg shadow-blue-500/20 transition-all duration-200"
+              >
+                Generate README
+                <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
+              </Link>
+            </motion.div>
+          </div>
+
+          {/* Right Column - Code editor mockup */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="flex items-center justify-center gap-2 mb-6"
-          >
-            <div className="flex items-center rounded-full border border-gray-800 bg-gray-900 px-3 py-1 text-sm font-medium text-gray-300">
-              <Star className="mr-1 h-3.5 w-3.5 text-yellow-500" />
-              <span>AI-Powered README Generation</span>
-            </div>
-          </motion.div>
-
-          <motion.h1
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.1 }}
-            className="mb-6 bg-gradient-to-br from-white to-gray-400 bg-clip-text text-5xl font-bold tracking-tight text-transparent sm:text-6xl"
-          >
-            GitHub README Generator
-          </motion.h1>
-
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.5, delay: 0.2 }}
-            className="mx-auto mb-10 max-w-xl text-lg text-gray-400"
+            className="relative w-full"
           >
-            Create impressive GitHub README files in seconds with our AI-powered
-            generator. Highlight your projects effectively and make your
-            repositories shine.
-          </motion.p>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.3 }}
-            className="flex flex-col sm:flex-row items-center justify-center gap-4"
-          >
-            <Link
-              href="#generate"
-              className="group inline-flex items-center justify-center rounded-lg bg-gradient-to-br from-blue-600 to-indigo-600 px-6 py-3.5 text-base font-medium text-white shadow-lg transition-all duration-300 hover:from-blue-700 hover:to-indigo-700 hover:shadow-blue-500/25 transform hover:-translate-y-1"
-            >
-              Generate README
-              <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
-            </Link>
-            <Link
-              href="https://github.com/yourusername/github-readme-generator"
-              className="inline-flex items-center justify-center rounded-lg border border-gray-700 bg-gray-900 px-6 py-3.5 text-base font-medium text-white transition-all duration-300 hover:bg-gray-800 transform hover:-translate-y-1"
-            >
-              <Github className="mr-2 h-5 w-5" />
-              View on GitHub
-            </Link>
-          </motion.div>
-        </div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 40 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.5 }}
-          className="relative mx-auto mt-16 max-w-5xl"
-        >
-          <div className="relative">
             {/* Code editor mockup */}
-            <div className="overflow-hidden rounded-xl border border-gray-800 bg-gray-900 shadow-2xl">
-              <div className="flex items-center justify-between border-b border-gray-800 bg-gray-950 px-4 py-3">
+            <div className="overflow-hidden rounded-xl border border-gray-800/50 bg-gray-900/80 backdrop-blur-sm shadow-2xl">
+              <div className="flex items-center justify-between border-b border-gray-800 bg-gray-950 px-5 py-3">
                 <div className="flex items-center gap-1.5">
                   <div className="h-3 w-3 rounded-full bg-red-500"></div>
                   <div className="h-3 w-3 rounded-full bg-yellow-500"></div>
                   <div className="h-3 w-3 rounded-full bg-green-500"></div>
                 </div>
-                <div className="text-xs text-gray-500">
-                  github-readme-generator
+                <div className="flex items-center gap-2 bg-blue-500/10 px-3 py-1 rounded-md">
+                  <Terminal className="h-3.5 w-3.5 text-blue-400" />
+                  <span className="text-xs font-medium text-blue-300">
+                    README Generator
+                  </span>
                 </div>
                 <div className="w-16"></div>
               </div>
-              <div className="grid grid-cols-12 divide-x divide-gray-800">
-                <div className="col-span-3 bg-gray-950 p-4">
-                  <div className="flex flex-col gap-2">
-                    <div className="h-6 w-3/4 rounded bg-gray-800"></div>
-                    <div className="h-6 w-2/3 rounded bg-gray-800"></div>
-                    <div className="h-6 w-5/6 rounded bg-blue-900/30"></div>
-                    <div className="h-6 w-4/5 rounded bg-gray-800"></div>
-                  </div>
-                </div>
-                <div className="col-span-9 p-6 text-gray-300">
-                  <div className="flex flex-col gap-4">
-                    <div className="h-8 w-3/4 rounded bg-gradient-to-r from-blue-500/20 to-indigo-500/20 animate-pulse"></div>
-                    <div className="h-4 w-full rounded bg-gray-800"></div>
-                    <div className="h-4 w-11/12 rounded bg-gray-800"></div>
-                    <div className="h-4 w-3/4 rounded bg-gray-800"></div>
-                    <div className="mt-4 h-24 w-full rounded bg-gray-800/50 border border-gray-700"></div>
-                    <div className="flex justify-end">
-                      <div className="h-10 w-32 rounded bg-blue-600"></div>
+
+              <div className="p-6 text-gray-300 h-[380px] flex flex-col">
+                <div className="flex-1 flex flex-col">
+                  {/* Terminal window with animated typing */}
+                  <div className="bg-gray-950 border border-gray-800 rounded-lg p-5 font-mono text-sm flex-1">
+                    <div className="flex items-center mb-4">
+                      <div className="w-5 h-5 rounded bg-blue-500/20 flex items-center justify-center mr-2">
+                        <Terminal className="h-3 w-3 text-blue-400" />
+                      </div>
+                      <div className="text-xs text-gray-400">
+                        AI README Generator
+                      </div>
+                    </div>
+
+                    <div className="space-y-3">
+                      {steps.slice(0, currentStep + 1).map((step, index) => (
+                        <div
+                          key={index}
+                          className={`flex flex-col space-y-1 ${
+                            index === currentStep && typing
+                              ? "opacity-80"
+                              : "opacity-100"
+                          }`}
+                        >
+                          <div className="flex items-center">
+                            <span className="text-blue-500 mr-2">→</span>
+                            <span
+                              className={`${
+                                index === currentStep && !generationComplete
+                                  ? "text-green-400"
+                                  : "text-blue-400"
+                              }`}
+                            >
+                              {step.text}
+                            </span>
+
+                            {/* Show status indicator */}
+                            {index === currentStep && !generationComplete && (
+                              <span className="ml-2 inline-block">
+                                {typing ? (
+                                  <RefreshCw className="h-3.5 w-3.5 text-blue-400 animate-spin" />
+                                ) : (
+                                  <span className="inline-block w-2 h-4 bg-blue-400 animate-blink"></span>
+                                )}
+                              </span>
+                            )}
+
+                            {/* Show check mark for completed steps */}
+                            {(index < currentStep ||
+                              (index === currentStep &&
+                                generationComplete)) && (
+                              <span className="ml-2 text-green-400">
+                                <Check className="inline h-3.5 w-3.5" />
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Show result of each step */}
+                          {(index < currentStep ||
+                            (index === currentStep && !typing)) && (
+                            <div className="ml-5 pl-2 border-l border-gray-800 text-xs">
+                              {index === 0 && (
+                                <div className="text-purple-400">
+                                  Detected:{" "}
+                                  <span className="text-yellow-300 font-semibold">
+                                    {step.lang}
+                                  </span>
+                                </div>
+                              )}
+                              {index === 1 && (
+                                <div className="text-purple-400">
+                                  Found:{" "}
+                                  <span className="text-yellow-300 font-semibold">
+                                    {step.files} files
+                                  </span>{" "}
+                                  in repository
+                                </div>
+                              )}
+                              {index === 2 && (
+                                <div className="text-purple-400">
+                                  Identified:{" "}
+                                  <span className="text-yellow-300 font-semibold">
+                                    {step.features} key features
+                                  </span>
+                                </div>
+                              )}
+                              {index === 3 && generationComplete && (
+                                <div className="text-purple-400">
+                                  Created:{" "}
+                                  <span className="text-yellow-300 font-semibold">
+                                    {step.sections} sections
+                                  </span>{" "}
+                                  in README.md
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+
+                      {/* Show completion message */}
+                      {generationComplete && (
+                        <motion.div
+                          initial={{ opacity: 0, y: 5 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.3 }}
+                          className="mt-3 flex items-center text-green-400 bg-green-500/10 px-3 py-2 rounded-md"
+                        >
+                          <Check className="mr-2 h-4 w-4" />
+                          README.md generated successfully!
+                        </motion.div>
+                      )}
                     </div>
                   </div>
+                </div>
+
+                {/* Progress bar */}
+                <div className="mt-5">
+                  <div className="h-1 w-full bg-gray-800 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-blue-500 transition-all duration-500 ease-out"
+                      style={{
+                        width: `${
+                          generationComplete
+                            ? 100
+                            : (currentStep / (steps.length - 1)) * 100
+                        }%`,
+                        backgroundColor: generationComplete
+                          ? "#10B981"
+                          : "#3B82F6",
+                      }}
+                    ></div>
+                  </div>
+                </div>
+
+                <div className="flex justify-end mt-5">
+                  <button
+                    className={`px-5 py-2.5 text-sm font-semibold text-white rounded-full flex items-center gap-2 transition-all duration-200 shadow-lg ${
+                      generationComplete
+                        ? "bg-green-600 hover:bg-green-500 shadow-green-500/20"
+                        : "bg-blue-600 hover:bg-blue-500 shadow-blue-500/20"
+                    }`}
+                  >
+                    {generationComplete ? (
+                      <>
+                        Download README
+                        <Download className="h-4 w-4" />
+                      </>
+                    ) : (
+                      <>
+                        {currentStep < steps.length - 1
+                          ? "Processing..."
+                          : "Generating..."}
+                        <RefreshCw
+                          className={`h-4 w-4 ${
+                            currentStep < steps.length ? "animate-spin" : ""
+                          }`}
+                        />
+                      </>
+                    )}
+                  </button>
                 </div>
               </div>
             </div>
 
             {/* Decorative glow effect */}
-            <div className="absolute -inset-px rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 opacity-10 blur-lg"></div>
-          </div>
+            <div className="absolute -inset-0.5 rounded-xl bg-gradient-to-r from-blue-600/20 to-blue-400/20 opacity-20 blur-xl"></div>
 
-          {/* Decorative background pattern */}
-          <div className="absolute -bottom-40 -left-40 h-80 w-80 rounded-full bg-blue-600/10 blur-3xl"></div>
-          <div className="absolute -top-20 -right-40 h-80 w-80 rounded-full bg-indigo-600/10 blur-3xl"></div>
-        </motion.div>
+            {/* Blue glow orbs */}
+            <div className="absolute -right-20 -bottom-20 h-64 w-64 rounded-full bg-blue-600/20 blur-3xl"></div>
+            <div className="absolute -left-10 -top-10 h-40 w-40 rounded-full bg-blue-600/20 blur-2xl"></div>
+          </motion.div>
+        </div>
       </div>
+
+      {/* Add custom blinking animation */}
+      <style jsx global>{`
+        @keyframes blink {
+          0%,
+          100% {
+            opacity: 1;
+          }
+          50% {
+            opacity: 0;
+          }
+        }
+        .animate-blink {
+          animation: blink 1s step-end infinite;
+        }
+      `}</style>
     </div>
   );
 }

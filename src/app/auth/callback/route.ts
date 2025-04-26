@@ -6,6 +6,7 @@ export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get("code");
   const redirectTo = requestUrl.searchParams.get("redirect_to") || "/dashboard";
+  const isConnection = requestUrl.searchParams.get("connect") === "github";
   const error = requestUrl.searchParams.get("error");
   const errorCode = requestUrl.searchParams.get("error_code");
   const errorDescription = requestUrl.searchParams.get("error_description");
@@ -68,15 +69,45 @@ export async function GET(request: NextRequest) {
         );
       }
 
-      console.log(
-        "AUTH CALLBACK: Successfully exchanged code for session, redirecting to:",
-        redirectTo
-      );
-      console.log("AUTH CALLBACK: Session data:", {
+      console.log("AUTH CALLBACK: Successfully exchanged code for session", {
         userId: data?.session?.user?.id,
         hasSession: !!data?.session,
       });
 
+      // If this is a GitHub connection for an existing user (not a login)
+      if (isConnection && data?.session?.user) {
+        try {
+          // Update the user's profile to set github_connected = true
+          const userId = data.session.user.id;
+          const { error: updateError } = await supabase
+            .from("profiles")
+            .update({
+              github_connected: true,
+              auth_provider:
+                data.session.user.app_metadata?.provider || "github",
+              updated_at: new Date().toISOString(),
+            })
+            .eq("id", userId);
+
+          if (updateError) {
+            console.error(
+              "AUTH CALLBACK: Error updating profile after GitHub connection:",
+              updateError
+            );
+          } else {
+            console.log(
+              "AUTH CALLBACK: Successfully updated user profile with GitHub connection"
+            );
+          }
+        } catch (profileError) {
+          console.error(
+            "AUTH CALLBACK: Exception updating profile:",
+            profileError
+          );
+        }
+      }
+
+      // Always redirect to the dashboard after successful authentication
       return NextResponse.redirect(new URL(redirectTo, requestUrl.origin));
     } else {
       console.error("AUTH CALLBACK: No code found in callback URL");

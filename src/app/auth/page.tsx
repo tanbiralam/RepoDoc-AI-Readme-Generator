@@ -1,14 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
 import {
   signInWithEmail,
   signInWithGitHub,
   signInWithGoogle,
   signUpWithEmail,
 } from "@/services/auth";
+import { SignInCredentials } from "@/types/auth";
 import { useAuth } from "@/context/AuthContext";
+import { ArrowRight, Github, Lock, Mail, LogIn } from "lucide-react";
+import Link from "next/link";
 
 export default function AuthPage() {
   const router = useRouter();
@@ -18,28 +22,34 @@ export default function AuthPage() {
   const [password, setPassword] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
+  const [authProvider, setAuthProvider] = useState<string | null>(null);
 
-  // Redirect to dashboard if already logged in
-  if (user) {
-    router.push("/dashboard");
-  }
+  // Redirect to dashboard if already logged in - moved to useEffect
+  useEffect(() => {
+    if (user) {
+      router.replace("/dashboard");
+    }
+  }, [user, router]);
 
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setLoading(true);
+    setAuthProvider("email");
 
     try {
       if (!email || !password) {
         throw new Error("Email and password are required.");
       }
 
+      const credentials: SignInCredentials = { email, password };
+
       if (mode === "signin") {
-        const { user, error } = await signInWithEmail(email, password);
+        const { user, error } = await signInWithEmail(credentials);
         if (error) throw error;
         if (user) router.push("/dashboard");
       } else {
-        const { user, error } = await signUpWithEmail(email, password);
+        const { user, error } = await signUpWithEmail(credentials);
         if (error) throw error;
         if (user) router.push("/dashboard");
       }
@@ -51,188 +61,344 @@ export default function AuthPage() {
       );
     } finally {
       setLoading(false);
+      setAuthProvider(null);
     }
   };
 
   const handleGitHubSignIn = async () => {
     setError(null);
     setLoading(true);
+    setAuthProvider("github");
 
     try {
-      // Log the attempt
-      console.log("Attempting GitHub sign in...");
-      localStorage.setItem("github_auth_attempt", new Date().toISOString());
-
-      // Request minimal scopes to start - we can request more later if needed
-      const { error } = await signInWithGitHub(["read:user", "user:email"]);
+      const { error } = await signInWithGitHub();
 
       if (error) {
-        console.error("GitHub auth error:", error);
         throw error;
       }
 
-      // If we get here without a redirect, something went wrong
-      console.log("GitHub auth did not redirect as expected");
+      // The page will redirect to GitHub, so we won't get here on success
     } catch (err) {
-      console.error("GitHub auth exception:", err);
       setError(
         err instanceof Error
           ? err.message
           : "GitHub authentication failed. Please try again."
       );
-    } finally {
       setLoading(false);
+      setAuthProvider(null);
     }
   };
 
   const handleGoogleSignIn = async () => {
     setError(null);
+    setLoading(true);
+    setAuthProvider("google");
+
     try {
       const { error } = await signInWithGoogle();
       if (error) throw error;
+
+      // The page will redirect to Google, so we won't get here on success
     } catch (err) {
       setError(
         err instanceof Error
           ? err.message
           : "Google authentication failed. Please try again."
       );
+      setLoading(false);
+      setAuthProvider(null);
     }
   };
 
+  // Show loading state or prevent rendering if user is already logged in
+  if (user) {
+    return null;
+  }
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50">
-      <div className="w-full max-w-md rounded-lg bg-white p-8 shadow-md">
-        <div className="mb-6 text-center">
-          <h1 className="text-2xl font-bold">GitHub README Generator</h1>
-          <p className="mt-2 text-gray-600">
-            {mode === "signin"
-              ? "Sign in to your account"
-              : "Create a new account"}
-          </p>
-        </div>
+    <div className="relative bg-gray-950 min-h-screen flex items-center justify-center">
+      {/* Background elements */}
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(37,99,235,0.15),transparent_50%)]" />
+      <div className="absolute inset-0 bg-grid-white/[0.02] bg-[size:50px_50px]" />
+      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/30 to-transparent" />
+      <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/20 to-transparent" />
 
-        {error && (
-          <div className="mb-4 rounded-md bg-red-50 p-3 text-sm text-red-600">
-            {error}
-          </div>
-        )}
+      {/* Decorative elements */}
+      <div className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full bg-blue-900/20 blur-3xl -z-10"></div>
+      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 rounded-full bg-indigo-900/20 blur-3xl -z-10"></div>
 
-        <form onSubmit={handleEmailAuth} className="space-y-4">
-          <div>
-            <label
-              htmlFor="email"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Email address
-            </label>
-            <input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none"
-              placeholder="you@example.com"
-              required
-            />
-          </div>
-
-          <div>
-            <label
-              htmlFor="password"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Password
-            </label>
-            <input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none"
-              placeholder={
-                mode === "signup" ? "Create a password" : "Enter your password"
-              }
-              required
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full rounded-md bg-blue-600 py-2 text-white hover:bg-blue-700 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+      <div className="relative z-10 w-full max-w-md px-6">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="bg-gradient-to-b from-gray-900 to-gray-900/80 backdrop-blur-sm rounded-2xl border border-gray-800/50 shadow-2xl p-8"
+        >
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1, duration: 0.5 }}
+            className="mb-6 text-center"
           >
-            {loading
-              ? "Processing..."
-              : mode === "signin"
-              ? "Sign In"
-              : "Sign Up"}
-          </button>
-        </form>
+            <h1 className="text-2xl font-bold text-white mb-2">
+              GitHub README Generator
+            </h1>
+            <p className="text-gray-400">
+              {mode === "signin"
+                ? "Sign in to your account"
+                : "Create a new account"}
+            </p>
+          </motion.div>
 
-        <div className="mt-6">
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-300"></div>
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="bg-white px-2 text-gray-500">
-                Or continue with
-              </span>
-            </div>
-          </div>
-
-          <div className="mt-6 grid grid-cols-2 gap-3">
-            <button
-              onClick={handleGitHubSignIn}
-              className="flex w-full items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+          {error && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="mb-6 rounded-md bg-red-500/10 border border-red-500/20 p-3 text-sm text-red-400"
             >
-              <svg
-                className="h-5 w-5 mr-2"
-                fill="currentColor"
-                viewBox="0 0 24 24"
+              {error}
+            </motion.div>
+          )}
+
+          <motion.form
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.2, duration: 0.5 }}
+            onSubmit={handleEmailAuth}
+            className="space-y-5"
+          >
+            <div>
+              <label
+                htmlFor="email"
+                className="block text-sm font-medium text-gray-300 mb-1.5"
               >
-                <path
-                  fillRule="evenodd"
-                  d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.87 8.17 6.84 9.5.5.08.66-.23.66-.5v-1.69c-2.77.6-3.36-1.34-3.36-1.34-.46-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.87 1.52 2.34 1.07 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.92 0-1.11.38-2 1.03-2.71-.1-.25-.45-1.29.1-2.64 0 0 .84-.27 2.75 1.02.79-.22 1.65-.33 2.5-.33.85 0 1.71.11 2.5.33 1.91-1.29 2.75-1.02 2.75-1.02.55 1.35.2 2.39.1 2.64.65.71 1.03 1.6 1.03 2.71 0 3.82-2.34 4.66-4.57 4.91.36.31.69.92.69 1.85V21c0 .27.16.59.67.5C19.14 20.16 22 16.42 22 12A10 10 0 0012 2z"
-                  clipRule="evenodd"
-                ></path>
-              </svg>
-              GitHub
-            </button>
+                Email address
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Mail className="h-5 w-5 text-gray-500" />
+                </div>
+                <input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="block w-full pl-10 rounded-md border-0 bg-gray-800/50 text-white shadow-sm ring-1 ring-inset ring-gray-700 focus:ring-2 focus:ring-inset focus:ring-blue-500 px-3 py-2.5"
+                  placeholder="you@example.com"
+                  required
+                />
+              </div>
+            </div>
 
-            <button
-              onClick={handleGoogleSignIn}
-              className="flex w-full items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            <div>
+              <label
+                htmlFor="password"
+                className="block text-sm font-medium text-gray-300 mb-1.5"
+              >
+                Password
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Lock className="h-5 w-5 text-gray-500" />
+                </div>
+                <input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="block w-full pl-10 rounded-md border-0 bg-gray-800/50 text-white shadow-sm ring-1 ring-inset ring-gray-700 focus:ring-2 focus:ring-inset focus:ring-blue-500 px-3 py-2.5"
+                  placeholder={
+                    mode === "signup"
+                      ? "Create a password"
+                      : "Enter your password"
+                  }
+                  required
+                />
+              </div>
+            </div>
+
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              type="submit"
+              disabled={loading && authProvider === "email"}
+              className="w-full group flex items-center justify-center rounded-md bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-2.5 text-white font-medium hover:from-blue-700 hover:to-indigo-700 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-blue-700/20 transition-all duration-200"
             >
-              <svg className="h-5 w-5 mr-2" viewBox="0 0 24 24">
-                <path
-                  d="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053H12.48z"
-                  fill="#4285F4"
-                />
-                <path
-                  d="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053H12.48z"
-                  fill="#4285F4"
-                />
-                <path d="M6.5 15.5l4.2-2.96-4.2-3.04v6z" fill="white" />
-              </svg>
-              Google
-            </button>
-          </div>
-        </div>
+              {loading && authProvider === "email" ? (
+                <span className="flex items-center">
+                  <svg
+                    className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
+                  </svg>
+                  Processing...
+                </span>
+              ) : (
+                <span className="flex items-center">
+                  {mode === "signin" ? "Sign In" : "Sign Up"}
+                  <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                </span>
+              )}
+            </motion.button>
+          </motion.form>
 
-        <div className="mt-6 text-center text-sm">
-          <span className="text-gray-600">
-            {mode === "signin"
-              ? "Don't have an account?"
-              : "Already have an account?"}
-          </span>
-          <button
-            onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
-            className="ml-1 text-blue-600 hover:underline"
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.3, duration: 0.5 }}
+            className="mt-8"
           >
-            {mode === "signin" ? "Sign up" : "Sign in"}
-          </button>
-        </div>
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-700"></div>
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-gray-900 text-gray-400">
+                  Or continue with
+                </span>
+              </div>
+            </div>
+
+            <div className="mt-6 grid grid-cols-2 gap-3">
+              <motion.button
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
+                onClick={handleGitHubSignIn}
+                disabled={loading}
+                className="w-full flex justify-center items-center gap-2 px-4 py-2.5 border border-gray-700 shadow-sm rounded-md bg-gray-800 hover:bg-gray-800/80 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 text-white text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+              >
+                {loading && authProvider === "github" ? (
+                  <svg
+                    className="animate-spin h-5 w-5 text-gray-400"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
+                  </svg>
+                ) : (
+                  <>
+                    <Github className="h-5 w-5 text-white" />
+                    <span>GitHub</span>
+                  </>
+                )}
+              </motion.button>
+
+              <motion.button
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
+                onClick={handleGoogleSignIn}
+                disabled={loading}
+                className="w-full flex justify-center items-center gap-2 px-4 py-2.5 border border-gray-700 shadow-sm rounded-md bg-gray-800 hover:bg-gray-800/80 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 text-white text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+              >
+                {loading && authProvider === "google" ? (
+                  <svg
+                    className="animate-spin h-5 w-5 text-gray-400"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
+                  </svg>
+                ) : (
+                  <>
+                    <svg className="h-5 w-5" viewBox="0 0 24 24">
+                      <g transform="matrix(1, 0, 0, 1, 27.009001, -39.238998)">
+                        <path
+                          fill="#4285F4"
+                          d="M -3.264 51.509 C -3.264 50.719 -3.334 49.969 -3.454 49.239 L -14.754 49.239 L -14.754 53.749 L -8.284 53.749 C -8.574 55.229 -9.424 56.479 -10.684 57.329 L -10.684 60.329 L -6.824 60.329 C -4.564 58.239 -3.264 55.159 -3.264 51.509 Z"
+                        />
+                        <path
+                          fill="#34A853"
+                          d="M -14.754 63.239 C -11.514 63.239 -8.804 62.159 -6.824 60.329 L -10.684 57.329 C -11.764 58.049 -13.134 58.489 -14.754 58.489 C -17.884 58.489 -20.534 56.379 -21.484 53.529 L -25.464 53.529 L -25.464 56.619 C -23.494 60.539 -19.444 63.239 -14.754 63.239 Z"
+                        />
+                        <path
+                          fill="#FBBC05"
+                          d="M -21.484 53.529 C -21.734 52.809 -21.864 52.039 -21.864 51.239 C -21.864 50.439 -21.724 49.669 -21.484 48.949 L -21.484 45.859 L -25.464 45.859 C -26.284 47.479 -26.754 49.299 -26.754 51.239 C -26.754 53.179 -26.284 54.999 -25.464 56.619 L -21.484 53.529 Z"
+                        />
+                        <path
+                          fill="#EA4335"
+                          d="M -14.754 43.989 C -12.984 43.989 -11.404 44.599 -10.154 45.789 L -6.734 42.369 C -8.804 40.429 -11.514 39.239 -14.754 39.239 C -19.444 39.239 -23.494 41.939 -25.464 45.859 L -21.484 48.949 C -20.534 46.099 -17.884 43.989 -14.754 43.989 Z"
+                        />
+                      </g>
+                    </svg>
+                    <span>Google</span>
+                  </>
+                )}
+              </motion.button>
+            </div>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.4, duration: 0.5 }}
+            className="mt-6 text-center"
+          >
+            <button
+              onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
+              className="text-indigo-400 hover:text-indigo-300 text-sm font-medium transition-colors"
+            >
+              {mode === "signin"
+                ? "Don't have an account? Sign up"
+                : "Already have an account? Sign in"}
+            </button>
+          </motion.div>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5, duration: 0.5 }}
+          className="mt-6 text-center"
+        >
+          <Link
+            href="/"
+            className="inline-flex items-center text-sm text-gray-400 hover:text-gray-300 transition-colors"
+          >
+            <LogIn className="h-4 w-4 mr-1.5" />
+            Back to homepage
+          </Link>
+        </motion.div>
       </div>
     </div>
   );

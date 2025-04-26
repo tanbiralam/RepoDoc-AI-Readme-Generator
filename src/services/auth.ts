@@ -1,36 +1,195 @@
 import supabase from "@/lib/supabaseClient";
-import { User } from "@/types";
+import {
+  AuthResponse,
+  AuthUser,
+  UserProfile,
+  SignInCredentials,
+  GitHubOAuthOptions,
+  GoogleOAuthOptions,
+} from "@/types/auth";
+
+/**
+ * Create or update a user profile in the database
+ */
+const upsertUserProfile = async (
+  user: AuthUser,
+  authProvider: "email" | "github" | "google",
+  githubConnected: boolean = false
+): Promise<UserProfile | null> => {
+  try {
+    console.log("Creating/updating user profile:", {
+      userId: user.id,
+      provider: authProvider,
+      githubConnected,
+    });
+
+    // Get user metadata with fallbacks for all fields
+    const avatar_url = user.user_metadata?.avatar_url || "";
+    const full_name =
+      user.user_metadata?.full_name ||
+      user.user_metadata?.name ||
+      user.email?.split("@")[0] ||
+      "User";
+    const email = user.email || user.user_metadata?.email || "";
+
+    // First try to update the profile directly - if it exists this will work
+    // If it doesn't exist, we'll get an error and then create it
+    try {
+      console.log("Attempting to update profile for user:", user.id);
+      const { data: updatedProfile, error } = await supabase
+        .from("profiles")
+        .update({
+          email,
+          avatar_url,
+          full_name,
+          auth_provider: authProvider,
+          github_connected: githubConnected,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", user.id)
+        .select()
+        .single();
+
+      if (!error) {
+        console.log("Successfully updated existing profile");
+        return updatedProfile as UserProfile;
+      }
+
+      // If error code is not PGRST116 (not found), it's a real error
+      if (error.code !== "PGRST116") {
+        console.error("Error updating profile:", error);
+        throw error;
+      }
+
+      // If we get here, profile doesn't exist and needs to be created
+    } catch (updateError) {
+      console.log("Profile doesn't exist yet or update error:", updateError);
+      // Continue to create profile
+    }
+
+    // Determine GitHub username if available
+    let github_username = "";
+    if (authProvider === "github") {
+      // For GitHub auth provider, we'll leave this empty for now
+      // The username could be extracted from the session data if needed
+      github_username = ""; // Left empty intentionally - can be updated by the user later
+    }
+
+    // Try to create the profile
+    console.log("Creating new profile for user:", user.id);
+
+    // First check if profile already exists to avoid duplicate key error
+    const { data: existingProfile } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    if (existingProfile) {
+      console.log("Profile already exists, trying update again");
+      const { data: updatedProfile, error } = await supabase
+        .from("profiles")
+        .update({
+          email,
+          avatar_url,
+          full_name,
+          auth_provider: authProvider,
+          github_connected: githubConnected,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", user.id)
+        .select()
+        .single();
+
+      if (error) {
+        console.error("Error updating existing profile:", error);
+        throw error;
+      }
+
+      return updatedProfile as UserProfile;
+    }
+
+    // Create new profile with fallbacks for all fields
+    const profileData = {
+      id: user.id,
+      email: email || `user-${user.id}@example.com`, // Fallback email
+      avatar_url,
+      full_name,
+      github_username,
+      subscription_tier: "free",
+      readme_generations_count: 0,
+      auth_provider: authProvider,
+      github_connected: githubConnected,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+
+    console.log("New profile data:", profileData);
+
+    const { data: newProfile, error } = await supabase
+      .from("profiles")
+      .insert(profileData)
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Error creating user profile:", error);
+      throw error;
+    }
+    return newProfile as UserProfile;
+  } catch (error) {
+    console.error("Error upserting user profile:", error);
+    return null;
+  }
+};
 
 /**
  * Sign up a new user with email and password
  */
-export const signUpWithEmail = async (
-  email: string,
-  password: string
-): Promise<{ user: User | null; error: Error | null }> => {
+export const signUpWithEmail = async ({
+  email,
+  password,
+}: SignInCredentials): Promise<AuthResponse> => {
   try {
+    console.log("Signing up with email:", email);
+
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
     });
 
-    if (error) throw error;
-
-    // Create a user profile in the profiles table
-    if (data.user) {
-      const { error: profileError } = await supabase.from("profiles").insert([
-        {
-          id: data.user.id,
-          email: data.user.email,
-          subscription_tier: "free",
-          readme_generations_count: 0,
-        },
-      ]);
-
-      if (profileError) throw profileError;
+    if (error) {
+      console.error("Supabase signup error:", error);
+      throw error;
     }
 
-    return { user: data.user as User, error: null };
+    console.log("Signup successful, user data:", {
+      userId: data.user?.id,
+      email: data.user?.email,
+      hasUser: !!data.user,
+    });
+
+    // Create/update user profile
+    if (data.user) {
+      try {
+        const profile = await upsertUserProfile(data.user, "email");
+        if (!profile) {
+          console.error("Failed to create user profile after signup");
+          throw new Error("Failed to create user profile");
+        }
+
+        return {
+          user: profile,
+          error: null,
+          requiresGithubConnection: true,
+        };
+      } catch (profileError) {
+        console.error("Error creating profile after signup:", profileError);
+        throw profileError;
+      }
+    }
+
+    throw new Error("User sign up failed - no user returned from Supabase");
   } catch (error) {
     console.error("Error signing up:", error);
     return { user: null, error: error as Error };
@@ -40,10 +199,10 @@ export const signUpWithEmail = async (
 /**
  * Sign in with email and password
  */
-export const signInWithEmail = async (
-  email: string,
-  password: string
-): Promise<{ user: User | null; error: Error | null }> => {
+export const signInWithEmail = async ({
+  email,
+  password,
+}: SignInCredentials): Promise<AuthResponse> => {
   try {
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
@@ -52,7 +211,18 @@ export const signInWithEmail = async (
 
     if (error) throw error;
 
-    return { user: data.user as User, error: null };
+    if (data.user) {
+      const profile = await upsertUserProfile(data.user, "email");
+      if (!profile) throw new Error("Failed to get user profile");
+
+      return {
+        user: profile,
+        error: null,
+        requiresGithubConnection: !profile.github_connected,
+      };
+    }
+
+    throw new Error("User sign in failed");
   } catch (error) {
     console.error("Error signing in:", error);
     return { user: null, error: error as Error };
@@ -63,91 +233,47 @@ export const signInWithEmail = async (
  * Sign in with GitHub OAuth
  */
 export const signInWithGitHub = async (
-  scopes: string[] = []
+  options: GitHubOAuthOptions = {}
 ): Promise<{ error: Error | null }> => {
-  // Create a persistent log in localStorage to track the full OAuth flow
-  const logEntry = {
-    timestamp: new Date().toISOString(),
-    event: "GitHub OAuth Initiated",
-    scopes,
-  };
-
-  // Store logs in localStorage so they persist through redirects
-  const existingLogs = JSON.parse(localStorage.getItem("authLogs") || "[]");
-  existingLogs.push(logEntry);
-  localStorage.setItem("authLogs", JSON.stringify(existingLogs));
-
-  console.log("signInWithGitHub called with scopes:", scopes);
   try {
-    // IMPORTANT: Use EXACTLY the string that's registered in GitHub OAuth app
-    // Make sure this matches exactly what's configured in GitHub OAuth app settings
-    // and ensure it's registered in your Supabase Auth settings too
-    const exactRedirectUrl = `${window.location.origin}/auth/callback`;
-    console.log("Using redirect URL:", exactRedirectUrl);
+    console.log("Starting GitHub sign-in process");
 
-    // Log this step
-    const stepLog = {
-      timestamp: new Date().toISOString(),
-      event: "Preparing OAuth Request",
-      redirectUrl: exactRedirectUrl,
-    };
-    const logs = JSON.parse(localStorage.getItem("authLogs") || "[]");
-    logs.push(stepLog);
-    localStorage.setItem("authLogs", JSON.stringify(logs));
+    // Ensure we include query parameters properly with consistent format
+    let baseRedirectUrl =
+      options.redirectTo || `${window.location.origin}/auth/callback`;
 
-    // Call the Supabase signInWithOAuth method with minimal options
+    // Add redirect_to parameter if not already included
+    if (!baseRedirectUrl.includes("redirect_to=")) {
+      baseRedirectUrl +=
+        (baseRedirectUrl.includes("?") ? "&" : "?") + "redirect_to=/dashboard";
+    }
+
+    const scopes = options.scopes || ["read:user", "user:email", "repo"];
+    console.log("GitHub auth redirect URL:", baseRedirectUrl);
+
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: "github",
       options: {
-        redirectTo: exactRedirectUrl,
-        // Include all requested scopes
-        scopes: scopes.length > 0 ? scopes.join(" ") : "repo",
-        // Don't use skipBrowserRedirect as we want the automatic redirect
+        redirectTo: baseRedirectUrl,
+        scopes: scopes.join(" "),
         skipBrowserRedirect: false,
       },
     });
 
-    // Log the result
-    const resultLog = {
-      timestamp: new Date().toISOString(),
-      event: "Supabase OAuth Response",
-      error: error ? error.message : null,
-      hasUrl: !!data?.url,
-    };
-    const updatedLogs = JSON.parse(localStorage.getItem("authLogs") || "[]");
-    updatedLogs.push(resultLog);
-    localStorage.setItem("authLogs", JSON.stringify(updatedLogs));
+    if (error) {
+      console.error("Supabase GitHub auth error:", error);
+      throw error;
+    }
 
-    console.log("GitHub OAuth result:", {
-      error: error || "No error",
-      url: data?.url,
-    });
-    if (error) throw error;
-
-    // Show the exact URL being redirected to
     if (data?.url) {
-      // Store the URL in localStorage for debugging
-      localStorage.setItem("lastAuthUrl", data.url);
-
-      console.log("IMPORTANT - GitHub redirect URL:", data.url);
-      // Redirect to GitHub's authorization URL
-      // The browser should be redirected automatically, but just in case:
+      console.log("Redirecting to GitHub auth URL");
       window.location.href = data.url;
       return { error: null };
     } else {
+      console.error("No redirect URL provided by Supabase for GitHub auth");
       throw new Error("No redirect URL provided by Supabase");
     }
   } catch (error) {
-    // Log the error
-    const errorLog = {
-      timestamp: new Date().toISOString(),
-      event: "OAuth Error",
-      error: error instanceof Error ? error.message : String(error),
-    };
-    const logs = JSON.parse(localStorage.getItem("authLogs") || "[]");
-    logs.push(errorLog);
-    localStorage.setItem("authLogs", JSON.stringify(logs));
-
     console.error("Error signing in with GitHub:", error);
     return { error: error as Error };
   }
@@ -156,18 +282,45 @@ export const signInWithGitHub = async (
 /**
  * Sign in with Google OAuth
  */
-export const signInWithGoogle = async (): Promise<{ error: Error | null }> => {
+export const signInWithGoogle = async (
+  options: GoogleOAuthOptions = {}
+): Promise<{ error: Error | null }> => {
   try {
-    const { error } = await supabase.auth.signInWithOAuth({
+    console.log("Starting Google sign-in process");
+
+    // Ensure we include query parameters properly with consistent format
+    let baseRedirectUrl =
+      options.redirectTo || `${window.location.origin}/auth/callback`;
+
+    // Add redirect_to parameter if not already included
+    if (!baseRedirectUrl.includes("redirect_to=")) {
+      baseRedirectUrl +=
+        (baseRedirectUrl.includes("?") ? "&" : "?") + "redirect_to=/dashboard";
+    }
+
+    console.log("Google auth redirect URL:", baseRedirectUrl);
+
+    const { data, error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo: baseRedirectUrl,
+        skipBrowserRedirect: false,
       },
     });
 
-    if (error) throw error;
+    if (error) {
+      console.error("Supabase Google auth error:", error);
+      throw error;
+    }
 
-    return { error: null };
+    if (data?.url) {
+      console.log("Redirecting to Google auth URL");
+      window.location.href = data.url;
+      return { error: null };
+    } else {
+      console.error("No redirect URL provided by Supabase for Google auth");
+      throw new Error("No redirect URL provided by Supabase");
+    }
   } catch (error) {
     console.error("Error signing in with Google:", error);
     return { error: error as Error };
@@ -178,10 +331,8 @@ export const signInWithGoogle = async (): Promise<{ error: Error | null }> => {
  * Sign out the current user
  */
 export const signOut = async (): Promise<{ error: Error | null }> => {
-  console.log("signOut called");
   try {
     const { error } = await supabase.auth.signOut();
-    console.log("Sign out result:", { error: error || "No error" });
     if (error) throw error;
 
     return { error: null };
@@ -193,106 +344,40 @@ export const signOut = async (): Promise<{ error: Error | null }> => {
 
 /**
  * Get the current authenticated user
- * Will return null for user when no session exists, without an error
  */
 export const getCurrentUser = async (): Promise<{
-  user: User | null;
+  user: UserProfile | null;
   error: Error | null;
 }> => {
-  console.log("getCurrentUser called");
   try {
     // First check if we have a session
-    console.log("Checking for session...");
     const { data: sessionData } = await supabase.auth.getSession();
-    console.log("Session check result:", { hasSession: !!sessionData.session });
 
     // If no session, return null without an error
     if (!sessionData.session) {
-      console.log("No session found, returning null user");
       return { user: null, error: null };
     }
 
     // If we have a session, get the user
-    console.log("Session found, getting user data...");
     const { data, error } = await supabase.auth.getUser();
-    console.log("getUser result:", {
-      user: !!data.user,
-      error: error || "No error",
-    });
     if (error) throw error;
 
-    // Get additional user profile data from the profiles table
+    // Get or create the user profile
     if (data.user) {
-      console.log("User found, fetching profile data...");
-      try {
-        // Fix the profile query to use the correct syntax
-        const { data: profileData, error: profileError } = await supabase
-          .from("profiles")
-          .select("*")
-          .eq("id", data.user.id)
-          .single();
+      const authProvider =
+        (data.user.app_metadata?.provider as "email" | "github" | "google") ||
+        "email";
+      const isGithubConnected = authProvider === "github";
 
-        if (profileError) {
-          console.log("Error fetching profile:", profileError);
+      const profile = await upsertUserProfile(
+        data.user,
+        authProvider,
+        isGithubConnected
+      );
 
-          // If profile doesn't exist, try to create it
-          if (profileError.code === "PGRST116") {
-            console.log("Profile not found, creating new profile...");
-            try {
-              const { data: newProfile, error: insertError } = await supabase
-                .from("profiles")
-                .insert({
-                  id: data.user.id,
-                  email: data.user.email,
-                  subscription_tier: "free",
-                  readme_generations_count: 0,
-                })
-                .select("*")
-                .single();
-
-              if (insertError) {
-                console.error("Error creating profile, details:", insertError);
-                // Return just the user data if we can't create a profile
-                // Don't throw here, we still want to return the user
-                return { user: data.user as User, error: null };
-              }
-
-              console.log("Profile created successfully:", newProfile);
-              return {
-                user: {
-                  ...data.user,
-                  ...newProfile,
-                } as User,
-                error: null,
-              };
-            } catch (createError) {
-              console.error("Exception during profile creation:", createError);
-              // Don't throw, return user but with a note
-              return { user: data.user as User, error: null };
-            }
-          } else if (profileError) {
-            console.error("Error fetching profile:", profileError);
-            // Return just the user data if we can't fetch a profile
-            return { user: data.user as User, error: null };
-          }
-        }
-
-        console.log("Profile data found:", !!profileData);
-        return {
-          user: {
-            ...data.user,
-            ...profileData,
-          } as User,
-          error: null,
-        };
-      } catch (profileError) {
-        console.log("Error handling profile data:", profileError);
-        // If profile doesn't exist yet but user is authenticated, return just the user data
-        return { user: data.user as User, error: null };
-      }
+      return { user: profile, error: null };
     }
 
-    console.log("No user data found despite session existing");
     return { user: null, error: null };
   } catch (error) {
     console.error("Error getting current user:", error);
@@ -301,11 +386,48 @@ export const getCurrentUser = async (): Promise<{
 };
 
 /**
- * Request GitHub access with specific scopes
- * Used when a user needs to access private repositories or perform write operations
+ * Connect the current user account with GitHub
  */
-export const requestGitHubAdditionalAccess = async (
-  scopes: string[]
+export const connectGitHub = async (
+  options: GitHubOAuthOptions = {}
 ): Promise<{ error: Error | null }> => {
-  return signInWithGitHub(scopes);
+  try {
+    // Ensure the user has a current session before trying to connect
+    const { data: sessionData } = await supabase.auth.getSession();
+    if (!sessionData.session) {
+      console.error("No active session when trying to connect GitHub");
+      return { error: new Error("You need to be logged in to connect GitHub") };
+    }
+
+    const redirectTo =
+      options.redirectTo ||
+      `${window.location.origin}/auth/callback?connect=github&redirect_to=/dashboard`;
+    const scopes = options.scopes || ["read:user", "user:email", "repo"];
+
+    console.log("Connecting GitHub with redirectTo:", redirectTo);
+
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: "github",
+      options: {
+        redirectTo,
+        scopes: scopes.join(" "),
+        skipBrowserRedirect: false,
+      },
+    });
+
+    if (error) {
+      console.error("Supabase GitHub connection error:", error);
+      throw error;
+    }
+
+    if (data?.url) {
+      window.location.href = data.url;
+      return { error: null };
+    } else {
+      throw new Error("No redirect URL provided by Supabase");
+    }
+  } catch (error) {
+    console.error("Error connecting GitHub:", error);
+    return { error: error as Error };
+  }
 };
