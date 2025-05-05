@@ -4,60 +4,55 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import {
-  signInWithEmail,
+  signUpWithEmail,
   signInWithGitHub,
   signInWithGoogle,
-  signUpWithEmail,
 } from "@/services/auth";
-import { SignInCredentials } from "@/types/auth";
 import { useAuth } from "@/context/AuthContext";
-import { ArrowRight, Github, Lock, Mail, LogIn } from "lucide-react";
+import { ArrowRight, Github, Lock, Mail, LogIn, User } from "lucide-react";
 import Link from "next/link";
 
-export default function AuthPage() {
+export default function SignUpPage() {
   const router = useRouter();
   const { user } = useAuth();
-  const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
+  const [name, setName] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [authProvider, setAuthProvider] = useState<string | null>(null);
 
-  // Redirect to dashboard if already logged in - moved to useEffect
+  // Redirect to dashboard if already logged in
   useEffect(() => {
     if (user) {
       router.replace("/dashboard");
     }
   }, [user, router]);
 
-  const handleEmailAuth = async (e: React.FormEvent) => {
+  const handleEmailSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setLoading(true);
     setAuthProvider("email");
 
     try {
-      if (!email || !password) {
-        throw new Error("Email and password are required.");
+      if (!email || !password || !name) {
+        throw new Error("All fields are required.");
       }
 
-      const credentials: SignInCredentials = { email, password };
+      const { user, error } = await signUpWithEmail({
+        email,
+        password,
+        fullName: name,
+      });
 
-      if (mode === "signin") {
-        const { user, error } = await signInWithEmail(credentials);
-        if (error) throw error;
-        if (user) router.push("/dashboard");
-      } else {
-        const { user, error } = await signUpWithEmail(credentials);
-        if (error) throw error;
-        if (user) router.push("/dashboard");
-      }
+      if (error) throw error;
+      if (user) router.push("/dashboard");
     } catch (err) {
       setError(
         err instanceof Error
           ? err.message
-          : "Authentication failed. Please try again."
+          : "Registration failed. Please try again."
       );
     } finally {
       setLoading(false);
@@ -143,11 +138,7 @@ export default function AuthPage() {
             <h1 className="text-2xl font-bold text-white mb-2">
               GitHub README Generator
             </h1>
-            <p className="text-gray-400">
-              {mode === "signin"
-                ? "Sign in to your account"
-                : "Create a new account"}
-            </p>
+            <p className="text-gray-400">Create a new account</p>
           </motion.div>
 
           {error && (
@@ -164,9 +155,28 @@ export default function AuthPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.2, duration: 0.5 }}
-            onSubmit={handleEmailAuth}
+            onSubmit={handleEmailSignUp}
             className="space-y-5"
           >
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-300">
+                Full Name
+              </label>
+              <div className="relative">
+                <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
+                  <User size={18} />
+                </span>
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required
+                  className="w-full pl-10 pr-4 py-2.5 bg-gray-800/50 border border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600 text-white placeholder-gray-500"
+                  placeholder="Your full name"
+                />
+              </div>
+            </div>
+
             <div>
               <label
                 htmlFor="email"
@@ -207,14 +217,14 @@ export default function AuthPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="block w-full pl-10 rounded-md border-0 bg-gray-800/50 text-white shadow-sm ring-1 ring-inset ring-gray-700 focus:ring-2 focus:ring-inset focus:ring-blue-500 px-3 py-2.5"
-                  placeholder={
-                    mode === "signup"
-                      ? "Create a password"
-                      : "Enter your password"
-                  }
+                  placeholder="Create a password"
                   required
+                  minLength={8}
                 />
               </div>
+              <p className="mt-1 text-xs text-gray-500">
+                Password must be at least 8 characters long
+              </p>
             </div>
 
             <motion.button
@@ -250,7 +260,7 @@ export default function AuthPage() {
                 </span>
               ) : (
                 <span className="flex items-center">
-                  {mode === "signin" ? "Sign In" : "Sign Up"}
+                  Create Account
                   <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
                 </span>
               )}
@@ -374,14 +384,13 @@ export default function AuthPage() {
             transition={{ delay: 0.4, duration: 0.5 }}
             className="mt-6 text-center"
           >
-            <button
-              onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
-              className="text-indigo-400 hover:text-indigo-300 text-sm font-medium transition-colors"
+            Already have an account?{" "}
+            <Link
+              href="/sign-in"
+              className="text-blue-400 hover:text-blue-300 focus:outline-none"
             >
-              {mode === "signin"
-                ? "Don't have an account? Sign up"
-                : "Already have an account? Sign in"}
-            </button>
+              Sign in
+            </Link>
           </motion.div>
         </motion.div>
 

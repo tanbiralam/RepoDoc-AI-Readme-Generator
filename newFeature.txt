@@ -1,0 +1,21 @@
+Separate sign-in and sign-up route. 
+
+1. Email & Password Authentication
+📝 Registration Flow:
+Users can register by providing:
+
+Name
+Email
+Password
+
+🔑 Login Flow:
+Users can log in using:
+
+Email
+Password
+Forgot Password
+
+2. OAuth Login Options
+In addition to email authentication, users can sign in with:
+Google
+GitHub

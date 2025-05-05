@@ -199,7 +199,7 @@ export default function PricingSection() {
                 </div>
 
                 <div className="mt-auto">
-                  <Link href="/auth">
+                  <Link href="/sign-in">
                     <motion.div
                       whileHover={{ scale: 1.03 }}
                       whileTap={{ scale: 0.98 }}

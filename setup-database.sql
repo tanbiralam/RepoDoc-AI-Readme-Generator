@@ -2,6 +2,11 @@
 CREATE TABLE IF NOT EXISTS public.profiles (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   email TEXT,
+  full_name TEXT,
+  avatar_url TEXT,
+  auth_provider TEXT DEFAULT 'email',
+  github_username TEXT,
+  github_connected BOOLEAN DEFAULT FALSE,
   subscription_tier TEXT DEFAULT 'free',
   readme_generations_count INTEGER DEFAULT 0,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -26,8 +31,22 @@ CREATE POLICY "Users can update their own profile"
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
-  INSERT INTO public.profiles (id, email)
-  VALUES (NEW.id, NEW.email);
+  INSERT INTO public.profiles (
+    id, 
+    email, 
+    full_name, 
+    avatar_url, 
+    auth_provider,
+    github_connected
+  )
+  VALUES (
+    NEW.id, 
+    NEW.email, 
+    COALESCE(NEW.raw_user_meta_data->>'full_name', NEW.raw_user_meta_data->>'name', ''),
+    COALESCE(NEW.raw_user_meta_data->>'avatar_url', ''),
+    COALESCE(NEW.raw_app_meta_data->>'provider', 'email'),
+    (COALESCE(NEW.raw_app_meta_data->>'provider', '') = 'github')
+  );
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
@@ -112,3 +131,18 @@ CREATE POLICY "Users can delete their own READMEs"
   ON public.readmes
   FOR DELETE
   USING (auth.uid() = user_id);
+
+-- Add missing columns if they don't exist (safe migration)
+DO $$
+BEGIN
+    BEGIN
+        ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS full_name TEXT;
+        ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS avatar_url TEXT;
+        ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS auth_provider TEXT DEFAULT 'email';
+        ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS github_username TEXT;
+        ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS github_connected BOOLEAN DEFAULT FALSE;
+    EXCEPTION
+        WHEN duplicate_column THEN
+        -- Do nothing, column already exists
+    END;
+END $$;

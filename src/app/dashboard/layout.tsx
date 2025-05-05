@@ -18,7 +18,7 @@ export default function DashboardLayout({
   // Handle authentication redirect in useEffect, not during render
   useEffect(() => {
     if (!authLoading && !user) {
-      router.push("/auth");
+      router.push("/sign-in");
     }
   }, [user, authLoading, router]);
 

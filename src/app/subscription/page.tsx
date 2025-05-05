@@ -25,7 +25,7 @@ export default function SubscriptionPage() {
   // Handle authentication redirect in useEffect
   useEffect(() => {
     if (!authLoading && !user) {
-      router.push("/auth");
+      router.push("/sign-in");
     }
   }, [user, authLoading, router]);
 

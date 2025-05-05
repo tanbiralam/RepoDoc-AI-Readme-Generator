@@ -52,7 +52,7 @@ const Navbar = () => {
 
           <div className="flex items-center gap-6 pl-3">
             <Link
-              href="/auth"
+              href="/sign-in"
               className="flex items-center gap-1 px-6 py-2.5 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-500 rounded-full transition-all duration-200 shadow-lg shadow-blue-500/20"
             >
               Sign In
@@ -125,7 +125,7 @@ const Navbar = () => {
                   className="w-full max-w-xs"
                 >
                   <Link
-                    href="/auth"
+                    href="/sign-in"
                     className="flex items-center justify-center gap-2 w-full px-8 py-3.5 text-base font-semibold text-white bg-blue-600 hover:bg-blue-500 rounded-full transition-all duration-200 shadow-lg shadow-blue-500/20"
                     onClick={() => setIsMenuOpen(false)}
                   >

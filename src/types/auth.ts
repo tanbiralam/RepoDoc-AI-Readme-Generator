@@ -39,6 +39,7 @@ export interface AuthResponse {
 export interface SignInCredentials {
   email: string;
   password: string;
+  fullName?: string;
 }
 
 export interface GitHubOAuthOptions {

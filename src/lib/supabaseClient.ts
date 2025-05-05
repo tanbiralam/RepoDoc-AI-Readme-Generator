@@ -8,9 +8,15 @@ const supabase = createClientComponentClient({
   supabaseKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
 });
 
-// Add debug logging for auth state
+// Add improved debug logging for auth state
 supabase.auth.onAuthStateChange((event, session) => {
-  console.log("[Supabase Auth Debug]", { event, hasSession: !!session });
+  console.log("[Supabase Auth Debug]", {
+    event,
+    hasSession: !!session,
+    provider: session?.user?.app_metadata?.provider,
+    userId: session?.user?.id,
+    providerToken: session?.provider_token ? "exists" : "missing",
+  });
 });
 
 export default supabase;
