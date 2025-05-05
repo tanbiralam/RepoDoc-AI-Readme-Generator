@@ -1,28 +1,21 @@
-import { useState } from "react";
 import { GitHubRepo } from "@/types";
-import { getRecentLogs } from "@/utils/logging";
 
 interface DebugLogsProps {
+  showLogs: boolean;
+  onToggleLogs: () => void;
   selectedRepo: GitHubRepo;
 }
 
-/**
- * Component for displaying debug logs related to the selected repository
- */
-export function DebugLogs({ selectedRepo }: DebugLogsProps) {
-  const [showLogs, setShowLogs] = useState<boolean>(false);
-
-  const toggleLogs = () => {
-    setShowLogs(!showLogs);
-  };
-
-  const recentLogs = getRecentLogs(selectedRepo.name);
-
+export default function DebugLogs({
+  showLogs,
+  onToggleLogs,
+  selectedRepo,
+}: DebugLogsProps) {
   return (
-    <div className="mt-5 pt-4 border-t border-gray-100">
+    <div className="mt-5 pt-4 border-t border-gray-700">
       <button
-        onClick={toggleLogs}
-        className="w-full flex items-center justify-center gap-2 py-2 px-3 text-xs text-gray-500 hover:text-indigo-600 rounded-md hover:bg-indigo-50 transition-colors"
+        onClick={onToggleLogs}
+        className="w-full flex items-center justify-center gap-2 py-2 px-3 text-xs text-gray-400 hover:text-indigo-400 rounded-md hover:bg-gray-800/60 transition-colors"
       >
         <svg
           className="w-4 h-4"
@@ -42,22 +35,27 @@ export function DebugLogs({ selectedRepo }: DebugLogsProps) {
       </button>
 
       {showLogs && (
-        <div className="mt-3 text-xs bg-gray-50 p-3 rounded-md max-h-48 overflow-y-auto">
-          {recentLogs.map((log: Record<string, unknown>, index: number) => (
-            <div
-              key={index}
-              className="mb-2 pb-2 border-b border-gray-100 last:border-0 last:mb-0 last:pb-0"
-            >
-              <div className="text-gray-400">
-                {new Date(log.timestamp as string).toLocaleTimeString()}
+        <div className="mt-3 text-xs bg-gray-800/60 p-3 rounded-md max-h-48 overflow-y-auto border border-gray-700">
+          {JSON.parse(localStorage.getItem("readme_generation_logs") || "[]")
+            .filter(
+              (log: Record<string, unknown>) =>
+                typeof log.message === "string" &&
+                log.message.includes(selectedRepo.name)
+            )
+            .slice(-5)
+            .map((log: Record<string, unknown>, index: number) => (
+              <div
+                key={index}
+                className="mb-2 pb-2 border-b border-gray-700 last:border-0 last:mb-0 last:pb-0"
+              >
+                <div className="text-gray-500">
+                  {new Date(log.timestamp as string).toLocaleTimeString()}
+                </div>
+                <div className="text-gray-300">{log.message as string}</div>
               </div>
-              <div className="text-gray-700">{log.message as string}</div>
-            </div>
-          ))}
+            ))}
         </div>
       )}
     </div>
   );
 }
-
-export default DebugLogs;

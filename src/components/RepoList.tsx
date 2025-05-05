@@ -6,21 +6,21 @@ import { fetchUserRepos } from "@/services/github";
 interface RepoListProps {
   onRepoSelect: (repo: GitHubRepo) => void;
   selectedRepo?: GitHubRepo | null;
-  onGenerateReadme?: () => Promise<void>;
-  isGenerating?: boolean;
 }
 
 export default function RepoList({
   onRepoSelect,
   selectedRepo,
-  onGenerateReadme,
-  isGenerating = false,
 }: RepoListProps) {
   const { githubToken } = useAuth();
   const [repos, setRepos] = useState<GitHubRepo[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState<string>("");
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const itemsPerPage = 5; // Number of repos per page
 
   useEffect(() => {
     // If user is authenticated with GitHub token, fetch their repos
@@ -50,32 +50,49 @@ export default function RepoList({
     }
   };
 
-  // Handle generate readme button click
-  const handleGenerateReadmeClick = (repo: GitHubRepo) => {
-    // First select the repo if not already selected
-    if (!selectedRepo || selectedRepo.id !== repo.id) {
-      onRepoSelect(repo);
-    }
-
-    // Then call the generate function if provided
-    if (onGenerateReadme) {
-      onGenerateReadme();
-    }
-  };
-
   // Filter repos based on search term
   const filteredRepos = repos.filter(
     (repo) =>
       repo.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      repo.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       repo.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       repo.language?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // Get current page repos
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentRepos = filteredRepos.slice(indexOfFirstItem, indexOfLastItem);
+
+  // Calculate total pages
+  const totalPages = Math.ceil(filteredRepos.length / itemsPerPage);
+
+  // Change page
+  const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
+
+  // Next and previous page handlers
+  const goToNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  const goToPrevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  // Reset to first page when search term changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
+
   // If no GitHub token, show message to connect GitHub
   if (!githubToken) {
     return (
-      <div className="p-4 text-center bg-gray-50 rounded-lg border border-gray-100">
-        <p className="text-sm text-gray-600">
+      <div className="p-4 text-center bg-gray-800 rounded-lg border border-gray-700">
+        <p className="text-sm text-gray-300">
           Connect your GitHub account to see your repositories.
         </p>
         <button
@@ -84,7 +101,7 @@ export default function RepoList({
               connectGitHub()
             );
           }}
-          className="mt-4 text-sm text-white bg-indigo-600 hover:bg-indigo-700 px-3 py-2 rounded-md font-medium transition-colors"
+          className="mt-4 text-sm text-white bg-indigo-600 hover:bg-indigo-700 px-3 py-2 rounded-md font-medium transition-colors shadow-md shadow-indigo-500/20"
         >
           Connect GitHub
         </button>
@@ -98,12 +115,12 @@ export default function RepoList({
         <input
           type="text"
           placeholder="Search repositories..."
-          className="w-full p-2.5 pl-10 text-black border border-gray-200 rounded-lg shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 text-sm placeholder-gray-400 transition-all duration-200"
+          className="w-full p-2.5 pl-10 text-gray-200 bg-gray-800/80 border border-gray-700 rounded-lg shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-500/30 focus:ring-opacity-50 text-sm placeholder-gray-500 transition-all duration-200"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
         <svg
-          className="absolute left-3 top-3 h-4 w-4 text-gray-400"
+          className="absolute left-3 top-3 h-4 w-4 text-gray-500"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -119,9 +136,9 @@ export default function RepoList({
       </div>
 
       {error && (
-        <div className="p-3 text-sm font-medium rounded-lg bg-red-50 text-red-700 border border-red-100 mb-4 flex items-center">
+        <div className="p-3 text-sm font-medium rounded-lg bg-red-900/30 text-red-300 border border-red-800 mb-4 flex items-center">
           <svg
-            className="h-4 w-4 text-red-500 mr-2 flex-shrink-0"
+            className="h-4 w-4 text-red-400 mr-2 flex-shrink-0"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -140,103 +157,192 @@ export default function RepoList({
 
       {loading ? (
         <div className="flex justify-center items-center py-12">
-          <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-indigo-600"></div>
+          <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-indigo-400"></div>
         </div>
       ) : (
-        <div className="rounded-lg overflow-hidden bg-white shadow-sm border border-gray-100">
+        <div className="rounded-lg overflow-hidden bg-gray-800/60 shadow-lg border border-gray-700">
           {filteredRepos.length === 0 ? (
-            <div className="p-6 text-center text-gray-500 font-medium">
+            <div className="p-6 text-center text-gray-400 font-medium">
               {repos.length === 0
                 ? "No repositories found. Please refresh or try again later."
                 : "No repositories match your search."}
             </div>
           ) : (
-            <ul className="divide-y divide-gray-100 max-h-96 overflow-y-auto">
-              {filteredRepos.map((repo) => (
-                <li
-                  key={repo.id}
-                  className={`hover:bg-gray-50 transition-colors ${
-                    selectedRepo && selectedRepo.id === repo.id
-                      ? "bg-indigo-50"
-                      : ""
-                  }`}
-                >
-                  <div className="px-4 py-4 sm:px-6">
-                    <div className="flex items-center justify-between">
-                      <div
-                        className="truncate cursor-pointer"
-                        onClick={() => onRepoSelect(repo)}
-                      >
-                        <div className="flex items-center">
-                          <svg
-                            className="h-4 w-4 text-gray-400 mr-2 flex-shrink-0"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                            xmlns="http://www.w3.org/2000/svg"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth="2"
-                              d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"
-                            ></path>
-                          </svg>
-                          <span className="font-medium text-sm text-gray-900">
-                            {repo.name}
-                          </span>
-                        </div>
-                        <p className="mt-1 text-xs text-gray-500 truncate">
-                          {repo.description || "No description"}
-                        </p>
-                      </div>
-                      <div className="flex flex-shrink-0 ml-2">
-                        {repo.language && (
-                          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-indigo-50 text-indigo-800 mr-2">
-                            {repo.language}
-                          </span>
-                        )}
-                        <button
-                          onClick={() => handleGenerateReadmeClick(repo)}
-                          disabled={isGenerating}
-                          className="inline-flex items-center justify-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            <>
+              <ul className="divide-y divide-gray-700 max-h-96 overflow-y-auto">
+                {currentRepos.map((repo) => (
+                  <li
+                    key={repo.id}
+                    className={`hover:bg-gray-700/50 transition-colors ${
+                      selectedRepo && selectedRepo.id === repo.id
+                        ? "bg-indigo-900/40 border-l-2 border-indigo-400"
+                        : ""
+                    }`}
+                  >
+                    <div className="px-4 py-4 sm:px-6">
+                      <div className="flex items-center justify-between">
+                        <div
+                          className="truncate cursor-pointer"
+                          onClick={() => onRepoSelect(repo)}
                         >
-                          {isGenerating &&
-                          selectedRepo &&
-                          selectedRepo.id === repo.id ? (
-                            <span className="flex items-center">
-                              <svg
-                                className="animate-spin -ml-1 mr-1 h-3 w-3 text-white"
-                                xmlns="http://www.w3.org/2000/svg"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                              >
-                                <circle
-                                  className="opacity-25"
-                                  cx="12"
-                                  cy="12"
-                                  r="10"
-                                  stroke="currentColor"
-                                  strokeWidth="4"
-                                ></circle>
-                                <path
-                                  className="opacity-75"
-                                  fill="currentColor"
-                                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                                ></path>
-                              </svg>
-                              Generating
+                          <div className="flex items-center">
+                            <svg
+                              className="h-4 w-4 text-indigo-400 mr-2 flex-shrink-0"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                              xmlns="http://www.w3.org/2000/svg"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="2"
+                                d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"
+                              ></path>
+                            </svg>
+                            <div>
+                              <span className="font-medium text-sm text-gray-100">
+                                {repo.name}
+                              </span>
+                              <p className="text-xs text-gray-400">
+                                {repo.full_name}
+                              </p>
+                            </div>
+                          </div>
+                          <p className="mt-1 text-xs text-gray-400 truncate">
+                            {repo.description || "No description"}
+                          </p>
+                        </div>
+                        <div className="flex flex-shrink-0 ml-2">
+                          {repo.language && (
+                            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-indigo-900/40 text-indigo-300 border border-indigo-800">
+                              {repo.language}
                             </span>
-                          ) : (
-                            "Generate README"
                           )}
-                        </button>
+                        </div>
                       </div>
                     </div>
+                  </li>
+                ))}
+              </ul>
+
+              {/* Pagination controls */}
+              {totalPages > 1 && (
+                <div className="bg-gray-800/80 border-t border-gray-700 px-4 py-3 flex items-center justify-between">
+                  <div className="flex-1 flex justify-between sm:hidden">
+                    <button
+                      onClick={goToPrevPage}
+                      disabled={currentPage === 1}
+                      className="relative inline-flex items-center px-2 py-1 border border-gray-700 text-xs font-medium rounded-md text-gray-300 bg-gray-800 hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Previous
+                    </button>
+                    <span className="text-gray-400 text-xs">
+                      Page {currentPage} of {totalPages}
+                    </span>
+                    <button
+                      onClick={goToNextPage}
+                      disabled={currentPage === totalPages}
+                      className="relative inline-flex items-center px-2 py-1 border border-gray-700 text-xs font-medium rounded-md text-gray-300 bg-gray-800 hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Next
+                    </button>
                   </div>
-                </li>
-              ))}
-            </ul>
+                  <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                    <div>
+                      <p className="text-xs text-gray-400">
+                        Showing{" "}
+                        <span className="font-medium">
+                          {indexOfFirstItem + 1}
+                        </span>{" "}
+                        to{" "}
+                        <span className="font-medium">
+                          {Math.min(indexOfLastItem, filteredRepos.length)}
+                        </span>{" "}
+                        of{" "}
+                        <span className="font-medium">
+                          {filteredRepos.length}
+                        </span>{" "}
+                        repositories
+                      </p>
+                    </div>
+                    <div>
+                      <nav
+                        className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px"
+                        aria-label="Pagination"
+                      >
+                        <button
+                          onClick={goToPrevPage}
+                          disabled={currentPage === 1}
+                          className="relative inline-flex items-center px-2 py-1 rounded-l-md border border-gray-700 bg-gray-800 text-xs font-medium text-gray-300 hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          <span className="sr-only">Previous</span>
+                          <svg
+                            className="h-4 w-4"
+                            xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 20 20"
+                            fill="currentColor"
+                            aria-hidden="true"
+                          >
+                            <path
+                              fillRule="evenodd"
+                              d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
+                              clipRule="evenodd"
+                            />
+                          </svg>
+                        </button>
+                        {/* Page numbers */}
+                        {Array.from({ length: Math.min(totalPages, 5) }).map(
+                          (_, idx) => {
+                            const pageNumber = (() => {
+                              if (totalPages <= 5) return idx + 1;
+                              if (currentPage <= 3) return idx + 1;
+                              if (currentPage >= totalPages - 2)
+                                return totalPages - 4 + idx;
+                              return currentPage - 2 + idx;
+                            })();
+
+                            return (
+                              <button
+                                key={idx}
+                                onClick={() => paginate(pageNumber)}
+                                className={`relative inline-flex items-center px-3 py-1 border text-xs font-medium ${
+                                  currentPage === pageNumber
+                                    ? "z-10 border-indigo-500 bg-indigo-900/50 text-indigo-300"
+                                    : "border-gray-700 bg-gray-800 text-gray-300 hover:bg-gray-700"
+                                }`}
+                              >
+                                {pageNumber}
+                              </button>
+                            );
+                          }
+                        )}
+                        <button
+                          onClick={goToNextPage}
+                          disabled={currentPage === totalPages}
+                          className="relative inline-flex items-center px-2 py-1 rounded-r-md border border-gray-700 bg-gray-800 text-xs font-medium text-gray-300 hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          <span className="sr-only">Next</span>
+                          <svg
+                            className="h-4 w-4"
+                            xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 20 20"
+                            fill="currentColor"
+                            aria-hidden="true"
+                          >
+                            <path
+                              fillRule="evenodd"
+                              d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+                              clipRule="evenodd"
+                            />
+                          </svg>
+                        </button>
+                      </nav>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </div>
       )}
