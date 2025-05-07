@@ -1,9 +1,9 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from 'react';
-import { SubscriptionPlan } from '@/types';
-import { getUserSubscriptionPlan, subscriptionPlans } from '@/services/stripe';
-import { useAuth } from '@/context/AuthContext';
+import { createContext, useContext, useEffect, useState } from "react";
+import { SubscriptionPlan } from "@/types";
+import { getUserSubscriptionPlan, subscriptionPlans } from "@/services/stripe";
+import { useAuth } from "@/context/AuthContext";
 
 interface SubscriptionContextType {
   plan: SubscriptionPlan;
@@ -27,12 +27,17 @@ const SubscriptionContext = createContext<SubscriptionContextType>({
 
 export const useSubscription = () => useContext(SubscriptionContext);
 
-export const SubscriptionProvider = ({ children }: { children: React.ReactNode }) => {
+export const SubscriptionProvider = ({
+  children,
+}: {
+  children: React.ReactNode;
+}) => {
   const { user } = useAuth();
   const [plan, setPlan] = useState<SubscriptionPlan>(subscriptionPlans[0]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [readmeGenerationsUsed, setReadmeGenerationsUsed] = useState<number>(0);
-  const [readmeGenerationsRemaining, setReadmeGenerationsRemaining] = useState<number>(5);
+  const [readmeGenerationsRemaining, setReadmeGenerationsRemaining] =
+    useState<number>(5);
   const [error, setError] = useState<Error | null>(null);
 
   const refreshSubscription = async () => {
@@ -46,9 +51,10 @@ export const SubscriptionProvider = ({ children }: { children: React.ReactNode }
 
     try {
       setIsLoading(true);
-      
+
       // Get user's subscription plan
-      const { plan: userPlan, error: planError } = await getUserSubscriptionPlan(user.id);
+      const { plan: userPlan, error: planError } =
+        await getUserSubscriptionPlan(user.id);
       if (planError) throw planError;
       if (userPlan) setPlan(userPlan);
 
@@ -56,11 +62,13 @@ export const SubscriptionProvider = ({ children }: { children: React.ReactNode }
       const generationsUsed = user.readme_generations_count || 0;
       setReadmeGenerationsUsed(generationsUsed);
 
-      const remaining = userPlan ? userPlan.readme_generations_limit - generationsUsed : 0;
+      const remaining = userPlan
+        ? userPlan.readme_generations_limit - generationsUsed
+        : 0;
       setReadmeGenerationsRemaining(Math.max(0, remaining));
     } catch (err) {
       setError(err as Error);
-      console.error('Error refreshing subscription:', err);
+      console.error("Error refreshing subscription:", err);
     } finally {
       setIsLoading(false);
     }
@@ -84,5 +92,9 @@ export const SubscriptionProvider = ({ children }: { children: React.ReactNode }
     canGenerateReadme,
   };
 
-  return <SubscriptionContext.Provider value={value}>{children}</SubscriptionContext.Provider>;
+  return (
+    <SubscriptionContext.Provider value={value}>
+      {children}
+    </SubscriptionContext.Provider>
+  );
 };

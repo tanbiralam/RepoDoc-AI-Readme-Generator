@@ -70,7 +70,7 @@ export default function DashboardLayout({
                 <div className="flex items-center space-x-3 pl-4 border-l border-gray-700">
                   <div className="text-right text-sm">
                     <button
-                      onClick={() => router.push("/profile")}
+                      onClick={() => router.push(`/profile/${user.id}`)}
                       className="block text-gray-300 font-medium hover:text-indigo-400 transition-colors"
                     >
                       {user.email}
@@ -85,7 +85,7 @@ export default function DashboardLayout({
                     </div>
                   </div>
                   <button
-                    onClick={() => router.push("/profile")}
+                    onClick={() => router.push(`/profile/${user.id}`)}
                     className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-full w-9 h-9 flex items-center justify-center font-medium shadow-md shadow-indigo-500/20"
                   >
                     {user.email?.charAt(0).toUpperCase()}

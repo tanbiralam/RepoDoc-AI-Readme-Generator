@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import ReactMarkdown from "react-markdown";
 import { ReadmeGenerationResult, ReadmeSection } from "@/types";
 
@@ -16,6 +16,7 @@ export default function ReadmeEditor({
   const [editMode, setEditMode] = useState<boolean>(false);
   const [content, setContent] = useState<string>(readmeContent);
   const [activeSection, setActiveSection] = useState<number | null>(null);
+  const contentContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setContent(readmeContent);
@@ -29,8 +30,32 @@ export default function ReadmeEditor({
 
   const scrollToSection = (index: number) => {
     setActiveSection(index);
-    // Could implement scroll to section functionality here
-    // For simplicity, we're just highlighting the active section for now
+
+    // Get the section title from the sections array
+    if (sections && sections[index] && contentContainerRef.current) {
+      const sectionTitle = sections[index].title;
+      const contentContainer = contentContainerRef.current;
+
+      // Find all heading elements in the preview area
+      const headingElements = contentContainer.querySelectorAll(
+        "h1, h2, h3, h4, h5, h6"
+      );
+
+      // Look for the heading element that matches the section title
+      for (let i = 0; i < headingElements.length; i++) {
+        if (headingElements[i].textContent?.trim() === sectionTitle) {
+          const headingPositionTop = (headingElements[i] as HTMLElement)
+            .offsetTop;
+
+          // Scroll the container to the heading position
+          contentContainer.scrollTo({
+            top: headingPositionTop,
+            behavior: "smooth",
+          });
+          break;
+        }
+      }
+    }
   };
 
   return (
@@ -95,7 +120,10 @@ export default function ReadmeEditor({
               ))}
             </ul>
           </div>
-          <div className="w-3/4 p-6 overflow-y-auto max-h-[500px] prose prose-indigo prose-headings:font-bold prose-headings:text-gray-900 max-w-none">
+          <div
+            ref={contentContainerRef}
+            className="w-3/4 p-6 overflow-y-auto max-h-[500px] prose prose-indigo prose-headings:font-bold prose-headings:text-gray-900 max-w-none"
+          >
             <ReactMarkdown>{content}</ReactMarkdown>
           </div>
         </div>

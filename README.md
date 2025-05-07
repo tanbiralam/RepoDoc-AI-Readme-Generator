@@ -83,6 +83,7 @@ yarn dev
 Create the following tables in your Supabase project:
 
 ### profiles
+
 - id: uuid (primary key, references auth.users.id)
 - email: text
 - created_at: timestamptz
@@ -91,12 +92,38 @@ Create the following tables in your Supabase project:
 - readme_generations_count: integer
 
 ### subscriptions
+
 - id: uuid (primary key)
 - user_id: uuid (references profiles.id)
 - plan_id: text
 - status: text
 - created_at: timestamptz
 - current_period_end: timestamptz
+
+## Stripe Webhook Setup
+
+To set up the Stripe webhook:
+
+1. Go to your [Stripe Dashboard](https://dashboard.stripe.com/webhooks)
+2. Click "Add endpoint"
+3. Enter your webhook URL (e.g., `https://yourdomain.com/api/webhook`)
+4. Select the following events to listen for:
+   - `checkout.session.completed`
+   - `customer.subscription.updated`
+   - `customer.subscription.deleted`
+   - `payment_intent.succeeded`
+5. Click "Add endpoint"
+6. Copy the Webhook Signing Secret
+7. Add the signing secret to your `.env.local` file:
+   ```
+   STRIPE_WEBHOOK_SECRET=whsec_your_webhook_secret
+   ```
+
+For local development:
+
+1. Install the [Stripe CLI](https://stripe.com/docs/stripe-cli)
+2. Run `stripe login` to authenticate
+3. Run `stripe listen --forward-to localhost:3000/api/webhook` to forward webhook events to your local server
 
 ## Contributing
 
