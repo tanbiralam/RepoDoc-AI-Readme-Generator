@@ -21,6 +21,7 @@ export default function SubscriptionPage() {
   const { user, loading: authLoading } = useAuth();
   const { plan: currentPlan } = useSubscription();
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   // Handle authentication redirect in useEffect
   useEffect(() => {
@@ -28,6 +29,22 @@ export default function SubscriptionPage() {
       router.push("/sign-in");
     }
   }, [user, authLoading, router]);
+
+  // Check for subscription cancellation success message
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const subscription = params.get("subscription");
+
+    if (subscription === "cancelled") {
+      setSuccessMessage(
+        "Your subscription has been cancelled. You will have access to Pro features until the end of your billing period."
+      );
+
+      // Clear the URL parameter
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, "", newUrl);
+    }
+  }, []);
 
   // Don't render content if not authenticated
   if (authLoading) {
@@ -109,6 +126,17 @@ export default function SubscriptionPage() {
             className="mb-8 p-4 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400"
           >
             {error}
+          </motion.div>
+        )}
+
+        {/* Success Message */}
+        {successMessage && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="mb-8 p-4 rounded-lg bg-green-500/10 border border-green-500/20 text-green-400"
+          >
+            {successMessage}
           </motion.div>
         )}
 

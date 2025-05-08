@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Check, Star, Zap, Loader2 } from "lucide-react";
+import { Check, Star, Zap, Loader2, AlertCircle } from "lucide-react";
 import { SubscriptionPlan, ANIMATION_VARIANTS } from "@/utils/constants";
 
 interface PlanCardProps {
@@ -17,6 +17,7 @@ export default function PlanCard({
   onUpgrade,
 }: PlanCardProps) {
   const [loading, setLoading] = useState(false);
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const isPro = plan.id === "pro";
   const icon =
     plan.iconType === "star" ? (
@@ -33,6 +34,35 @@ export default function PlanCard({
       await onUpgrade(plan.id);
     } catch (error) {
       console.error("Error upgrading plan:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCancelPlan = () => {
+    setShowCancelConfirm(true);
+  };
+
+  const confirmCancelPlan = async () => {
+    setLoading(true);
+    try {
+      // Call the cancel-subscription API
+      const response = await fetch("/api/cancel-subscription", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to cancel subscription");
+      }
+
+      // Reset state and redirect to dashboard
+      setShowCancelConfirm(false);
+      window.location.href = "/dashboard?subscription=cancelled";
+    } catch (error) {
+      console.error("Error cancelling plan:", error);
     } finally {
       setLoading(false);
     }
@@ -125,12 +155,26 @@ export default function PlanCard({
 
         <div className="mt-auto">
           {isCurrentPlan ? (
-            <button
-              disabled
-              className="w-full py-2.5 px-4 rounded-lg bg-gray-800/50 text-gray-400 cursor-not-allowed border border-gray-700"
+            <motion.button
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={handleCancelPlan}
+              disabled={loading || plan.id === "free"}
+              className={`w-full py-2.5 px-4 rounded-lg transition-all duration-200 flex items-center justify-center ${
+                plan.id === "free"
+                  ? "bg-gray-800/50 text-gray-400 cursor-not-allowed border border-gray-700"
+                  : "bg-gray-800 hover:bg-red-500/20 text-white hover:text-red-400 border border-gray-700 hover:border-red-500/30"
+              }`}
             >
-              Current Plan
-            </button>
+              {loading ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  <span>Processing...</span>
+                </>
+              ) : (
+                <span>{plan.id === "free" ? "Free Plan" : "Cancel Plan"}</span>
+              )}
+            </motion.button>
           ) : (
             <motion.button
               whileHover={{ scale: 1.03 }}
@@ -157,6 +201,60 @@ export default function PlanCard({
           )}
         </div>
       </div>
+
+      {/* Cancel Confirmation Modal */}
+      {showCancelConfirm && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-gray-900 border border-gray-800 rounded-xl p-6 max-w-md w-full shadow-xl"
+          >
+            <div className="flex items-center gap-3 mb-4">
+              <div className="rounded-full bg-red-500/20 p-2">
+                <AlertCircle className="h-6 w-6 text-red-400" />
+              </div>
+              <h3 className="text-xl font-semibold text-white">
+                Cancel Subscription
+              </h3>
+            </div>
+
+            <p className="text-gray-300 mb-6">
+              Are you sure you want to cancel your {plan.name} subscription?
+              You&apos;ll be downgraded to the Free plan at the end of your
+              current billing period.
+            </p>
+
+            <div className="flex gap-3 justify-end">
+              <motion.button
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => setShowCancelConfirm(false)}
+                className="px-4 py-2 rounded-lg bg-gray-800 text-white hover:bg-gray-700 border border-gray-700"
+              >
+                Keep Subscription
+              </motion.button>
+
+              <motion.button
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={confirmCancelPlan}
+                disabled={loading}
+                className="px-4 py-2 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 border border-red-500/30 flex items-center gap-2"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span>Processing...</span>
+                  </>
+                ) : (
+                  <span>Yes, Cancel</span>
+                )}
+              </motion.button>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </motion.div>
   );
 }

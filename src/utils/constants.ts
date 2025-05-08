@@ -22,6 +22,7 @@ export interface SubscriptionPlan {
   features: string[];
   popular: boolean;
   iconType: "star" | "zap";
+  readme_generations_limit: number;
 }
 
 // README generation limits for different subscription tiers
@@ -117,6 +118,7 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
     ],
     popular: false,
     iconType: "star",
+    readme_generations_limit: README_GENERATION_LIMITS.FREE,
   },
   {
     id: "pro",
@@ -132,6 +134,7 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
     ],
     popular: true,
     iconType: "zap",
+    readme_generations_limit: README_GENERATION_LIMITS.PRO,
   },
 ];
 
