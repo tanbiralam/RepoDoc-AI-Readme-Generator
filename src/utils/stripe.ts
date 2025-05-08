@@ -59,13 +59,9 @@ export const redirectToStripeCheckout = async (
   sessionId: string
 ): Promise<{ success: boolean; error: Error | null }> => {
   try {
-    const stripePublishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
-
-    if (!stripePublishableKey) {
-      throw new Error("Missing Stripe publishable key");
-    }
-
-    const stripe = window.Stripe(stripePublishableKey);
+    const stripe = window.Stripe(
+      process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || ""
+    );
 
     const { error } = await stripe.redirectToCheckout({ sessionId });
 

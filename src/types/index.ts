@@ -33,7 +33,6 @@ export interface SubscriptionPlan {
   features: string[];
   readme_generations_limit: number;
   popular?: boolean;
-  iconType?: "star" | "zap";
 }
 
 // AI README generation related types
