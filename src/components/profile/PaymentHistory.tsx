@@ -6,11 +6,14 @@ import { CheckCircle, AlertCircle, Clock } from "lucide-react";
 interface PaymentTransaction {
   id: string;
   created_at: string;
-  amount: number;
+  amount: number | string;
   currency: string;
   status: "succeeded" | "failed" | "pending";
-  payment_method: string;
-  payment_id: string;
+  payment_method?: string;
+  payment_id?: string;
+  stripe_session_id?: string;
+  stripe_payment_intent_id?: string;
+  description?: string;
   user_id: string;
 }
 
@@ -120,13 +123,25 @@ export default function PaymentHistory({ userId }: PaymentHistoryProps) {
                     {new Date(transaction.created_at).toLocaleDateString()}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                    Payment {transaction.payment_id.substring(0, 8)}...
+                    Payment{" "}
+                    {transaction.payment_id
+                      ? transaction.payment_id.substring(0, 8) + "..."
+                      : transaction.stripe_session_id
+                      ? transaction.stripe_session_id.substring(0, 8) + "..."
+                      : transaction.stripe_payment_intent_id
+                      ? transaction.stripe_payment_intent_id.substring(0, 8) +
+                        "..."
+                      : transaction.id.substring(0, 8) + "..."}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-300">
                     {new Intl.NumberFormat("en-US", {
                       style: "currency",
                       currency: transaction.currency.toUpperCase(),
-                    }).format(transaction.amount)}
+                    }).format(
+                      typeof transaction.amount === "string"
+                        ? parseFloat(transaction.amount)
+                        : transaction.amount
+                    )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm">
                     {transaction.status === "succeeded" ? (

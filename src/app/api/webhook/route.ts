@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
-import { cookies } from "next/headers";
+import { createClient } from "@supabase/supabase-js";
 import Stripe from "stripe";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
@@ -33,8 +32,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Webhook error" }, { status: 400 });
     }
 
-    // Initialize Supabase client
-    const supabase = createRouteHandlerClient({ cookies });
+    // Initialize Supabase admin client with service role to bypass RLS
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL || "",
+      process.env.SUPABASE_SERVICE_ROLE_KEY || ""
+    );
 
     // Handle specific event types
     switch (event.type) {
@@ -52,10 +54,9 @@ export async function POST(request: NextRequest) {
             user_id: userId,
             amount: paymentIntent.amount / 100, // Convert from cents to dollars
             currency: paymentIntent.currency,
-            payment_id: paymentIntent.id,
+            stripe_payment_intent_id: paymentIntent.id,
             status: "succeeded",
-            payment_method:
-              paymentIntent.payment_method_types?.[0] || "unknown",
+            description: "Payment completed",
           });
 
           if (error) {
@@ -87,22 +88,26 @@ export async function POST(request: NextRequest) {
           )
         );
 
-        if (!session.client_reference_id) {
-          console.error("No client_reference_id in session");
+        // Use metadata.userId if available, otherwise fallback to client_reference_id
+        const userId = session.metadata?.userId || session.client_reference_id;
+
+        if (!userId) {
+          console.error(
+            "No userId in metadata or client_reference_id in session"
+          );
           return NextResponse.json(
-            { error: "Invalid session" },
+            { error: "Invalid session: missing user identification" },
             { status: 400 }
           );
         }
 
-        const userId = session.client_reference_id;
         const planId = session.metadata?.planId || "pro"; // Default to 'pro' if planId is missing
 
         console.log(`Updating profile for user ${userId} with plan ${planId}`);
 
         try {
           // First check if the profile exists
-          const { error: profileError } = await supabase
+          const { data: profileData, error: profileError } = await supabase
             .from("profiles")
             .select("*")
             .eq("id", userId)
@@ -113,47 +118,87 @@ export async function POST(request: NextRequest) {
               `Error fetching profile for user ${userId}:`,
               profileError
             );
-            return NextResponse.json(
-              { error: `Profile not found: ${profileError.message}` },
-              { status: 500 }
+
+            // If profile doesn't exist, try to create one
+            if (profileError.code === "PGRST116") {
+              console.log(
+                `Profile not found for user ${userId}, creating new profile`
+              );
+
+              const { error: insertError } = await supabase
+                .from("profiles")
+                .insert({
+                  id: userId,
+                  subscription_tier: planId,
+                  stripe_customer_id: session.customer as string,
+                  stripe_subscription_id: session.subscription as string,
+                  subscription_status: "active",
+                });
+
+              if (insertError) {
+                console.error(
+                  `Error creating profile for user ${userId}:`,
+                  insertError
+                );
+                return NextResponse.json(
+                  { error: `Failed to create profile: ${insertError.message}` },
+                  { status: 500 }
+                );
+              }
+
+              console.log(`Created new profile for user ${userId}`);
+            } else {
+              return NextResponse.json(
+                { error: `Profile error: ${profileError.message}` },
+                { status: 500 }
+              );
+            }
+          } else {
+            console.log(
+              `Found existing profile for user ${userId}:`,
+              profileData
+            );
+
+            // Update user's subscription in database
+            const { error } = await supabase
+              .from("profiles")
+              .update({
+                subscription_tier: planId,
+                stripe_customer_id: session.customer as string,
+                stripe_subscription_id: session.subscription as string,
+                subscription_status: "active",
+              })
+              .eq("id", userId);
+
+            if (error) {
+              console.error("Error updating user subscription:", error);
+              return NextResponse.json(
+                { error: `Database error: ${error.message}` },
+                { status: 500 }
+              );
+            }
+
+            console.log(
+              `Successfully updated subscription for user ${userId} to ${planId}`
             );
           }
-
-          console.log(`Found profile for user ${userId}`);
-
-          // Update user's subscription in database
-          const { error } = await supabase
-            .from("profiles")
-            .update({
-              subscription_tier: planId,
-              stripe_customer_id: session.customer as string,
-              stripe_subscription_id: session.subscription as string,
-            })
-            .eq("id", userId);
-
-          if (error) {
-            console.error("Error updating user subscription:", error);
-            return NextResponse.json(
-              { error: `Database error: ${error.message}` },
-              { status: 500 }
-            );
-          }
-
-          console.log(
-            `Successfully updated subscription for user ${userId} to ${planId}`
-          );
 
           // Also record this transaction in payments table
           if (session.amount_total) {
+            console.log(
+              `Recording payment of ${session.amount_total / 100} ${
+                session.currency || "usd"
+              } for session ${session.id}`
+            );
             const { error: paymentError } = await supabase
               .from("payments")
               .insert({
                 user_id: userId,
-                amount: session.amount_total / 100,
+                amount: (session.amount_total / 100).toString(), // Match schema (amount is text)
                 currency: session.currency || "usd",
-                payment_id: session.id,
+                stripe_session_id: session.id,
                 status: "succeeded",
-                payment_method: session.payment_method_types?.[0] || "unknown",
+                description: `Subscription payment for ${planId} plan`,
               });
 
             if (paymentError) {
@@ -205,6 +250,10 @@ export async function POST(request: NextRequest) {
             planId = "pro"; // Default to pro for any active subscription
           }
         }
+
+        console.log(
+          `Updating profile for customer ${customerId} to plan ${planId}`
+        );
 
         // Update user's subscription in database
         const { error } = await supabase

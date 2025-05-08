@@ -52,7 +52,7 @@ export default function DashboardLayout({
           <div className="flex justify-between h-16">
             <div className="flex items-center">
               <h1 className="text-xl font-bold bg-gradient-to-r from-indigo-400 to-purple-400 text-transparent bg-clip-text">
-                GitHub README Generator
+                RepoDoc
               </h1>
             </div>
 
