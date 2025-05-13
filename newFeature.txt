@@ -1,21 +1,16 @@
-Separate sign-in and sign-up route. 
+fix: security vulnerabilities and improve user experience
 
-1. Email & Password Authentication
-📝 Registration Flow:
-Users can register by providing:
+- Security:
+  - Replace in-memory rate limiting with persistent Supabase storage
+  - Fix insecure fallback in error cases
+  - Fix NextJS Cookie API warnings in route handlers
 
-Name
-Email
-Password
+- User Experience:
+  - Implement React Hot Toast for notifications
+  - Add toast notifications for auth, README generation, and payments
+  - Create global error handling system
+  - Remove redundant status message UI
 
-🔑 Login Flow:
-Users can log in using:
-
-Email
-Password
-Forgot Password
-
-2. OAuth Login Options
-In addition to email authentication, users can sign in with:
-Google
-GitHub
+This commit addresses security vulnerabilities while enhancing the user
+experience with non-intrusive notifications. All changes maintain the
+existing application flow.

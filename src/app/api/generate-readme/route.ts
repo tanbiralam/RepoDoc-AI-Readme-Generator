@@ -5,6 +5,9 @@ import {
   ReadmeGenerationResult,
   ReadmeSection,
 } from "@/types";
+import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
+import { cookies } from "next/headers";
+import { rateLimit } from "@/lib/rateLimit";
 
 // Initialize API key from environment variables
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || "";
@@ -28,21 +31,40 @@ export async function POST(request: NextRequest) {
   const requestStartTime = Date.now();
   logAI("REQUEST", "Received README generation request");
 
-  // Check if API key is available
-  if (!GEMINI_API_KEY || !geminiAI) {
-    logAI("CONFIG_ERROR", "Gemini API key is missing");
-    return NextResponse.json(
-      {
-        error:
-          "Gemini API key is not configured. Please add GEMINI_API_KEY to environment variables.",
-      },
-      { status: 500 }
-    );
-  }
-
-  logAI("MODEL", "Using Gemini model for README generation");
-
   try {
+    // Apply AI-specific rate limiting
+    const rateLimitResponse = await rateLimit(request, "AI_GENERATION");
+    if (rateLimitResponse) {
+      logAI("RATE_LIMIT", "Rate limit exceeded for README generation");
+      return rateLimitResponse;
+    }
+
+    // Verify user is authenticated
+    const cookieStore = cookies();
+    const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    if (!session) {
+      logAI("AUTH_ERROR", "Unauthorized access attempt");
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Check if API key is available
+    if (!GEMINI_API_KEY || !geminiAI) {
+      logAI("CONFIG_ERROR", "Gemini API key is missing");
+      return NextResponse.json(
+        {
+          error:
+            "Gemini API key is not configured. Please add GEMINI_API_KEY to environment variables.",
+        },
+        { status: 500 }
+      );
+    }
+
+    logAI("MODEL", "Using Gemini model for README generation");
+
     // Parse request body
     let body: ReadmeGenerationRequest;
     try {

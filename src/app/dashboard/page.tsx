@@ -41,7 +41,7 @@ export default function Dashboard() {
     readmeGenerationsRemaining,
     refreshSubscription,
   } = useSubscription();
-  const { showToast } = useToast();
+  const { showToast, showSuccess, showInfo } = useToast();
 
   const [selectedRepo, setSelectedRepo] = useState<GitHubRepo | null>(null);
   const [readmeResult, setReadmeResult] =
@@ -50,10 +50,6 @@ export default function Dashboard() {
   const [generatingReadme, setGeneratingReadme] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [showLogs, setShowLogs] = useState<boolean>(false);
-  const [statusMessage, setStatusMessage] = useState<{
-    type: string;
-    text: string;
-  } | null>(null);
 
   // Check URL for GitHub connection status
   useEffect(() => {
@@ -83,24 +79,17 @@ export default function Dashboard() {
     // Handle subscription updates
     const subscription = params.get("subscription");
     if (subscription === "updated") {
-      setStatusMessage({
-        type: "success",
-        text: "Your subscription has been updated successfully!",
-      });
+      showSuccess("Your subscription has been updated successfully!");
     } else if (subscription === "cancelled") {
-      setStatusMessage({
-        type: "info",
-        text: "Your subscription has been cancelled. You will have access until the end of your billing period.",
-      });
+      showInfo(
+        "Your subscription has been cancelled. You will have access until the end of your billing period."
+      );
     }
 
     // Handle checkout status
     const checkout = params.get("checkout");
     if (checkout === "success") {
-      setStatusMessage({
-        type: "success",
-        text: "Payment successful! Your subscription has been activated.",
-      });
+      showSuccess("Payment successful! Your subscription has been activated.");
     }
 
     // Clear URL parameters
@@ -108,7 +97,7 @@ export default function Dashboard() {
       const newUrl = window.location.pathname;
       window.history.replaceState({}, "", newUrl);
     }
-  }, []);
+  }, [showSuccess, showInfo]);
 
   // Add global styles for animations
   useEffect(() => {
@@ -332,88 +321,6 @@ export default function Dashboard() {
       </main>
 
       <DashboardFooter />
-
-      {/* Status message notification */}
-      {statusMessage && (
-        <div
-          className={`fixed top-4 right-4 z-50 w-80 p-4 rounded-lg shadow-lg border transition-all transform animate-fadeIn ${
-            statusMessage.type === "success"
-              ? "bg-green-500/10 border-green-500/30 text-green-400"
-              : statusMessage.type === "error"
-              ? "bg-red-500/10 border-red-500/30 text-red-400"
-              : "bg-blue-500/10 border-blue-500/30 text-blue-400"
-          }`}
-        >
-          <div className="flex items-start gap-3">
-            <div
-              className={`mt-0.5 rounded-full p-1 ${
-                statusMessage.type === "success"
-                  ? "bg-green-500/20"
-                  : statusMessage.type === "error"
-                  ? "bg-red-500/20"
-                  : "bg-blue-500/20"
-              }`}
-            >
-              {statusMessage.type === "success" ? (
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M20 6L9 17l-5-5" />
-                </svg>
-              ) : statusMessage.type === "error" ? (
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <circle cx="12" cy="12" r="10" />
-                  <line x1="12" y1="8" x2="12" y2="12" />
-                  <line x1="12" y1="16" x2="12.01" y2="16" />
-                </svg>
-              ) : (
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <circle cx="12" cy="12" r="10" />
-                  <line x1="12" y1="16" x2="12" y2="12" />
-                  <line x1="12" y1="8" x2="12.01" y2="8" />
-                </svg>
-              )}
-            </div>
-            <div>
-              <p className="text-sm">{statusMessage.text}</p>
-              <button
-                onClick={() => setStatusMessage(null)}
-                className="text-xs mt-2 opacity-70 hover:opacity-100"
-              >
-                Dismiss
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

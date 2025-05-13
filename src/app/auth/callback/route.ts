@@ -160,7 +160,6 @@ export async function GET(request: NextRequest) {
             .from("profiles")
             .update({
               github_connected: true,
-              github_connecting: false,
               auth_provider: "github",
               updated_at: new Date().toISOString(),
             })
@@ -220,7 +219,7 @@ export async function GET(request: NextRequest) {
           // First check if we need to update the user profile
           const { data: profileData, error: selectError } = await supabase
             .from("profiles")
-            .select("github_connected, auth_provider, github_connecting")
+            .select("github_connected, auth_provider")
             .eq("id", effectiveUserId)
             .single();
 
@@ -241,7 +240,6 @@ export async function GET(request: NextRequest) {
             .from("profiles")
             .update({
               github_connected: true,
-              github_connecting: false,
               auth_provider: profileData?.auth_provider || "email", // Keep original auth provider
               updated_at: new Date().toISOString(),
             })

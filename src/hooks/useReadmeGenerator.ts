@@ -9,6 +9,8 @@ import {
 import { getPackageJson, getReadmeContent } from "@/services/github";
 import { incrementReadmeGeneration } from "@/services/stripe";
 import { logWithTime } from "@/utils/logging";
+import { toast } from "react-hot-toast";
+import { useToast } from "@/context/ToastContext";
 
 /**
  * Custom hook for handling README generation functionality
@@ -21,6 +23,8 @@ export const useReadmeGenerator = () => {
     readmeGenerationsRemaining,
     refreshSubscription,
   } = useSubscription();
+  const { showSuccess, showError, showWarning, showLoading, hideToast } =
+    useToast();
 
   const [selectedRepo, setSelectedRepo] = useState<GitHubRepo | null>(null);
   const [readmeResult, setReadmeResult] =
@@ -73,6 +77,7 @@ export const useReadmeGenerator = () => {
         remaining: readmeGenerationsRemaining,
       });
       setError(errorMessage);
+      showWarning(errorMessage);
       return;
     }
 
@@ -83,6 +88,7 @@ export const useReadmeGenerator = () => {
         repoFullName: selectedRepo.full_name,
       });
 
+      const loadingToastId = showLoading("Generating README...");
       setGeneratingReadme(true);
       setError(null);
 
@@ -148,6 +154,10 @@ export const useReadmeGenerator = () => {
           setReadmeResult(result);
           setReadmeContent(result.content);
 
+          // Hide the loading toast and show success
+          hideToast(loadingToastId);
+          showSuccess("README generated successfully!");
+
           // Increment the readme generation count
           if (user) {
             logWithTime("Incrementing README generation count");
@@ -164,6 +174,10 @@ export const useReadmeGenerator = () => {
           { error: aiError }
         );
         console.error("Error generating README with AI:", aiError);
+
+        // Hide the loading toast and show warning
+        hideToast(loadingToastId);
+        showWarning("AI generation failed. Using a basic template instead.");
 
         // Fallback to basic template if AI generation fails
         const basicResult = generateBasicReadmeTemplate(
@@ -193,6 +207,11 @@ export const useReadmeGenerator = () => {
     } catch (error) {
       logWithTime("Error in README generation process", { error });
       console.error("Error generating README:", error);
+
+      // Hide the loading toast and show error
+      hideToast(loadingToastId);
+      showError("Failed to generate README. Please try again.");
+
       setError("Failed to generate README. Please try again.");
     } finally {
       setGeneratingReadme(false);

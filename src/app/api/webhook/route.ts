@@ -1,24 +1,68 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import Stripe from "stripe";
+import crypto from "crypto";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
-  apiVersion: "2025-03-31.basil",
-});
+// Initialize Stripe with proper error handling
+const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
+if (!stripeSecretKey) {
+  console.error("STRIPE_SECRET_KEY is not configured");
+}
+
+const stripe = stripeSecretKey
+  ? new Stripe(stripeSecretKey, { apiVersion: "2025-03-31.basil" })
+  : null;
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
+// Constant-time string comparison to prevent timing attacks
+function secureCompare(a: string, b: string): boolean {
+  if (a.length !== b.length) {
+    return false;
+  }
+
+  return crypto.timingSafeEqual(Buffer.from(a, "utf8"), Buffer.from(b, "utf8"));
+}
+
+// Validate UUID format
+function isValidUUID(uuid: string): boolean {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+    uuid
+  );
+}
+
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.text();
-    const signature = request.headers.get("stripe-signature") as string;
-
-    if (!webhookSecret || !signature) {
-      console.error("Webhook secret or signature missing");
-      return NextResponse.json({ error: "Webhook error" }, { status: 400 });
+    // Verify Stripe is initialized
+    if (!stripe) {
+      console.error("Stripe client not initialized - missing API key");
+      return NextResponse.json(
+        { error: "Stripe configuration error" },
+        { status: 500 }
+      );
     }
 
-    // Verify webhook signature
+    // Verify webhook secret is configured
+    if (!webhookSecret) {
+      console.error("STRIPE_WEBHOOK_SECRET is not configured");
+      return NextResponse.json(
+        { error: "Webhook configuration error" },
+        { status: 500 }
+      );
+    }
+
+    const body = await request.text();
+    const signature = request.headers.get("stripe-signature");
+
+    if (!signature) {
+      console.error("Webhook signature missing");
+      return NextResponse.json(
+        { error: "Missing stripe-signature header" },
+        { status: 400 }
+      );
+    }
+
+    // Verify webhook signature with enhanced error handling
     let event: Stripe.Event;
     try {
       event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
@@ -29,14 +73,25 @@ export async function POST(request: NextRequest) {
           err instanceof Error ? err.message : "Unknown error"
         }`
       );
-      return NextResponse.json({ error: "Webhook error" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Invalid webhook signature" },
+        { status: 401 }
+      );
     }
 
     // Initialize Supabase admin client with service role to bypass RLS
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL || "",
-      process.env.SUPABASE_SERVICE_ROLE_KEY || ""
-    );
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+    if (!supabaseUrl || !supabaseServiceKey) {
+      console.error("Supabase configuration missing");
+      return NextResponse.json(
+        { error: "Database configuration error" },
+        { status: 500 }
+      );
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // Handle specific event types
     switch (event.type) {
@@ -47,13 +102,25 @@ export async function POST(request: NextRequest) {
         // Optional: Record the payment in your database
         if (paymentIntent.metadata?.userId) {
           const userId = paymentIntent.metadata.userId;
+
+          // Validate userId format
+          if (!isValidUUID(userId)) {
+            console.error(
+              `Invalid userId format in payment intent metadata: ${userId}`
+            );
+            return NextResponse.json(
+              { error: "Invalid user ID format" },
+              { status: 400 }
+            );
+          }
+
           console.log(`Recording payment for user: ${userId}`);
 
-          // Record the payment in your database
+          // Record the payment in your database with proper data validation
           const { error } = await supabase.from("payments").insert({
             user_id: userId,
-            amount: paymentIntent.amount / 100, // Convert from cents to dollars
-            currency: paymentIntent.currency,
+            amount: (paymentIntent.amount / 100).toString(), // Convert from cents to dollars and ensure string format
+            currency: paymentIntent.currency || "usd",
             stripe_payment_intent_id: paymentIntent.id,
             status: "succeeded",
             description: "Payment completed",
@@ -101,7 +168,19 @@ export async function POST(request: NextRequest) {
           );
         }
 
-        const planId = session.metadata?.planId || "pro"; // Default to 'pro' if planId is missing
+        // Validate userId format
+        if (!isValidUUID(userId)) {
+          console.error(`Invalid userId format in checkout session: ${userId}`);
+          return NextResponse.json(
+            { error: "Invalid user ID format" },
+            { status: 400 }
+          );
+        }
+
+        // Validate and sanitize planId
+        const validPlans = ["free", "pro", "enterprise"];
+        const rawPlanId = session.metadata?.planId || "pro"; // Default to 'pro' if planId is missing
+        const planId = validPlans.includes(rawPlanId) ? rawPlanId : "pro"; // Ensure planId is valid
 
         console.log(`Updating profile for user ${userId} with plan ${planId}`);
 

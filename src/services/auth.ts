@@ -7,6 +7,7 @@ import {
   GitHubOAuthOptions,
   GoogleOAuthOptions,
 } from "@/types/auth";
+import { toast } from "react-hot-toast";
 
 /**
  * Create or update a user profile in the database
@@ -166,6 +167,7 @@ export const signUpWithEmail = async ({
 
     if (error) {
       console.error("Supabase signup error:", error);
+      toast.error(`Sign up failed: ${error.message}`);
       throw error;
     }
 
@@ -174,6 +176,10 @@ export const signUpWithEmail = async ({
       email: data.user?.email,
       hasUser: !!data.user,
     });
+
+    toast.success(
+      "Account created successfully! Please check your email for verification."
+    );
 
     // Create/update user profile
     if (data.user) {
@@ -215,11 +221,19 @@ export const signInWithEmail = async ({
       password,
     });
 
-    if (error) throw error;
+    if (error) {
+      toast.error(`Sign in failed: ${error.message}`);
+      throw error;
+    }
 
     if (data.user) {
       const profile = await upsertUserProfile(data.user, "email");
-      if (!profile) throw new Error("Failed to get user profile");
+      if (!profile) {
+        toast.error("Failed to get user profile");
+        throw new Error("Failed to get user profile");
+      }
+
+      toast.success(`Welcome back, ${profile.full_name || "User"}!`);
 
       return {
         user: profile,
@@ -339,8 +353,12 @@ export const signInWithGoogle = async (
 export const signOut = async (): Promise<{ error: Error | null }> => {
   try {
     const { error } = await supabase.auth.signOut();
-    if (error) throw error;
+    if (error) {
+      toast.error(`Sign out failed: ${error.message}`);
+      throw error;
+    }
 
+    toast.success("You have been signed out successfully");
     return { error: null };
   } catch (error) {
     console.error("Error signing out:", error);
@@ -432,7 +450,7 @@ export const connectGitHub = async (
       const { error: updateError } = await supabase
         .from("profiles")
         .update({
-          github_connecting: true,
+          github_connected: true,
           updated_at: new Date().toISOString(),
         })
         .eq("id", userId);

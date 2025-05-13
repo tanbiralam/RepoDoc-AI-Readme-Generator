@@ -13,6 +13,18 @@ create table public.payments (
   constraint payments_user_id_fkey foreign KEY (user_id) references auth.users (id) on delete CASCADE
 ) TABLESPACE pg_default;
 
+-- Rate limiting table for persistent rate limiting
+create table public.rate_limits (
+  id uuid not null default gen_random_uuid (),
+  key text not null,
+  count integer not null default 0,
+  reset_time timestamp with time zone not null,
+  created_at timestamp with time zone null default now(),
+  updated_at timestamp with time zone null default now(),
+  constraint rate_limits_pkey primary key (id),
+  constraint rate_limits_key_unique unique (key)
+) TABLESPACE pg_default;
+
 create table public.profiles (
   id uuid not null,
   email text null,
@@ -21,7 +33,6 @@ create table public.profiles (
   auth_provider text null default 'email'::text,
   github_username text null,
   github_connected boolean null default false,
-  github_connecting boolean null default false,
   subscription_tier text null default 'free'::text,
   subscription_status text null default 'inactive'::text,
   stripe_customer_id text null,
