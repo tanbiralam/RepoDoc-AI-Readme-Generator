@@ -9,7 +9,6 @@ import {
 import { getPackageJson, getReadmeContent } from "@/services/github";
 import { incrementReadmeGeneration } from "@/services/stripe";
 import { logWithTime } from "@/utils/logging";
-import { toast } from "react-hot-toast";
 import { useToast } from "@/context/ToastContext";
 
 /**

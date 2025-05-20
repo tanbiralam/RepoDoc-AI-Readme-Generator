@@ -23,7 +23,7 @@ export default function PricingSection() {
     {
       id: "pro",
       name: "Pro",
-      price: "9.99",
+      price: "6.99",
       description: "For regular GitHub users",
       features: [
         "Generate up to 15 READMEs",

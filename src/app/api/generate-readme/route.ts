@@ -16,7 +16,7 @@ const GEMINI_API_KEY = process.env.GEMINI_API_KEY || "";
 const geminiAI = GEMINI_API_KEY ? new GoogleGenerativeAI(GEMINI_API_KEY) : null;
 
 // Create a simple server-side logging function
-const logAI = (stage: string, message: string, data?: any) => {
+const logAI = (stage: string, message: string, data?: unknown) => {
   const timestamp = new Date().toISOString();
   console.log(
     `[SERVER-AI][${timestamp}][${stage}] ${message}`,
@@ -373,6 +373,7 @@ function parseReadmeSections(content: string): ReadmeSection[] {
   // Add the last section if there is one
   if (currentSection) {
     sections.push(currentSection);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     sectionCount++;
   }
 

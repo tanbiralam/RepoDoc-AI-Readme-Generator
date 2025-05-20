@@ -10,7 +10,7 @@ if (!stripeSecretKey) {
 }
 
 const stripe = stripeSecretKey
-  ? new Stripe(stripeSecretKey, { apiVersion: "2025-03-31.basil" })
+  ? new Stripe(stripeSecretKey, { apiVersion: "2024-06-20" })
   : null;
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
@@ -310,12 +310,17 @@ export async function POST(request: NextRequest) {
         const subscription = event.data.object as Stripe.Subscription;
         const customerId = subscription.customer as string;
         console.log(
-          `Subscription updated for customer: ${customerId}, status: ${subscription.status}`
+          `Subscription updated for customer: ${customerId}, status: ${subscription.status}, cancel_at_period_end: ${subscription.cancel_at_period_end}`
         );
 
-        // Get the current plan ID based on subscription status
+        // Get the current plan ID based on subscription status and cancellation
         let planId = "free";
-        if (
+        let subscriptionStatus = subscription.status;
+
+        // If subscription is active but scheduled for cancellation
+        if (subscription.cancel_at_period_end) {
+          subscriptionStatus = "canceled";
+        } else if (
           subscription.status === "active" ||
           subscription.status === "trialing"
         ) {
@@ -324,14 +329,13 @@ export async function POST(request: NextRequest) {
           console.log(`Active subscription with price ID: ${priceId}`);
 
           // Map your Stripe price IDs to your plan IDs here
-          // This is just a placeholder implementation
           if (priceId) {
             planId = "pro"; // Default to pro for any active subscription
           }
         }
 
         console.log(
-          `Updating profile for customer ${customerId} to plan ${planId}`
+          `Updating profile for customer ${customerId} to plan ${planId} with status ${subscriptionStatus}`
         );
 
         // Update user's subscription in database
@@ -339,7 +343,7 @@ export async function POST(request: NextRequest) {
           .from("profiles")
           .update({
             subscription_tier: planId,
-            subscription_status: subscription.status,
+            subscription_status: subscriptionStatus,
           })
           .eq("stripe_customer_id", customerId);
 
@@ -351,7 +355,7 @@ export async function POST(request: NextRequest) {
           );
         } else {
           console.log(
-            `Updated subscription status for customer ${customerId} to ${planId}`
+            `Updated subscription status for customer ${customerId} to ${planId} (${subscriptionStatus})`
           );
         }
 

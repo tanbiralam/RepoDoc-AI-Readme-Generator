@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, ChevronLeft, ChevronRight, Download, Code } from "lucide-react";
+import { X, Download, Code } from "lucide-react";
 import { Template } from "@/utils/constants";
 
 interface TemplatePreviewModalProps {
