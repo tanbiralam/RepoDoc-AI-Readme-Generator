@@ -83,21 +83,20 @@ export async function POST(request: NextRequest) {
     }
 
     const currentCount = profile?.readme_generations_count || 0;
-    const subscriptionTier = profile?.subscription_tier || "free";
+    const subscriptionTier = profile?.subscription_tier || "FREE";
 
     // Check if user has reached their limit based on subscription tier
     // This is a secondary check in addition to the client-side check
     const tierLimits = {
-      free: 5,
-      pro: 1000,
-      enterprise: 10000,
+      FREE: 5,
+      PRO: Infinity,
     };
 
     const limit =
       tierLimits[subscriptionTier as keyof typeof tierLimits] ||
-      tierLimits.free;
+      tierLimits.FREE;
 
-    if (currentCount >= limit && subscriptionTier === "free") {
+    if (currentCount >= limit && subscriptionTier === "FREE") {
       return NextResponse.json(
         {
           error: "Generation limit reached",

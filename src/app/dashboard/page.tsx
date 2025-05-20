@@ -10,7 +10,6 @@ import {
 } from "@/services/readmeGenerator";
 import { getPackageJson, getReadmeContent } from "@/services/github";
 import { incrementReadmeGeneration } from "@/services/stripe";
-import { useToast } from "@/context/ToastContext";
 import {
   DashboardHeader,
   ErrorMessage,
@@ -18,6 +17,13 @@ import {
   MainContentPanel,
   DashboardFooter,
 } from "@/components/dashboard";
+import {
+  showGithubConnectedToast,
+  showGithubSignInToast,
+  showSubscriptionUpdatedToast,
+  showPaymentSuccessToast,
+  showSubscriptionCancelledToast,
+} from "@/utils/toast";
 
 // Create a utility to help log with timestamps
 const logWithTime = (message: string, data?: Record<string, unknown>) => {
@@ -41,7 +47,6 @@ export default function Dashboard() {
     readmeGenerationsRemaining,
     refreshSubscription,
   } = useSubscription();
-  const { showToast, showSuccess, showInfo } = useToast();
 
   const [selectedRepo, setSelectedRepo] = useState<GitHubRepo | null>(null);
   const [readmeResult, setReadmeResult] =
@@ -58,19 +63,19 @@ export default function Dashboard() {
     const directGitHubLogin = url.searchParams.get("direct_github_login");
 
     if (githubConnectionParam === "success") {
-      showToast("GitHub successfully connected!", "success");
+      showGithubConnectedToast();
       // Clean up URL parameters
       url.searchParams.delete("github_connection");
       window.history.replaceState({}, document.title, url.toString());
     }
 
     if (directGitHubLogin === "true") {
-      showToast("Successfully signed in with GitHub!", "success");
+      showGithubSignInToast();
       // Clean up URL parameters
       url.searchParams.delete("direct_github_login");
       window.history.replaceState({}, document.title, url.toString());
     }
-  }, [showToast]);
+  }, []);
 
   // Check URL parameters for any status messages
   useEffect(() => {
@@ -79,17 +84,15 @@ export default function Dashboard() {
     // Handle subscription updates
     const subscription = params.get("subscription");
     if (subscription === "updated") {
-      showSuccess("Your subscription has been updated successfully!");
+      showSubscriptionUpdatedToast();
     } else if (subscription === "cancelled") {
-      showInfo(
-        "Your subscription has been cancelled. You will have access until the end of your billing period."
-      );
+      showSubscriptionCancelledToast();
     }
 
     // Handle checkout status
     const checkout = params.get("checkout");
     if (checkout === "success") {
-      showSuccess("Payment successful! Your subscription has been activated.");
+      showPaymentSuccessToast();
     }
 
     // Clear URL parameters
@@ -97,7 +100,7 @@ export default function Dashboard() {
       const newUrl = window.location.pathname;
       window.history.replaceState({}, "", newUrl);
     }
-  }, [showSuccess, showInfo]);
+  }, []);
 
   // Add global styles for animations
   useEffect(() => {

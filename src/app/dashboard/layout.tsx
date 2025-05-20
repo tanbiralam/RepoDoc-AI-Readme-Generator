@@ -80,7 +80,9 @@ export default function DashboardLayout({
                         {plan.name} Plan
                       </span>
                       <span className="ml-2 text-gray-400 text-xs">
-                        {readmeGenerationsRemaining} generations left
+                        {plan.id === "pro"
+                          ? "Unlimited"
+                          : `${readmeGenerationsRemaining} generations left`}
                       </span>
                     </div>
                   </div>

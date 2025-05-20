@@ -4,6 +4,7 @@ import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
 import { SubscriptionProvider } from "@/context/SubscriptionContext";
 import { ToastProvider } from "@/context/ToastContext";
+import { Toaster } from "react-hot-toast";
 import Script from "next/script";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -26,7 +27,10 @@ export default function RootLayout({
       <body className={inter.className}>
         <AuthProvider>
           <SubscriptionProvider>
-            <ToastProvider>{children}</ToastProvider>
+            <ToastProvider>
+              {children}
+              <Toaster position="top-center" />
+            </ToastProvider>
           </SubscriptionProvider>
         </AuthProvider>
       </body>
