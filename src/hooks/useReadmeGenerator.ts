@@ -160,9 +160,15 @@ export const useReadmeGenerator = () => {
           // Increment the readme generation count
           if (user) {
             logWithTime("Incrementing README generation count");
-            await incrementReadmeGeneration(user.id);
-            refreshSubscription();
-            logWithTime("README generation count incremented");
+            const { success } = await incrementReadmeGeneration(user.id);
+            if (success) {
+              await refreshSubscription();
+              logWithTime(
+                "README generation count incremented and subscription refreshed"
+              );
+            } else {
+              console.error("Failed to increment README generation count");
+            }
           }
         } else {
           throw new Error("AI generation returned no result");
@@ -198,9 +204,17 @@ export const useReadmeGenerator = () => {
           logWithTime(
             "Incrementing README generation count for fallback generation"
           );
-          await incrementReadmeGeneration(user.id);
-          refreshSubscription();
-          logWithTime("README generation count incremented for fallback");
+          const { success } = await incrementReadmeGeneration(user.id);
+          if (success) {
+            await refreshSubscription();
+            logWithTime(
+              "README generation count incremented and subscription refreshed for fallback"
+            );
+          } else {
+            console.error(
+              "Failed to increment README generation count for fallback"
+            );
+          }
         }
       }
     } catch (error) {
