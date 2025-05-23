@@ -1,22 +1,22 @@
-import { toast } from 'react-hot-toast';
+import { toast } from "react-hot-toast";
 
 // Error types
 export enum ErrorType {
-  AUTH = 'auth',
-  API = 'api',
-  PAYMENT = 'payment',
-  RATE_LIMIT = 'rate_limit',
-  VALIDATION = 'validation',
-  NETWORK = 'network',
-  UNKNOWN = 'unknown',
+  AUTH = "auth",
+  API = "api",
+  PAYMENT = "payment",
+  RATE_LIMIT = "rate_limit",
+  VALIDATION = "validation",
+  NETWORK = "network",
+  UNKNOWN = "unknown",
 }
 
 // Error severity levels
 export enum ErrorSeverity {
-  INFO = 'info',
-  WARNING = 'warning',
-  ERROR = 'error',
-  CRITICAL = 'critical',
+  INFO = "info",
+  WARNING = "warning",
+  ERROR = "error",
+  CRITICAL = "critical",
 }
 
 // Error interface
@@ -30,11 +30,16 @@ interface AppError {
 
 // Function to log errors to console with additional context
 const logError = (error: AppError) => {
-  console.error(`[${error.type.toUpperCase()}][${error.severity.toUpperCase()}] ${error.message}`, {
-    originalError: error.originalError,
-    context: error.context,
-    timestamp: new Date().toISOString(),
-  });
+  console.error(
+    `[${error.type.toUpperCase()}][${error.severity.toUpperCase()}] ${
+      error.message
+    }`,
+    {
+      originalError: error.originalError,
+      context: error.context,
+      timestamp: new Date().toISOString(),
+    }
+  );
 };
 
 // Function to show appropriate toast based on error severity
@@ -43,33 +48,33 @@ const showErrorToast = (error: AppError) => {
     case ErrorSeverity.INFO:
       toast(error.message, {
         duration: 3000,
-        position: 'top-right',
+        position: "top-center",
         style: {
-          background: '#3B82F6',
-          color: '#fff',
+          background: "#3B82F6",
+          color: "#fff",
         },
-        icon: 'ℹ️',
+        icon: "ℹ️",
       });
       break;
     case ErrorSeverity.WARNING:
       toast(error.message, {
         duration: 4000,
-        position: 'top-right',
+        position: "top-center",
         style: {
-          background: '#F59E0B',
-          color: '#fff',
+          background: "#F59E0B",
+          color: "#fff",
         },
-        icon: '⚠️',
+        icon: "⚠️",
       });
       break;
     case ErrorSeverity.ERROR:
     case ErrorSeverity.CRITICAL:
       toast.error(error.message, {
         duration: 5000,
-        position: 'top-right',
+        position: "top-center",
         style: {
-          background: '#EF4444',
-          color: '#fff',
+          background: "#EF4444",
+          color: "#fff",
         },
       });
       break;
@@ -87,13 +92,13 @@ export const handleError = (
   showToast: boolean = true
 ): AppError => {
   // Format the error message
-  let errorMessage = 'An unexpected error occurred';
+  let errorMessage = "An unexpected error occurred";
   let originalError = error;
 
-  if (typeof error === 'string') {
+  if (typeof error === "string") {
     errorMessage = error;
   } else if (error instanceof Error) {
-    errorMessage = error.message || 'An unexpected error occurred';
+    errorMessage = error.message || "An unexpected error occurred";
     originalError = error;
   }
 
@@ -123,7 +128,13 @@ export const handleAuthError = (
   context?: Record<string, any>,
   showToast: boolean = true
 ) => {
-  return handleError(error, ErrorType.AUTH, ErrorSeverity.ERROR, context, showToast);
+  return handleError(
+    error,
+    ErrorType.AUTH,
+    ErrorSeverity.ERROR,
+    context,
+    showToast
+  );
 };
 
 export const handleApiError = (
@@ -131,7 +142,13 @@ export const handleApiError = (
   context?: Record<string, any>,
   showToast: boolean = true
 ) => {
-  return handleError(error, ErrorType.API, ErrorSeverity.ERROR, context, showToast);
+  return handleError(
+    error,
+    ErrorType.API,
+    ErrorSeverity.ERROR,
+    context,
+    showToast
+  );
 };
 
 export const handlePaymentError = (
@@ -139,7 +156,13 @@ export const handlePaymentError = (
   context?: Record<string, any>,
   showToast: boolean = true
 ) => {
-  return handleError(error, ErrorType.PAYMENT, ErrorSeverity.ERROR, context, showToast);
+  return handleError(
+    error,
+    ErrorType.PAYMENT,
+    ErrorSeverity.ERROR,
+    context,
+    showToast
+  );
 };
 
 export const handleRateLimitError = (
@@ -147,7 +170,13 @@ export const handleRateLimitError = (
   context?: Record<string, any>,
   showToast: boolean = true
 ) => {
-  return handleError(error, ErrorType.RATE_LIMIT, ErrorSeverity.WARNING, context, showToast);
+  return handleError(
+    error,
+    ErrorType.RATE_LIMIT,
+    ErrorSeverity.WARNING,
+    context,
+    showToast
+  );
 };
 
 export const handleValidationError = (
@@ -155,7 +184,13 @@ export const handleValidationError = (
   context?: Record<string, any>,
   showToast: boolean = true
 ) => {
-  return handleError(error, ErrorType.VALIDATION, ErrorSeverity.WARNING, context, showToast);
+  return handleError(
+    error,
+    ErrorType.VALIDATION,
+    ErrorSeverity.WARNING,
+    context,
+    showToast
+  );
 };
 
 export const handleNetworkError = (
@@ -163,5 +198,11 @@ export const handleNetworkError = (
   context?: Record<string, any>,
   showToast: boolean = true
 ) => {
-  return handleError(error, ErrorType.NETWORK, ErrorSeverity.ERROR, context, showToast);
+  return handleError(
+    error,
+    ErrorType.NETWORK,
+    ErrorSeverity.ERROR,
+    context,
+    showToast
+  );
 };

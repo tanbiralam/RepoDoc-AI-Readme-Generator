@@ -1,0 +1,12 @@
+Signing up with email: tanbir@gmail.com
+C:\Users\itzme\OneDrive\Desktop\Projects\readMeGenerator\src\lib\supabaseClient.ts:13 [Supabase Auth Debug] {event: 'SIGNED_IN', hasSession: true, provider: 'email', userId: '4ec06ee3-797d-48e4-8509-85be302be4d6', providerToken: 'missing'}
+C:\Users\itzme\OneDrive\Desktop\Projects\readMeGenerator\src\context\AuthContext.tsx:264 AuthProvider: Auth state changed: {event: 'SIGNED_IN', hasSession: true}
+C:\Users\itzme\OneDrive\Desktop\Projects\readMeGenerator\src\context\AuthContext.tsx:45 AuthContext: Beginning full user refresh
+C:\Users\itzme\OneDrive\Desktop\Projects\readMeGenerator\src\services\auth.ts:262 Signup successful, user data: {userId: '4ec06ee3-797d-48e4-8509-85be302be4d6', email: 'tanbir@gmail.com', hasUser: true}
+C:\Users\itzme\OneDrive\Desktop\Projects\readMeGenerator\src\services\auth.ts:117 Creating/updating user profile: {userId: '4ec06ee3-797d-48e4-8509-85be302be4d6', provider: 'email', hasGithubData: false}
+C:\Users\itzme\OneDrive\Desktop\Projects\readMeGenerator\src\context\AuthContext.tsx:68 AuthContext: Current profile data: {profileData: {…}, profileError: null}
+C:\Users\itzme\OneDrive\Desktop\Projects\readMeGenerator\src\services\auth.ts:499 getCurrentUser - derived connection status: {userId: '4ec06ee3-797d-48e4-8509-85be302be4d6', dbGithubConnected: false, provider: 'email', finalStatus: false}
+C:\Users\itzme\OneDrive\Desktop\Projects\readMeGenerator\src\services\auth.ts:117 Creating/updating user profile: {userId: '4ec06ee3-797d-48e4-8509-85be302be4d6', provider: 'email', hasGithubData: false}
+C:\Users\itzme\OneDrive\Desktop\Projects\readMeGenerator\src\context\AuthContext.tsx:98 User GitHub connection status: {userId: '4ec06ee3-797d-48e4-8509-85be302be4d6', provider: 'email', directQueryGithubConnected: false, profileGithubConnected: false, finalConnectionStatus: false, …}
+C:\Users\itzme\OneDrive\Desktop\Projects\readMeGenerator\src\context\AuthContext.tsx:203 User not logged in with GitHub and no connection
+

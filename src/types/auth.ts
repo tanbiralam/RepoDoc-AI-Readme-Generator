@@ -1,6 +1,6 @@
 // Authentication related types
 
-export type AuthProvider = "email" | "github" | "google";
+export type AuthProvider = "email" | "github";
 
 export interface UserProfile {
   id: string;
@@ -16,17 +16,32 @@ export interface UserProfile {
   updated_at: string;
 }
 
+export interface GitHubIdentity {
+  id: string;
+  user_id: string;
+  github_id: string;
+  github_username: string;
+  github_email?: string;
+  access_token: string;
+  token_expires_at: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface AuthUser {
   id: string;
   email?: string; // Email can be undefined in some auth providers
-  app_metadata?: {
-    provider?: string;
-  };
   user_metadata?: {
     avatar_url?: string;
     full_name?: string;
     name?: string;
     email?: string;
+    github_id?: string;
+    github_username?: string;
+  };
+  app_metadata: {
+    provider?: string;
+    [key: string]: any;
   };
 }
 
@@ -44,9 +59,5 @@ export interface SignInCredentials {
 
 export interface GitHubOAuthOptions {
   scopes?: string[];
-  redirectTo?: string;
-}
-
-export interface GoogleOAuthOptions {
   redirectTo?: string;
 }

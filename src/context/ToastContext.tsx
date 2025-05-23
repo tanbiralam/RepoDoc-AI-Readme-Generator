@@ -152,7 +152,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({
     >
       {children}
       <Toaster
-        position="top-right"
+        position="top-center"
         toastOptions={{
           className: "react-hot-toast",
           style: {

@@ -58,146 +58,148 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
       const userId = sessionData.session.user.id;
 
-      // Directly query the profiles table to get the most up-to-date connection status
+      // Get current profile data first
       const { data: profileData, error: profileError } = await supabase
         .from("profiles")
-        .select("github_connected, auth_provider")
+        .select("*")
         .eq("id", userId)
         .single();
 
-      console.log("AuthContext: Direct profile query result:", {
+      console.log("AuthContext: Current profile data:", {
         profileData,
         profileError,
       });
 
-      // Get full user profile
-      const { user: currentUser, error: userError } = await getCurrentUser();
+      // Get GitHub identity data if it exists
+      const { data: githubIdentity, error: githubError } = await supabase
+        .from("github_identities")
+        .select("*")
+        .eq("user_id", userId)
+        .maybeSingle();
 
-      if (userError) {
-        throw userError;
-      }
-
-      setUser(currentUser);
-
-      // Use the most accurate information for GitHub connection
-      const githubConnected =
-        profileData?.github_connected || currentUser?.github_connected || false;
-      const provider = sessionData?.session?.user?.app_metadata?.provider;
-      const hasConnection = githubConnected || provider === "github";
-
-      console.log("User GitHub connection status:", {
-        userId: currentUser?.id,
-        provider,
-        directQueryGithubConnected: profileData?.github_connected,
-        profileGithubConnected: currentUser?.github_connected,
-        finalConnectionStatus: hasConnection,
+      console.log("AuthContext: GitHub identity data:", {
+        githubIdentity,
+        githubError,
       });
 
-      // Set GitHub connection status using most accurate information
-      setHasGithubConnection(hasConnection);
+      // Get full user profile with preserved data
+      const { data: userData, error: userError } =
+        await supabase.auth.getUser();
+      if (userError) throw userError;
 
-      // Only proceed with GitHub token checks if user is signed in
-      if (currentUser) {
-        if (provider === "github" || hasConnection) {
-          // Extract GitHub token - first check provider_token, then metadata
-          const providerToken = sessionData?.session?.provider_token;
-          const metadataToken =
-            sessionData?.session?.user?.user_metadata?.github_token;
-          const token = providerToken || metadataToken;
+      // Get or create the user profile
+      if (userData.user) {
+        // Ensure we preserve the original email and auth provider if this is a GitHub connection
+        if (profileData) {
+          const preservedUser = {
+            ...profileData,
+            email: profileData.email || userData.user.email,
+            auth_provider:
+              profileData.auth_provider ||
+              userData.user.app_metadata?.provider ||
+              "email",
+          };
+          setUser(preservedUser);
+        } else {
+          // Create/update profile without GitHub data - let the callback handle GitHub data
+          const { user: currentUser, error: profileError } =
+            await getCurrentUser();
+          if (profileError) throw profileError;
+          setUser(currentUser);
+        }
 
-          console.log("GitHub token sources:", {
-            hasProviderToken: !!providerToken,
-            hasMetadataToken: !!metadataToken,
-            finalTokenAvailable: !!token,
-          });
+        // Use the most accurate information for GitHub connection
+        const githubConnected = !!(
+          githubIdentity?.access_token ||
+          (profileData?.github_connected &&
+            userData.user.app_metadata?.provider === "github")
+        );
+        setHasGithubConnection(githubConnected);
 
-          if (token) {
-            console.log("Found GitHub token, setting token");
-            setGithubToken(token);
+        console.log("User GitHub connection status:", {
+          userId: userData.user.id,
+          provider: userData.user.app_metadata?.provider,
+          hasGithubIdentity: !!githubIdentity,
+          githubConnected,
+        });
 
-            // Check if token has private repo access
-            try {
-              console.log("Testing GitHub token validity");
-              const response = await fetch("https://api.github.com/user", {
-                headers: {
-                  Authorization: `Bearer ${token}`,
-                  Accept: "application/vnd.github.v3+json",
-                },
-              });
+        // Handle GitHub token
+        if (
+          githubConnected &&
+          (githubIdentity?.access_token || sessionData.session?.provider_token)
+        ) {
+          const token =
+            githubIdentity?.access_token || sessionData.session.provider_token;
+          console.log("Found GitHub token");
 
-              if (response.ok) {
-                const userData = await response.json();
-                const hasPrivateAccess = userData.plan?.private_repos > 0;
-                console.log(
-                  "GitHub token is valid, has private access:",
-                  hasPrivateAccess
-                );
-                setHasPrivateRepoAccess(hasPrivateAccess);
-              } else {
-                console.warn(
-                  "GitHub token invalid or expired:",
-                  await response.text()
-                );
-                // Don't throw here, just set token to null
-                setGithubToken(null);
+          try {
+            console.log("Testing GitHub token validity");
+            const response = await fetch("https://api.github.com/user", {
+              headers: {
+                Authorization: `Bearer ${token}`,
+                Accept: "application/vnd.github.v3+json",
+              },
+            });
 
-                // If token is invalid but profile says GitHub is connected,
-                // we should still consider GitHub as connected but try to refresh
-                if (currentUser.github_connected) {
-                  console.log(
-                    "GitHub token invalid but profile has GitHub connection - may need to reconnect"
-                  );
+            if (response.ok) {
+              console.log("GitHub token is valid");
+              setGithubToken(token);
+              const userData = await response.json();
+              setHasPrivateRepoAccess(userData.plan?.private_repos > 0);
 
-                  // If the token in metadata is invalid, clear it to avoid future issues
-                  if (metadataToken) {
-                    try {
-                      console.log(
-                        "Clearing invalid GitHub token from metadata"
-                      );
-                      await supabase.auth.updateUser({
-                        data: {
-                          github_token: null,
-                        },
-                      });
-                    } catch (clearError) {
-                      console.error(
-                        "Error clearing invalid token:",
-                        clearError
-                      );
-                    }
-                  }
-                }
+              // Only update user metadata if the values have actually changed
+              const currentMetadata =
+                sessionData.session.user.user_metadata || {};
+              const needsUpdate =
+                currentMetadata.github_token !== token ||
+                !currentMetadata.github_connected ||
+                currentMetadata.github_username !==
+                  githubIdentity?.github_username;
+
+              if (needsUpdate) {
+                await supabase.auth.updateUser({
+                  data: {
+                    github_token: token,
+                    github_connected: true,
+                    github_username: githubIdentity?.github_username,
+                  },
+                });
               }
-            } catch (tokenError) {
-              console.error("Error checking private repo access:", tokenError);
-              // Don't throw here either, just set token to null
+            } else {
+              console.warn(
+                "GitHub token invalid or expired:",
+                await response.text()
+              );
               setGithubToken(null);
+              setHasPrivateRepoAccess(false);
+              setHasGithubConnection(false);
+
+              // Only clear metadata if it's not already cleared
+              const currentMetadata =
+                sessionData.session.user.user_metadata || {};
+              if (
+                currentMetadata.github_token ||
+                currentMetadata.github_connected
+              ) {
+                await supabase.auth.updateUser({
+                  data: {
+                    github_token: null,
+                    github_connected: false,
+                  },
+                });
+              }
             }
-          } else {
-            console.log("No GitHub token found in session");
+          } catch (tokenError) {
+            console.error("Error checking GitHub token:", tokenError);
             setGithubToken(null);
             setHasPrivateRepoAccess(false);
-
-            // If database says GitHub is connected but no token is found,
-            // log this inconsistency but respect the database state
-            if (hasConnection) {
-              console.log(
-                "GitHub connected in database but no token found - user may need to reconnect"
-              );
-            }
+            setHasGithubConnection(false);
           }
         } else {
-          // User is logged in but not with GitHub and doesn't have a connection
-          console.log("User not logged in with GitHub and no connection");
+          console.log("No GitHub connection found");
           setGithubToken(null);
           setHasPrivateRepoAccess(false);
         }
-      } else {
-        // Reset state if no user
-        console.log("No user found, resetting GitHub state");
-        setGithubToken(null);
-        setHasGithubConnection(false);
-        setHasPrivateRepoAccess(false);
       }
     } catch (refreshError) {
       console.error("Error refreshing user:", refreshError);
