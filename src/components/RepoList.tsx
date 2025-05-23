@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { GitHubRepo } from "@/types";
 import { useAuth } from "@/context/AuthContext";
 import { fetchUserRepos } from "@/services/github";
@@ -13,82 +13,81 @@ export default function RepoList({
   selectedRepo,
 }: RepoListProps) {
   const { githubToken } = useAuth();
-  const [repos, setRepos] = useState<GitHubRepo[]>([]);
+  const [currentPagedRepos, setCurrentPagedRepos] = useState<GitHubRepo[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState<string>("");
 
-  // Pagination state
   const [currentPage, setCurrentPage] = useState<number>(1);
-  const itemsPerPage = 5; // Number of repos per page
+  const itemsPerPage = 5;
+  const [hasNextPage, setHasNextPage] = useState<boolean>(false);
+
+  const loadUserRepos = useCallback(
+    async (pageToLoad: number) => {
+      if (!githubToken) {
+        setLoading(false);
+        return;
+      }
+      try {
+        setLoading(true);
+        setError(null);
+
+        const { repos: newRepos, error: fetchError } = await fetchUserRepos(
+          githubToken,
+          pageToLoad,
+          itemsPerPage
+        );
+
+        if (fetchError) throw fetchError;
+
+        setCurrentPagedRepos(newRepos);
+        setHasNextPage(newRepos.length === itemsPerPage);
+      } catch (err) {
+        setError("Failed to load repositories. Please try again.");
+        console.error("Error fetching user repos:", err);
+        setCurrentPagedRepos([]);
+        setHasNextPage(false);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [githubToken, itemsPerPage]
+  );
 
   useEffect(() => {
-    // If user is authenticated with GitHub token, fetch their repos
-    if (githubToken) {
-      loadUserRepos();
-    } else {
-      // If no GitHub token, set loading to false
-      setLoading(false);
-    }
-  }, [githubToken]);
+    loadUserRepos(currentPage);
+  }, [githubToken, currentPage, loadUserRepos]);
 
-  const loadUserRepos = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      const { repos: userRepos, error } = await fetchUserRepos(githubToken!);
-
-      if (error) throw error;
-
-      setRepos(userRepos);
-    } catch (err) {
-      setError("Failed to load repositories. Please try again.");
-      console.error("Error fetching user repos:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Filter repos based on search term
-  const filteredRepos = repos.filter(
+  const filteredRepos = currentPagedRepos.filter(
     (repo) =>
       repo.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       repo.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      repo.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      repo.language?.toLowerCase().includes(searchTerm.toLowerCase())
+      (repo.description &&
+        repo.description.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (repo.language &&
+        repo.language.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
-  // Get current page repos
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentRepos = filteredRepos.slice(indexOfFirstItem, indexOfLastItem);
+  useEffect(() => {
+    if (currentPage !== 1) {
+      setCurrentPage(1);
+    } else {
+      loadUserRepos(1);
+    }
+  }, [searchTerm]);
 
-  // Calculate total pages
-  const totalPages = Math.ceil(filteredRepos.length / itemsPerPage);
-
-  // Change page
-  const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
-
-  // Next and previous page handlers
   const goToNextPage = () => {
-    if (currentPage < totalPages) {
-      setCurrentPage(currentPage + 1);
+    if (hasNextPage) {
+      setCurrentPage((prev) => prev + 1);
     }
   };
 
   const goToPrevPage = () => {
     if (currentPage > 1) {
-      setCurrentPage(currentPage - 1);
+      setCurrentPage((prev) => prev - 1);
     }
   };
 
-  // Reset to first page when search term changes
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchTerm]);
-
-  // If no GitHub token, show message to connect GitHub
   if (!githubToken) {
     return (
       <div className="p-4 text-center bg-gray-800 rounded-lg border border-gray-700">
@@ -163,14 +162,14 @@ export default function RepoList({
         <div className="rounded-lg overflow-hidden bg-gray-800/60 shadow-lg border border-gray-700">
           {filteredRepos.length === 0 ? (
             <div className="p-6 text-center text-gray-400 font-medium">
-              {repos.length === 0
+              {currentPagedRepos.length === 0
                 ? "No repositories found. Please refresh or try again later."
                 : "No repositories match your search."}
             </div>
           ) : (
             <>
               <ul className="divide-y divide-gray-700 max-h-96 overflow-y-auto">
-                {currentRepos.map((repo) => (
+                {filteredRepos.map((repo) => (
                   <li
                     key={repo.id}
                     className={`hover:bg-gray-700/50 transition-colors ${
@@ -226,8 +225,7 @@ export default function RepoList({
                 ))}
               </ul>
 
-              {/* Pagination controls */}
-              {totalPages > 1 && (
+              {(currentPage > 1 || hasNextPage) && (
                 <div className="bg-gray-800/80 border-t border-gray-700 px-4 py-3 flex items-center justify-between">
                   <div className="flex-1 flex justify-between sm:hidden">
                     <button
@@ -238,11 +236,11 @@ export default function RepoList({
                       Previous
                     </button>
                     <span className="text-gray-400 text-xs">
-                      Page {currentPage} of {totalPages}
+                      Page {currentPage}
                     </span>
                     <button
                       onClick={goToNextPage}
-                      disabled={currentPage === totalPages}
+                      disabled={!hasNextPage}
                       className="relative inline-flex items-center px-2 py-1 border border-gray-700 text-xs font-medium rounded-md text-gray-300 bg-gray-800 hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       Next
@@ -253,17 +251,9 @@ export default function RepoList({
                       <p className="text-xs text-gray-400">
                         Showing{" "}
                         <span className="font-medium">
-                          {indexOfFirstItem + 1}
-                        </span>{" "}
-                        to{" "}
-                        <span className="font-medium">
-                          {Math.min(indexOfLastItem, filteredRepos.length)}
-                        </span>{" "}
-                        of{" "}
-                        <span className="font-medium">
                           {filteredRepos.length}
                         </span>{" "}
-                        repositories
+                        repositories on this page
                       </p>
                     </div>
                     <div>
@@ -291,35 +281,15 @@ export default function RepoList({
                             />
                           </svg>
                         </button>
-                        {/* Page numbers */}
-                        {Array.from({ length: Math.min(totalPages, 5) }).map(
-                          (_, idx) => {
-                            const pageNumber = (() => {
-                              if (totalPages <= 5) return idx + 1;
-                              if (currentPage <= 3) return idx + 1;
-                              if (currentPage >= totalPages - 2)
-                                return totalPages - 4 + idx;
-                              return currentPage - 2 + idx;
-                            })();
-
-                            return (
-                              <button
-                                key={idx}
-                                onClick={() => paginate(pageNumber)}
-                                className={`relative inline-flex items-center px-3 py-1 border text-xs font-medium ${
-                                  currentPage === pageNumber
-                                    ? "z-10 border-indigo-500 bg-indigo-900/50 text-indigo-300"
-                                    : "border-gray-700 bg-gray-800 text-gray-300 hover:bg-gray-700"
-                                }`}
-                              >
-                                {pageNumber}
-                              </button>
-                            );
-                          }
-                        )}
+                        <span
+                          aria-current="page"
+                          className="relative inline-flex items-center px-3 py-1 border border-gray-700 bg-gray-800 text-xs font-medium text-indigo-300"
+                        >
+                          {currentPage}
+                        </span>
                         <button
                           onClick={goToNextPage}
-                          disabled={currentPage === totalPages}
+                          disabled={!hasNextPage}
                           className="relative inline-flex items-center px-2 py-1 rounded-r-md border border-gray-700 bg-gray-800 text-xs font-medium text-gray-300 hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           <span className="sr-only">Next</span>

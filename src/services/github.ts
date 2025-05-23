@@ -5,15 +5,22 @@ import { GitHubRepo } from "@/types";
  * Fetch public repositories for a GitHub user
  */
 export const fetchPublicRepos = async (
-  username: string
-): Promise<{ repos: GitHubRepo[]; error: Error | null }> => {
+  username: string,
+  page: number = 1,
+  perPage: number = 5
+): Promise<{
+  repos: GitHubRepo[];
+  error: Error | null;
+  total_count?: number;
+}> => {
   try {
     const octokit = new Octokit();
 
     const { data } = await octokit.repos.listForUser({
       username,
       sort: "updated",
-      per_page: 100,
+      per_page: perPage,
+      page: page,
     });
 
     const repos: GitHubRepo[] = data.map((repo) => ({
@@ -23,15 +30,15 @@ export const fetchPublicRepos = async (
       description: repo.description,
       html_url: repo.html_url,
       private: repo.private,
-      language: repo.language,
-      stargazers_count: repo.stargazers_count,
-      forks_count: repo.forks_count,
-      updated_at: repo.updated_at,
+      language: repo.language ?? null,
+      stargazers_count: repo.stargazers_count ?? 0,
+      forks_count: repo.forks_count ?? 0,
+      updated_at: repo.updated_at ?? "",
       topics: repo.topics || [],
     }));
 
     return { repos, error: null };
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error fetching public repos:", error);
     return { repos: [], error: error as Error };
   }
@@ -41,8 +48,14 @@ export const fetchPublicRepos = async (
  * Fetch repositories for the authenticated user (includes private repos if authorized)
  */
 export const fetchUserRepos = async (
-  token: string
-): Promise<{ repos: GitHubRepo[]; error: Error | null }> => {
+  token: string,
+  page: number = 1,
+  perPage: number = 5
+): Promise<{
+  repos: GitHubRepo[];
+  error: Error | null;
+  total_count?: number;
+}> => {
   try {
     const octokit = new Octokit({
       auth: token,
@@ -50,7 +63,8 @@ export const fetchUserRepos = async (
 
     const { data } = await octokit.repos.listForAuthenticatedUser({
       sort: "updated",
-      per_page: 100,
+      per_page: perPage,
+      page: page,
     });
 
     const repos: GitHubRepo[] = data.map((repo) => ({
@@ -60,15 +74,15 @@ export const fetchUserRepos = async (
       description: repo.description,
       html_url: repo.html_url,
       private: repo.private,
-      language: repo.language,
-      stargazers_count: repo.stargazers_count,
-      forks_count: repo.forks_count,
-      updated_at: repo.updated_at,
+      language: repo.language ?? null,
+      stargazers_count: repo.stargazers_count ?? 0,
+      forks_count: repo.forks_count ?? 0,
+      updated_at: repo.updated_at ?? "",
       topics: repo.topics || [],
     }));
 
     return { repos, error: null };
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error fetching user repos:", error);
     return { repos: [], error: error as Error };
   }
@@ -105,7 +119,7 @@ export const getRepoDetails = async (
     };
 
     return { repo: repoDetails, error: null };
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error getting repo details:", error);
     return { repo: null, error: error as Error };
   }
@@ -136,7 +150,7 @@ export const getPackageJson = async (
     }
 
     throw new Error("package.json not found or not a file");
-  } catch (error) {
+  } catch (error: any) {
     // Return null content but not error if file simply doesn't exist
     if ((error as any).status === 404) {
       console.log(`package.json not found in ${owner}/${repo} repository`);
@@ -172,7 +186,7 @@ export const getReadmeContent = async (
     }
 
     throw new Error("README.md not found or not accessible");
-  } catch (error) {
+  } catch (error: any) {
     // Return null content but not error if file simply doesn't exist
     if ((error as any).status === 404) {
       return { content: null, error: null };
@@ -209,7 +223,7 @@ export const commitReadmeToRepo = async (
         sha = data.sha;
       }
     } catch (error) {
-      // README.md doesn't exist, that's fine
+      throw error;
     }
 
     // Create or update the README.md file
@@ -223,7 +237,7 @@ export const commitReadmeToRepo = async (
     });
 
     return { success: true, error: null };
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error committing README to repo:", error);
     return { success: false, error: error as Error };
   }

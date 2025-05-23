@@ -1,8 +1,8 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
-import { UserProfile } from "@/types/auth";
-import { getCurrentUser, signOut } from "@/services/auth";
+import { UserProfile, AuthProvider as AuthProviderType } from "@/types/auth";
+import { signOut } from "@/services/auth";
 import supabase from "@/lib/supabaseClient";
 
 interface AuthContextType {
@@ -38,14 +38,26 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
-  const [mounted, setMounted] = useState<boolean>(false);
+  const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
 
-  const refreshUser = async () => {
+  const refreshUser = async (
+    sessionFromEvent?: import("@supabase/supabase-js").Session | null
+  ) => {
+    if (isRefreshing) {
+      console.log("AuthContext: refreshUser already in progress, skipping.");
+      return;
+    }
+    setIsRefreshing(true);
+
     try {
-      console.log("AuthContext: Beginning full user refresh");
+      console.log("AuthContext: Beginning full user refresh", {
+        sessionSource: sessionFromEvent ? "event" : "fetch",
+      });
+      setLoading(true); // Ensure loading is true at the start of a refresh
 
-      // First check if we have a session
-      const { data: sessionData } = await supabase.auth.getSession();
+      const { data: sessionData, error: sessionError } =
+        await supabase.auth.getSession();
+      if (sessionError) throw sessionError;
 
       if (!sessionData.session) {
         console.log("AuthContext: No session found during refresh");
@@ -53,157 +65,183 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setGithubToken(null);
         setHasGithubConnection(false);
         setHasPrivateRepoAccess(false);
+        setLoading(false);
         return;
       }
 
-      const userId = sessionData.session.user.id;
+      const authUser = sessionData.session.user;
+      const userId = authUser.id;
 
-      // Get current profile data first
       const { data: profileData, error: profileError } = await supabase
         .from("profiles")
         .select("*")
         .eq("id", userId)
         .single();
 
-      console.log("AuthContext: Current profile data:", {
-        profileData,
-        profileError,
-      });
+      // If profileError and it's not 'PGRST116' (0 rows), throw it.
+      // If it is PGRST116, profileData will be null, which is handled below.
+      if (profileError && profileError.code !== "PGRST116") {
+        throw profileError;
+      }
 
-      // Get GitHub identity data if it exists
+      console.log("AuthContext: Fetched profile data:", { profileData });
+
       const { data: githubIdentity, error: githubError } = await supabase
         .from("github_identities")
         .select("*")
         .eq("user_id", userId)
         .maybeSingle();
 
-      console.log("AuthContext: GitHub identity data:", {
+      if (githubError) {
+        console.warn(
+          "AuthContext: Error fetching github_identity:",
+          githubError
+        );
+        // Don't throw, proceed without it if it fails for some reason (e.g. RLS)
+      }
+      console.log("AuthContext: Fetched GitHub identity data:", {
         githubIdentity,
-        githubError,
       });
 
-      // Get full user profile with preserved data
-      const { data: userData, error: userError } =
-        await supabase.auth.getUser();
-      if (userError) throw userError;
-
-      // Get or create the user profile
-      if (userData.user) {
-        // Ensure we preserve the original email and auth provider if this is a GitHub connection
-        if (profileData) {
-          const preservedUser = {
-            ...profileData,
-            email: profileData.email || userData.user.email,
-            auth_provider:
-              profileData.auth_provider ||
-              userData.user.app_metadata?.provider ||
-              "email",
-          };
-          setUser(preservedUser);
-        } else {
-          // Create/update profile without GitHub data - let the callback handle GitHub data
-          const { user: currentUser, error: profileError } =
-            await getCurrentUser();
-          if (profileError) throw profileError;
-          setUser(currentUser);
-        }
-
-        // Use the most accurate information for GitHub connection
-        const githubConnected = !!(
-          githubIdentity?.access_token ||
-          (profileData?.github_connected &&
-            userData.user.app_metadata?.provider === "github")
+      // Construct UserProfile directly here
+      // This part needs to replicate the logic from getCurrentUser or simplify it.
+      // For now, let's assume profileData is the primary source, augmented by authUser.
+      if (profileData) {
+        const combinedUser: UserProfile = {
+          ...profileData, // Spread all fields from profiles table
+          id: authUser.id, // Ensure authUser.id is authoritative
+          email: profileData.email || authUser.email!, // Prefer profile email, fallback to authUser
+          // Other fields like avatar_url, full_name will come from profileData if they exist
+          // Ensure all UserProfile fields are covered
+        };
+        setUser(combinedUser);
+        console.log(
+          "AuthContext: User state set from profileData:",
+          combinedUser
         );
-        setHasGithubConnection(githubConnected);
+      } else {
+        // Profile doesn't exist. This is a critical state.
+        // Ideally, a profile should be created upon sign-up.
+        // For a refresh, if it's missing, it indicates an issue or a new user post-signup pre-profile-creation.
+        // We might need to call a minimal profile creation here, or log an error.
+        // For now, set user based on authUser, but this might be incomplete.
+        console.warn(
+          `AuthContext: Profile data not found for user ${userId}. User may need profile creation.`
+        );
+        const minimalUser: UserProfile = {
+          id: authUser.id,
+          email: authUser.email!,
+          avatar_url: authUser.user_metadata?.avatar_url || undefined,
+          full_name: authUser.user_metadata?.full_name || undefined,
+          github_username:
+            githubIdentity?.github_username ||
+            authUser.user_metadata?.github_username ||
+            undefined,
+          subscription_tier: "free",
+          readme_generations_count: 0,
+          auth_provider: (authUser.app_metadata?.provider === "github"
+            ? "github"
+            : "email") as AuthProviderType,
+          github_connected: !!(
+            githubIdentity?.access_token ||
+            (profileData?.github_connected &&
+              authUser.app_metadata?.provider === "github")
+          ),
+          created_at: authUser.created_at || new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        };
+        setUser(minimalUser);
+        // TODO: Consider triggering profile creation if profileData is null and session exists
+        // This might involve calling a simplified version of upsertUserProfile from auth.ts
+        // For now, logging a warning.
+      }
 
-        console.log("User GitHub connection status:", {
-          userId: userData.user.id,
-          provider: userData.user.app_metadata?.provider,
-          hasGithubIdentity: !!githubIdentity,
-          githubConnected,
-        });
+      const githubConnected = !!(
+        githubIdentity?.access_token ||
+        (profileData?.github_connected &&
+          authUser.app_metadata?.provider === "github")
+      );
+      setHasGithubConnection(githubConnected);
+      console.log("AuthContext: GitHub connection status:", {
+        githubConnected,
+      });
 
-        // Handle GitHub token
-        if (
-          githubConnected &&
-          (githubIdentity?.access_token || sessionData.session?.provider_token)
-        ) {
-          const token =
-            githubIdentity?.access_token || sessionData.session.provider_token;
-          console.log("Found GitHub token");
+      if (
+        githubConnected &&
+        (githubIdentity?.access_token || sessionData.session?.provider_token)
+      ) {
+        const token =
+          githubIdentity?.access_token || sessionData.session.provider_token;
+        console.log("AuthContext: Found GitHub token, proceeding to validate.");
 
-          try {
-            console.log("Testing GitHub token validity");
-            const response = await fetch("https://api.github.com/user", {
-              headers: {
-                Authorization: `Bearer ${token}`,
-                Accept: "application/vnd.github.v3+json",
-              },
-            });
+        try {
+          console.log("Testing GitHub token validity");
+          const response = await fetch("https://api.github.com/user", {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              Accept: "application/vnd.github.v3+json",
+            },
+          });
 
-            if (response.ok) {
-              console.log("GitHub token is valid");
-              setGithubToken(token);
-              const userData = await response.json();
-              setHasPrivateRepoAccess(userData.plan?.private_repos > 0);
+          if (response.ok) {
+            console.log("GitHub token is valid");
+            setGithubToken(token);
+            const userData = await response.json();
+            setHasPrivateRepoAccess(userData.plan?.private_repos > 0);
 
-              // Only update user metadata if the values have actually changed
-              const currentMetadata =
-                sessionData.session.user.user_metadata || {};
-              const needsUpdate =
-                currentMetadata.github_token !== token ||
-                !currentMetadata.github_connected ||
-                currentMetadata.github_username !==
-                  githubIdentity?.github_username;
+            // Only update user metadata if the values have actually changed
+            const currentMetadata =
+              sessionData.session.user.user_metadata || {};
+            const needsUpdate =
+              currentMetadata.github_token !== token ||
+              !currentMetadata.github_connected ||
+              currentMetadata.github_username !==
+                githubIdentity?.github_username;
 
-              if (needsUpdate) {
-                await supabase.auth.updateUser({
-                  data: {
-                    github_token: token,
-                    github_connected: true,
-                    github_username: githubIdentity?.github_username,
-                  },
-                });
-              }
-            } else {
-              console.warn(
-                "GitHub token invalid or expired:",
-                await response.text()
-              );
-              setGithubToken(null);
-              setHasPrivateRepoAccess(false);
-              setHasGithubConnection(false);
-
-              // Only clear metadata if it's not already cleared
-              const currentMetadata =
-                sessionData.session.user.user_metadata || {};
-              if (
-                currentMetadata.github_token ||
-                currentMetadata.github_connected
-              ) {
-                await supabase.auth.updateUser({
-                  data: {
-                    github_token: null,
-                    github_connected: false,
-                  },
-                });
-              }
+            if (needsUpdate) {
+              await supabase.auth.updateUser({
+                data: {
+                  github_token: token,
+                  github_connected: true,
+                  github_username: githubIdentity?.github_username,
+                },
+              });
             }
-          } catch (tokenError) {
-            console.error("Error checking GitHub token:", tokenError);
+          } else {
+            console.warn(
+              "GitHub token invalid or expired:",
+              await response.text()
+            );
             setGithubToken(null);
             setHasPrivateRepoAccess(false);
-            setHasGithubConnection(false);
+            // setHasGithubConnection(false); // Re-evaluate if this should be set based on token failure
           }
-        } else {
-          console.log("No GitHub connection found");
+        } catch (tokenError) {
+          console.error("Error checking GitHub token:", tokenError);
           setGithubToken(null);
           setHasPrivateRepoAccess(false);
+          // If no token, but was previously connected via profileData, retain hasGithubConnection true from above.
         }
+      } else {
+        console.log(
+          "AuthContext: No GitHub token or connection details found for token validation."
+        );
+        setGithubToken(null);
+        setHasPrivateRepoAccess(false);
+        // If no token, but was previously connected via profileData, retain hasGithubConnection true from above.
       }
-    } catch (refreshError) {
-      console.error("Error refreshing user:", refreshError);
+      // Removed the direct call to getCurrentUser() and its subsequent setUser() call
+      // The user state is now set directly from profileData or a minimal user object.
+    } catch (refreshError: any) {
+      console.error("AuthContext: Error refreshing user:", refreshError);
       setError(refreshError as Error);
+      setUser(null);
+      setGithubToken(null);
+      setHasGithubConnection(false);
+      setHasPrivateRepoAccess(false);
+    } finally {
+      setLoading(false);
+      setIsRefreshing(false);
     }
   };
 
@@ -222,57 +260,43 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   useEffect(() => {
-    // Set mounted to true once the component mounts
-    setMounted(true);
-    return () => {
-      setMounted(false);
-    };
-  }, []);
+    // setLoading(true) should be managed by refreshUser or specific event handlers like SIGNED_OUT
+    // to avoid premature toggling.
+    // refreshUser sets setLoading(true) at its start and setLoading(false) in its finally block.
 
-  useEffect(() => {
-    if (!mounted) return;
-
-    // Initial user check when component mounts
-    const loadUserData = async () => {
-      try {
-        console.log("AuthProvider: Initial loading of user data");
-        await refreshUser();
-      } catch (err) {
-        console.error("AuthProvider: Error during initial user load:", err);
-        // Don't set loading to false here yet, to avoid flashing content
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadUserData();
-
-    // Set up listener for auth changes
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
       console.log("AuthProvider: Auth state changed:", {
         event,
-        hasSession: !!session,
+        sessionToken: session?.access_token?.slice(-5),
       });
 
-      if (session) {
-        // Attempt to refresh user data when we get a session
-        refreshUser().catch((err) => {
-          console.error(
-            "AuthProvider: Error refreshing after auth change:",
-            err
-          );
-          // Even if refresh fails, we still have a session
-          setLoading(false);
-        });
-      } else {
-        // No session, update state accordingly
+      if (
+        event === "INITIAL_SESSION" ||
+        event === "SIGNED_IN" ||
+        event === "TOKEN_REFRESHED" ||
+        event === "USER_UPDATED"
+      ) {
+        if (session) {
+          // Session exists, refresh user data.
+          // refreshUser handles its own loading state (true at start, false in finally).
+          refreshUser(session);
+        } else if (event === "INITIAL_SESSION" && !session) {
+          // Initial check, no session found.
+          setUser(null);
+          setGithubToken(null);
+          setHasGithubConnection(false);
+          setHasPrivateRepoAccess(false);
+          setLoading(false); // Explicitly set loading false as refreshUser won't run
+        }
+      } else if (event === "SIGNED_OUT") {
         setUser(null);
         setGithubToken(null);
         setHasGithubConnection(false);
         setHasPrivateRepoAccess(false);
-        setLoading(false);
+        setError(null); // Clear any previous errors on logout
+        setLoading(false); // Explicitly set loading false
       }
     });
 
@@ -280,7 +304,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       console.log("AuthProvider: Cleaning up auth subscription");
       subscription.unsubscribe();
     };
-  }, [mounted]);
+  }, []); // Run this effect once on mount to set up the listener.
 
   const value = {
     user,
