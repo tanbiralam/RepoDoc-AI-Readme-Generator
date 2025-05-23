@@ -19,10 +19,10 @@ export default function HeroSection() {
 
   // Steps text content
   const steps = [
-    { text: "Detecting repository language...", lang: "TypeScript" },
-    { text: "Analyzing project structure...", files: 42 },
+    { text: "Analyzing repository structure...", lang: "TypeScript" },
+    { text: "Extracting project metadata...", files: 42 },
     { text: "Identifying key features...", features: 7 },
-    { text: "Generating README content...", sections: 8 },
+    { text: "Crafting professional README...", sections: 8 },
   ];
 
   // Auto advance through the steps with looping
@@ -87,20 +87,39 @@ export default function HeroSection() {
               transition={{ duration: 0.4 }}
               className="flex items-center gap-2"
             >
-              <div className="flex items-center rounded-full border border-blue-500/30 bg-blue-500/10 px-4 py-1.5 text-sm font-medium text-white">
-                <Star className="mr-1.5 h-3.5 w-3.5 text-blue-400" />
-                <span>AI-Powered README Generation</span>
+              <div className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-blue-600/20 to-purple-600/20 border border-blue-400/30 px-4 py-2 backdrop-blur-sm">
+                <div className="relative">
+                  <div className="absolute inset-0 rounded-full bg-blue-400 opacity-20 animate-pulse"></div>
+                  <Star className="relative h-4 w-4 text-blue-400 fill-blue-400/20" />
+                </div>
+                <span className="text-sm font-semibold bg-gradient-to-r from-blue-200 to-purple-200 bg-clip-text text-transparent">
+                  Trusted by 10,000+ developers
+                </span>
               </div>
             </motion.div>
 
-            <motion.h1
+            <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, delay: 0.1 }}
-              className="text-4xl md:text-5xl xl:text-6xl font-bold tracking-tight text-white"
+              className="space-y-2"
             >
-              GitHub README Generator
-            </motion.h1>
+              <h1 className="text-4xl md:text-5xl xl:text-6xl font-bold tracking-tight">
+                <span className="bg-gradient-to-r from-white via-blue-100 to-blue-200 bg-clip-text text-transparent">
+                  Repo
+                </span>
+                <span className="bg-gradient-to-r from-blue-400 via-blue-500 to-blue-600 bg-clip-text text-transparent">
+                  Doc
+                </span>
+              </h1>
+              <div className="flex items-center gap-3">
+                <div className="h-px flex-1 bg-gradient-to-r from-transparent via-blue-500/50 to-transparent"></div>
+                <span className="text-sm font-medium text-blue-400 tracking-wider uppercase px-3 py-1 bg-blue-500/10 rounded-full border border-blue-500/20">
+                  AI Documentation Engine
+                </span>
+                <div className="h-px flex-1 bg-gradient-to-r from-transparent via-blue-500/50 to-transparent"></div>
+              </div>
+            </motion.div>
 
             <motion.p
               initial={{ opacity: 0, y: 20 }}
@@ -108,23 +127,29 @@ export default function HeroSection() {
               transition={{ duration: 0.4, delay: 0.2 }}
               className="text-lg text-gray-300 leading-relaxed"
             >
-              Create impressive GitHub README files in seconds with our
-              AI-powered generator. Highlight your projects effectively and make
-              your repositories shine.
+              Transform your GitHub repositories with stunning, professional
+              README files. Our AI analyzes your code and generates
+              comprehensive documentation that showcases your project's true
+              potential.
             </motion.p>
 
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, delay: 0.3 }}
+              className="flex flex-col sm:flex-row gap-4"
             >
               <Link
-                href="#generate"
+                href="/sign-in"
                 className="group inline-flex items-center justify-center rounded-full bg-blue-600 hover:bg-blue-500 px-8 py-3 text-base font-semibold text-white shadow-lg shadow-blue-500/20 transition-all duration-200"
               >
-                Generate README
+                Try RepoDoc Free
                 <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
               </Link>
+              <div className="flex items-center text-sm text-gray-400">
+                <Check className="mr-2 h-4 w-4 text-green-400" />
+                No credit card required
+              </div>
             </motion.div>
           </div>
 
@@ -146,7 +171,7 @@ export default function HeroSection() {
                 <div className="flex items-center gap-2 bg-blue-500/10 px-3 py-1 rounded-md">
                   <Terminal className="h-3.5 w-3.5 text-blue-400" />
                   <span className="text-xs font-medium text-blue-300">
-                    README Generator
+                    RepoDoc AI
                   </span>
                 </div>
                 <div className="w-16"></div>
@@ -161,7 +186,7 @@ export default function HeroSection() {
                         <Terminal className="h-3 w-3 text-blue-400" />
                       </div>
                       <div className="text-xs text-gray-400">
-                        AI README Generator
+                        RepoDoc AI Engine
                       </div>
                     </div>
 
@@ -214,7 +239,7 @@ export default function HeroSection() {
                             <div className="ml-5 pl-2 border-l border-gray-800 text-xs">
                               {index === 0 && (
                                 <div className="text-purple-400">
-                                  Detected:{" "}
+                                  Primary language:{" "}
                                   <span className="text-yellow-300 font-semibold">
                                     {step.lang}
                                   </span>
@@ -222,16 +247,16 @@ export default function HeroSection() {
                               )}
                               {index === 1 && (
                                 <div className="text-purple-400">
-                                  Found:{" "}
+                                  Processed:{" "}
                                   <span className="text-yellow-300 font-semibold">
                                     {step.files} files
                                   </span>{" "}
-                                  in repository
+                                  and dependencies
                                 </div>
                               )}
                               {index === 2 && (
                                 <div className="text-purple-400">
-                                  Identified:{" "}
+                                  Extracted:{" "}
                                   <span className="text-yellow-300 font-semibold">
                                     {step.features} key features
                                   </span>
@@ -239,11 +264,10 @@ export default function HeroSection() {
                               )}
                               {index === 3 && generationComplete && (
                                 <div className="text-purple-400">
-                                  Created:{" "}
+                                  Generated:{" "}
                                   <span className="text-yellow-300 font-semibold">
-                                    {step.sections} sections
-                                  </span>{" "}
-                                  in README.md
+                                    {step.sections} comprehensive sections
+                                  </span>
                                 </div>
                               )}
                             </div>
@@ -260,7 +284,7 @@ export default function HeroSection() {
                           className="mt-3 flex items-center text-green-400 bg-green-500/10 px-3 py-2 rounded-md"
                         >
                           <Check className="mr-2 h-4 w-4" />
-                          README.md generated successfully!
+                          Professional README.md ready!
                         </motion.div>
                       )}
                     </div>
@@ -302,7 +326,7 @@ export default function HeroSection() {
                     ) : (
                       <>
                         {currentStep < steps.length - 1
-                          ? "Processing..."
+                          ? "Analyzing..."
                           : "Generating..."}
                         <RefreshCw
                           className={`h-4 w-4 ${

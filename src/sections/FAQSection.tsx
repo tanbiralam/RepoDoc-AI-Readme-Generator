@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown } from "lucide-react";
-import Link from "next/link";
 
 interface FAQItemProps {
   question: string;
@@ -142,24 +141,6 @@ export default function FAQSection() {
             <FAQItem key={index} question={faq.question} answer={faq.answer} />
           ))}
         </div>
-
-        <motion.div
-          className="mt-16 text-center"
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6, delay: 0.4 }}
-        >
-          <p className="text-gray-400 mb-6">
-            Still have questions? We&apos;re here to help!
-          </p>
-          <Link
-            href="#contact"
-            className="inline-flex items-center justify-center rounded-lg bg-gradient-to-br from-blue-600 to-indigo-600 px-6 py-3.5 text-base font-medium text-white shadow-lg transition-all duration-300 hover:from-blue-700 hover:to-indigo-700 hover:shadow-blue-500/25 transform hover:-translate-y-1"
-          >
-            Contact Support
-          </Link>
-        </motion.div>
       </div>
     </section>
   );

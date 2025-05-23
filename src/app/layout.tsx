@@ -9,7 +9,7 @@ import Script from "next/script";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "GitHub README Generator",
+  title: "RepoDoc",
   description: "Generate professional READMEs for your GitHub repositories",
 };
 

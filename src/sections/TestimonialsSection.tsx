@@ -218,7 +218,7 @@ export default function TestimonialsSection() {
                   transition={{ type: "spring", stiffness: 400, damping: 10 }}
                 >
                   <Link
-                    href="#generate"
+                    href="/sign-in"
                     className="group inline-flex items-center justify-center rounded-lg bg-gradient-to-br from-blue-600 to-indigo-600 px-6 py-3.5 text-base font-medium text-white shadow-lg transition-all duration-300 hover:from-blue-700 hover:to-indigo-700 hover:shadow-blue-500/25 transform hover:-translate-y-1"
                   >
                     Start Generating READMEs
