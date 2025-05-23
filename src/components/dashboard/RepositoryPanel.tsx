@@ -1,7 +1,6 @@
 import { GitHubRepo } from "@/types";
 import RepoList from "@/components/RepoList";
 import DebugLogs from "@/components/dashboard/DebugLogs";
-import GitHubConnectionStatus from "./GitHubConnectionStatus";
 
 interface RepositoryPanelProps {
   hasGithubConnection: boolean;
@@ -38,11 +37,6 @@ export default function RepositoryPanel({
           </svg>
           Repositories
         </h2>
-
-        {/* GitHub Connection Status */}
-        <div className="mb-4">
-          <GitHubConnectionStatus />
-        </div>
 
         {/* Repository List */}
         {hasGithubConnection && (

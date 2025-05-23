@@ -1,3 +1,5 @@
+"use client";
+
 import { useAuth } from "@/context/AuthContext";
 import { connectGitHub } from "@/services/auth";
 import { Loader2, Github, UnplugIcon, RefreshCw } from "lucide-react";
