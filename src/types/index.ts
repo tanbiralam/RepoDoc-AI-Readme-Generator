@@ -12,16 +12,17 @@ export interface User {
 // GitHub related types
 export interface GitHubRepo {
   id: number;
-  name: string;
-  full_name: string;
+  name: string; // Just the repo name, e.g., "InsightIQ"
+  full_name: string; // e.g., "tanbiralam/InsightIQ"
   description: string | null;
-  html_url: string;
-  private: boolean;
   language: string | null;
-  stargazers_count: number;
-  forks_count: number;
-  updated_at: string;
-  topics: string[];
+  html_url: string; // Full URL to the repo, e.g., "https://github.com/tanbiralam/InsightIQ"
+  topics?: string[];
+  private?: boolean;
+  owner?: { login?: string }; // Owner information
+  stargazers_count?: number; // Optional as not all contexts might have it
+  forks_count?: number; // Optional
+  updated_at?: string; // Optional
 }
 
 // Subscription related types
@@ -37,14 +38,17 @@ export interface SubscriptionPlan {
 
 // AI README generation related types
 export interface ReadmeGenerationRequest {
-  repoName: string;
+  repoName: string; // Just the repo name, e.g., "InsightIQ"
+  repoOwner: string; // Owner of the repository, e.g., "tanbiralam"
+  repoUrl: string; // Full HTML URL of the repository, e.g., "https://github.com/tanbiralam/InsightIQ"
   repoDescription?: string;
   repoLanguage?: string;
   packageJson?: string;
-  mainFiles?: string[];
   currentReadme?: string;
   topics?: string[];
   isPrivate?: boolean;
+  demoUrl?: string; // from EnhancedReadmeRequest in promptBuilder
+  screenshots?: string[]; // from EnhancedReadmeRequest in promptBuilder
 }
 
 export interface ReadmeGenerationResult {
@@ -54,6 +58,6 @@ export interface ReadmeGenerationResult {
 
 export interface ReadmeSection {
   title: string;
-  level: number;
   content: string;
+  level: number;
 }

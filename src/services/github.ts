@@ -223,8 +223,14 @@ export const commitReadmeToRepo = async (
         sha = data.sha;
       }
     } catch (error) {
-      throw error;
+      // If file doesn't exist, sha will remain undefined
     }
+
+    // Remove any unnecessary markdown formatting
+    const cleanContent = content
+      .replace(/^```markdown\s*/gm, "") // Remove opening markdown blocks
+      .replace(/\s*```\s*$/gm, "") // Remove closing markdown blocks
+      .trim(); // Clean up any extra whitespace
 
     // Create or update the README.md file
     await octokit.repos.createOrUpdateFileContents({
@@ -232,7 +238,7 @@ export const commitReadmeToRepo = async (
       repo,
       path: "README.md",
       message,
-      content: Buffer.from(content).toString("base64"),
+      content: Buffer.from(cleanContent).toString("base64"),
       sha, // Include SHA if updating existing file
     });
 

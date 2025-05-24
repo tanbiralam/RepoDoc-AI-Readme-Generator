@@ -1,68 +1,96 @@
 import { useState, useEffect, useRef } from "react";
-import ReactMarkdown from "react-markdown";
-import { ReadmeGenerationResult, ReadmeSection } from "@/types";
+// import { ReadmeGenerationResult, ReadmeSection } from "@/types"; // ReadmeSection is no longer used
+import { ReadmeGenerationResult } from "@/types";
+import TiptapEditor from "./TiptapEditor";
 
 interface ReadmeEditorProps {
   readmeContent: string;
   onChange: (content: string) => void;
-  sections?: ReadmeGenerationResult["sections"];
+  sections?: ReadmeGenerationResult["sections"]; // Kept for potential future use like scrollToSection
+  onToggleFullScreen?: (isFullScreen: boolean) => void;
 }
 
 export default function ReadmeEditor({
   readmeContent,
   onChange,
-  sections,
+  // sections, // No longer used
+  onToggleFullScreen,
 }: ReadmeEditorProps) {
   const [editMode, setEditMode] = useState<boolean>(false);
+  const [isFullScreen, setIsFullScreen] = useState<boolean>(false);
   const [content, setContent] = useState<string>(readmeContent);
-  const [activeSection, setActiveSection] = useState<number | null>(null);
   const contentContainerRef = useRef<HTMLDivElement>(null);
+  const editorContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setContent(readmeContent);
   }, [readmeContent]);
 
-  const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const newContent = e.target.value;
+  useEffect(() => {
+    const handleEsc = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && isFullScreen) {
+        setIsFullScreen(false);
+        onToggleFullScreen?.(false);
+      }
+    };
+    window.addEventListener("keydown", handleEsc);
+    return () => window.removeEventListener("keydown", handleEsc);
+  }, [isFullScreen, onToggleFullScreen]);
+
+  const handleContentChange = (newContent: string) => {
     setContent(newContent);
     onChange(newContent);
   };
 
-  const scrollToSection = (index: number) => {
-    setActiveSection(index);
-
-    // Get the section title from the sections array
-    if (sections && sections[index] && contentContainerRef.current) {
-      const sectionTitle = sections[index].title;
-      const contentContainer = contentContainerRef.current;
-
-      // Find all heading elements in the preview area
-      const headingElements = contentContainer.querySelectorAll(
-        "h1, h2, h3, h4, h5, h6"
-      );
-
-      // Look for the heading element that matches the section title
-      for (let i = 0; i < headingElements.length; i++) {
-        if (headingElements[i].textContent?.trim() === sectionTitle) {
-          const headingPositionTop = (headingElements[i] as HTMLElement)
-            .offsetTop;
-
-          // Scroll the container to the heading position
-          contentContainer.scrollTo({
-            top: headingPositionTop,
-            behavior: "smooth",
-          });
-          break;
-        }
-      }
+  const toggleFullScreen = () => {
+    const newFullScreenState = !isFullScreen;
+    setIsFullScreen(newFullScreenState);
+    onToggleFullScreen?.(newFullScreenState);
+    if (newFullScreenState && editorContainerRef.current) {
+      setTimeout(() => editorContainerRef.current?.focus(), 0);
     }
   };
 
   return (
-    <div className="rounded-lg overflow-hidden bg-white text-black shadow-sm border border-gray-100">
+    <div
+      ref={editorContainerRef}
+      className={`rounded-lg overflow-hidden bg-white text-black shadow-sm border border-gray-100 ${
+        isFullScreen ? "fixed inset-0 z-[9999]" : ""
+      }`}
+      tabIndex={-1}
+    >
       <div className="flex items-center justify-between p-4 border-b border-gray-100 bg-gray-50/80">
-        <h2 className="text-lg font-medium text-gray-900">README Preview</h2>
+        <h2 className="text-lg font-medium text-gray-900">README Editor</h2>
         <div className="flex items-center space-x-2">
+          <button
+            onClick={toggleFullScreen}
+            className="px-4 py-2 text-sm font-medium rounded-md bg-gray-100 text-gray-700 hover:bg-gray-200 transition-all duration-200"
+            title={isFullScreen ? "Exit Full Screen" : "Enter Full Screen"}
+          >
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              {isFullScreen ? (
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M9 20l-5-5m0 0l5-5m-5 5h16m0-5l-5 5m0 0l5 5m-5-5H4"
+                />
+              ) : (
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"
+                />
+              )}
+            </svg>
+          </button>
           <button
             onClick={() => setEditMode(false)}
             className={`px-4 py-2 text-sm font-medium rounded-md transition-all duration-200 ${
@@ -86,50 +114,7 @@ export default function ReadmeEditor({
         </div>
       </div>
 
-      {sections && !editMode && (
-        <div className="flex border-b border-gray-100">
-          <div className="w-1/4 border-r border-gray-100 overflow-y-auto max-h-[500px] bg-white">
-            <div className="sticky top-0 bg-indigo-600 text-white px-4 py-2 text-sm font-medium z-10">
-              Table of Contents
-            </div>
-            <ul className="divide-y divide-gray-100">
-              {sections.map((section: ReadmeSection, index: number) => (
-                <li
-                  key={index}
-                  className={`px-4 py-3 hover:bg-indigo-50 cursor-pointer transition-all duration-200 
-                    ${
-                      activeSection === index
-                        ? "bg-indigo-100 border-l-4 border-indigo-500"
-                        : "border-l-4 border-transparent"
-                    }`}
-                  onClick={() => scrollToSection(index)}
-                >
-                  <span
-                    className={`text-sm ${
-                      section.level === 1
-                        ? "font-semibold text-gray-900"
-                        : section.level === 2
-                        ? "font-medium text-gray-800 pl-2"
-                        : "font-normal text-gray-700 pl-4"
-                    } 
-                    ${activeSection === index ? "text-indigo-700" : ""}`}
-                  >
-                    {section.title}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </div>
-          <div
-            ref={contentContainerRef}
-            className="w-3/4 p-6 overflow-y-auto max-h-[500px] prose prose-indigo prose-headings:font-bold prose-headings:text-gray-900 max-w-none"
-          >
-            <ReactMarkdown>{content}</ReactMarkdown>
-          </div>
-        </div>
-      )}
-
-      {(!sections || editMode) && (
+      {editMode ? (
         <div className="flex flex-col md:flex-row border-b border-gray-100">
           <div className="w-full md:w-1/2 border-r border-gray-100">
             <div className="bg-gray-50/80 p-3 border-b border-gray-100 flex items-center">
@@ -151,12 +136,14 @@ export default function ReadmeEditor({
                 MARKDOWN EDITOR
               </span>
             </div>
-            <textarea
-              value={content}
+            <TiptapEditor
+              content={content}
               onChange={handleContentChange}
-              className="w-full h-[500px] p-5 font-mono text-gray-800 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50 leading-relaxed border-0"
+              editable={true}
+              className={`p-1 ${
+                isFullScreen ? "h-[calc(100vh-180px)]" : "h-[500px]"
+              }`}
               placeholder="# README Content"
-              spellCheck="false"
             />
           </div>
           <div className="w-full md:w-1/2">
@@ -183,37 +170,65 @@ export default function ReadmeEditor({
               </svg>
               <span className="text-sm font-medium text-gray-700">PREVIEW</span>
             </div>
-            <div className="p-6 overflow-y-auto h-[500px] prose prose-indigo prose-headings:font-bold prose-headings:text-gray-900 max-w-none">
-              <ReactMarkdown>{content}</ReactMarkdown>
+            <div
+              className={`overflow-y-auto ${
+                isFullScreen ? "h-[calc(100vh-180px)]" : "h-[500px]"
+              }`}
+            >
+              <TiptapEditor
+                content={content}
+                onChange={() => {}}
+                editable={false}
+                className="p-1"
+              />
             </div>
           </div>
+        </div>
+      ) : (
+        <div
+          ref={contentContainerRef}
+          className={`overflow-y-auto ${
+            isFullScreen ? "h-[calc(100vh-120px)]" : "h-[560px]"
+          }`}
+        >
+          <TiptapEditor
+            content={content}
+            onChange={() => {}}
+            editable={false}
+            className="p-1"
+          />
         </div>
       )}
 
       <div className="bg-gray-50/80 p-4 flex items-center justify-between text-sm text-gray-600 border-t border-gray-100">
         <span className="font-medium">Use Markdown syntax for formatting</span>
-        <a
-          href="https://www.markdownguide.org/cheat-sheet/"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-indigo-600 hover:underline font-semibold flex items-center"
-        >
-          <svg
-            className="w-4 h-4 mr-1"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            xmlns="http://www.w3.org/2000/svg"
+        <div className="flex items-center gap-4">
+          <span className="text-gray-500 text-xs">
+            {isFullScreen ? "Press ESC to exit full screen" : ""}
+          </span>
+          <a
+            href="https://www.markdownguide.org/cheat-sheet/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-indigo-600 hover:underline font-semibold flex items-center"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-            ></path>
-          </svg>
-          Markdown Cheat Sheet
-        </a>
+            <svg
+              className="w-4 h-4 mr-1"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              ></path>
+            </svg>
+            Markdown Cheat Sheet
+          </a>
+        </div>
       </div>
     </div>
   );

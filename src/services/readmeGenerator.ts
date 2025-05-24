@@ -1,17 +1,26 @@
-import { ReadmeGenerationRequest, ReadmeGenerationResult, ReadmeSection } from '@/types';
+import {
+  ReadmeGenerationRequest,
+  ReadmeGenerationResult,
+  ReadmeSection,
+} from "@/types";
 
 // Helper function for consistent logging
-const logReadmeGen = (stage: string, message: string, data?: any) => {
+const logReadmeGen = (stage: string, message: string, data?: unknown) => {
   const timestamp = new Date().toISOString();
-  console.log(`[README-GEN][${timestamp}][${stage}] ${message}`, data || '');
-  
-  // Store in localStorage for debugging purposes
-  try {
-    const logs = JSON.parse(localStorage.getItem('readme_ai_logs') || '[]');
-    logs.push({ timestamp, stage, message, data: data || null });
-    localStorage.setItem('readme_ai_logs', JSON.stringify(logs));
-  } catch (e) {
-    console.error('Error storing log in localStorage:', e);
+  console.log(
+    `[README-GEN][${timestamp}][${stage}] ${message}`,
+    data ? JSON.stringify(data) : ""
+  );
+
+  // Only attempt to use localStorage in browser environment
+  if (typeof window !== "undefined") {
+    try {
+      const logs = JSON.parse(localStorage.getItem("readme_ai_logs") || "[]");
+      logs.push({ timestamp, stage, message, data: data || null });
+      localStorage.setItem("readme_ai_logs", JSON.stringify(logs));
+    } catch (e) {
+      console.warn("Error storing log in localStorage:", e);
+    }
   }
 };
 
@@ -22,123 +31,148 @@ const logReadmeGen = (stage: string, message: string, data?: any) => {
 export const generateReadmeWithAI = async (
   request: ReadmeGenerationRequest
 ): Promise<{ result: ReadmeGenerationResult | null; error: Error | null }> => {
-  logReadmeGen('START', 'Beginning README generation with AI', { request });
-  
+  logReadmeGen("START", "Beginning README generation with AI", { request });
+
   try {
-    logReadmeGen('API_CALL', 'Sending request to /api/generate-readme endpoint', {
-      requestSize: JSON.stringify(request).length,
-      hasPackageJson: !!request.packageJson,
-      packageJsonLength: request.packageJson?.length || 0,
-      hasCurrentReadme: !!request.currentReadme,
-      currentReadmeLength: request.currentReadme?.length || 0
-    });
-    
+    logReadmeGen(
+      "API_CALL",
+      "Sending request to /api/generate-readme endpoint",
+      {
+        requestSize: JSON.stringify(request).length,
+        hasPackageJson: !!request.packageJson,
+        packageJsonLength: request.packageJson?.length || 0,
+        hasCurrentReadme: !!request.currentReadme,
+        currentReadmeLength: request.currentReadme?.length || 0,
+      }
+    );
+
     const startTime = Date.now();
-    const response = await fetch('/api/generate-readme', {
-      method: 'POST',
+    const response = await fetch("/api/generate-readme", {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify(request),
     });
     const requestDuration = Date.now() - startTime;
-    
-    logReadmeGen('API_RESPONSE', `Received response from API in ${requestDuration}ms`, {
-      status: response.status,
-      statusText: response.statusText,
-      duration: requestDuration
-    });
+
+    logReadmeGen(
+      "API_RESPONSE",
+      `Received response from API in ${requestDuration}ms`,
+      {
+        status: response.status,
+        statusText: response.statusText,
+        duration: requestDuration,
+      }
+    );
 
     // Get the response text first for logging
     const responseText = await response.text();
-    
+
     // Try to parse JSON from response text
-    let data: any;
+    let data: unknown;
     try {
       data = JSON.parse(responseText);
-      logReadmeGen('PARSE_JSON', 'Successfully parsed JSON from response', {
-        hasResult: !!data.result,
-        hasError: !!data.error,
-        contentLength: data.result?.content?.length || 0,
+      logReadmeGen("PARSE_JSON", "Successfully parsed JSON from response", {
+        hasResult: !!(data as any)?.result,
+        hasError: !!(data as any)?.error,
+        contentLength: (data as any)?.result?.content?.length || 0,
       });
     } catch (parseError) {
-      logReadmeGen('PARSE_ERROR', 'Failed to parse JSON from response', {
-        responseText: responseText.substring(0, 200) + '...',
-        error: parseError instanceof Error ? parseError.message : String(parseError)
+      logReadmeGen("PARSE_ERROR", "Failed to parse JSON from response", {
+        responseText: responseText.substring(0, 200) + "...",
+        error:
+          parseError instanceof Error ? parseError.message : String(parseError),
       });
-      throw new Error(`Failed to parse API response: ${parseError instanceof Error ? parseError.message : String(parseError)}`);
+      throw new Error(
+        `Failed to parse API response: ${
+          parseError instanceof Error ? parseError.message : String(parseError)
+        }`
+      );
     }
-    
+
     // Handle error response (even with 200 status code)
-    if (data.error && !data.result) {
-      logReadmeGen('API_ERROR', 'API returned error in response body', {
-        error: data.error,
-        status: response.status
+    if ((data as any)?.error && !(data as any)?.result) {
+      logReadmeGen("API_ERROR", "API returned error in response body", {
+        error: (data as any)?.error,
+        status: response.status,
       });
-      throw new Error(`API error: ${data.error}`);
+      throw new Error(`API error: ${(data as any)?.error}`);
     }
 
     // Handle case where the API returns a 500 status but still includes a fallback template
     if (!response.ok) {
       // If the response has a result from the fallback template, use it but also log the error
-      if (data.result) {
-        logReadmeGen('FALLBACK_FROM_SERVER', 'Using fallback template from server', {
-          error: data.error,
-          status: response.status,
-          templateSections: data.result.sections?.length || 0
-        });
-        
+      if ((data as any)?.result) {
+        logReadmeGen(
+          "FALLBACK_FROM_SERVER",
+          "Using fallback template from server",
+          {
+            error: (data as any)?.error,
+            status: response.status,
+            templateSections: (data as any)?.result.sections?.length || 0,
+          }
+        );
+
         return {
-          result: data.result,
-          error: new Error(data.error || `API returned status ${response.status}`)
+          result: (data as any)?.result as ReadmeGenerationResult,
+          error: new Error(
+            (data as any)?.error || `API returned status ${response.status}`
+          ),
         };
       }
-      
+
       // Otherwise throw an error
-      logReadmeGen('API_ERROR_STATUS', `API returned error status: ${response.status}`, {
-        status: response.status,
-        statusText: response.statusText,
-        responsePreview: responseText.substring(0, 200) + '...'
-      });
-      throw new Error(`API returned status: ${response.status} - ${responseText}`);
+      logReadmeGen(
+        "API_ERROR_STATUS",
+        `API returned error status: ${response.status}`,
+        {
+          status: response.status,
+          statusText: response.statusText,
+          responsePreview: responseText.substring(0, 200) + "...",
+        }
+      );
+      throw new Error(
+        `API returned status: ${response.status} - ${responseText}`
+      );
     }
 
     // Log successful parsing
-    logReadmeGen('PARSE_SUCCESS', `Processed API response successfully`, {
-      hasResult: !!data.result,
-      contentLength: data.result?.content?.length || 0,
-      sectionCount: data.result?.sections?.length || 0
+    logReadmeGen("PARSE_SUCCESS", `Processed API response successfully`, {
+      hasResult: !!(data as any)?.result,
+      contentLength: (data as any)?.result?.content?.length || 0,
+      sectionCount: (data as any)?.result?.sections?.length || 0,
     });
-    
-    logReadmeGen('COMPLETE', 'Successfully generated README', {
+
+    logReadmeGen("COMPLETE", "Successfully generated README", {
       totalTime: Date.now() - startTime,
-      contentLength: data.result?.content?.length || 0
+      contentLength: (data as any)?.result?.content?.length || 0,
     });
-    
+
     return {
-      result: data.result,
-      error: null
+      result: (data as any)?.result as ReadmeGenerationResult,
+      error: null,
     };
   } catch (error) {
-    logReadmeGen('ERROR', 'Error generating README with AI', {
+    logReadmeGen("ERROR", "Error generating README with AI", {
       error: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined
+      stack: error instanceof Error ? error.stack : undefined,
     });
-    
-    logReadmeGen('FALLBACK', 'Falling back to basic README template', {
+
+    logReadmeGen("FALLBACK", "Falling back to basic README template", {
       repoName: request.repoName,
       hasDescription: !!request.repoDescription,
-      language: request.repoLanguage || 'unknown'
+      language: request.repoLanguage || "unknown",
     });
-    
-    console.error('Error generating README:', error);
-    return { 
+
+    console.error("Error generating README:", error);
+    return {
       result: generateBasicReadmeTemplate(
-        request.repoName, 
-        request.repoDescription, 
+        request.repoName,
+        request.repoDescription,
         request.repoLanguage
-      ), 
-      error: error instanceof Error ? error : new Error('Unknown error') 
+      ),
+      error: error instanceof Error ? error : new Error("Unknown error"),
     };
   }
 };
@@ -147,81 +181,109 @@ export const generateReadmeWithAI = async (
  * Parse the generated README into sections
  */
 export const parseReadmeSections = (content: string): ReadmeSection[] => {
-  logReadmeGen('PARSE_SECTIONS', 'Parsing README content into sections', {
+  logReadmeGen("PARSE_SECTIONS", "Parsing README content into sections", {
     contentLength: content.length,
-    lineCount: content.split('\n').length
+    lineCount: content.split("\n").length,
   });
-  
+
   const sections: ReadmeSection[] = [];
-  const lines = content.split('\n');
-  
+  const lines = content.split("\n");
+
   let currentSection: ReadmeSection | null = null;
-  
+
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
-    
+
     // Check if this line is a heading
-    if (line.startsWith('# ')) {
+    if (line.startsWith("# ")) {
       // If we already have a current section, add it to the list
       if (currentSection) {
         sections.push(currentSection);
-        logReadmeGen('SECTION_ADDED', `Added section: ${currentSection.title}`, {
-          level: currentSection.level,
-          contentLength: currentSection.content.length
-        });
+        logReadmeGen(
+          "SECTION_ADDED",
+          `Added section: ${currentSection.title}`,
+          {
+            level: currentSection.level,
+            contentLength: currentSection.content.length,
+          }
+        );
       }
-      
+
       // Start a new section with an H1 heading
       currentSection = {
         title: line.substring(2).trim(),
-        content: line + '\n',
+        content: line + "\n",
         level: 1,
       };
-      logReadmeGen('SECTION_STARTED', `Started new H1 section: ${currentSection.title}`, { lineNumber: i });
-    } else if (line.startsWith('## ')) {
+      logReadmeGen(
+        "SECTION_STARTED",
+        `Started new H1 section: ${currentSection.title}`,
+        { lineNumber: i }
+      );
+    } else if (line.startsWith("## ")) {
       // If we already have a current section, add it to the list
       if (currentSection) {
         sections.push(currentSection);
-        logReadmeGen('SECTION_ADDED', `Added section: ${currentSection.title}`, {
-          level: currentSection.level,
-          contentLength: currentSection.content.length
-        });
+        logReadmeGen(
+          "SECTION_ADDED",
+          `Added section: ${currentSection.title}`,
+          {
+            level: currentSection.level,
+            contentLength: currentSection.content.length,
+          }
+        );
       }
-      
+
       // Start a new section with an H2 heading
       currentSection = {
         title: line.substring(3).trim(),
-        content: line + '\n',
+        content: line + "\n",
         level: 2,
       };
-      logReadmeGen('SECTION_STARTED', `Started new H2 section: ${currentSection.title}`, { lineNumber: i });
+      logReadmeGen(
+        "SECTION_STARTED",
+        `Started new H2 section: ${currentSection.title}`,
+        { lineNumber: i }
+      );
     } else if (currentSection) {
       // Add this line to the current section's content
-      currentSection.content += line + '\n';
+      currentSection.content += line + "\n";
     } else {
       // If we don't have a current section yet, create one for the preamble
       currentSection = {
-        title: 'Introduction',
-        content: line + '\n',
+        title: "Introduction",
+        content: line + "\n",
         level: 0,
       };
-      logReadmeGen('SECTION_STARTED', 'Started introduction section (no heading)', { lineNumber: i });
+      logReadmeGen(
+        "SECTION_STARTED",
+        "Started introduction section (no heading)",
+        { lineNumber: i }
+      );
     }
   }
-  
+
   // Add the last section if there is one
   if (currentSection) {
     sections.push(currentSection);
-    logReadmeGen('SECTION_ADDED', `Added final section: ${currentSection.title}`, {
-      level: currentSection.level,
-      contentLength: currentSection.content.length
-    });
+    logReadmeGen(
+      "SECTION_ADDED",
+      `Added final section: ${currentSection.title}`,
+      {
+        level: currentSection.level,
+        contentLength: currentSection.content.length,
+      }
+    );
   }
-  
-  logReadmeGen('PARSE_COMPLETE', `Parsed ${sections.length} sections from README content`, {
-    sectionCount: sections.length
-  });
-  
+
+  logReadmeGen(
+    "PARSE_COMPLETE",
+    `Parsed ${sections.length} sections from README content`,
+    {
+      sectionCount: sections.length,
+    }
+  );
+
   return sections;
 };
 
@@ -233,38 +295,42 @@ export const generateBasicReadmeTemplate = (
   description?: string,
   language?: string
 ): ReadmeGenerationResult => {
-  logReadmeGen('TEMPLATE', 'Generating basic README template', {
+  logReadmeGen("TEMPLATE", "Generating basic README template", {
     repoName,
-    description: description || 'none provided',
-    language: language || 'unknown'
+    description: description || "none provided",
+    language: language || "unknown",
   });
-  
+
   const content = `# ${repoName}\n\n${
-    description ? description + '\n\n' : ''
+    description ? description + "\n\n" : ""
   }## Features\n\n- Feature 1\n- Feature 2\n- Feature 3\n\n## Installation\n\n\`\`\`bash\n${
-    language === 'JavaScript' || language === 'TypeScript'
-      ? 'npm install'
-      : language === 'Python'
-      ? 'pip install -r requirements.txt'
-      : 'Install dependencies'
+    language === "JavaScript" || language === "TypeScript"
+      ? "npm install"
+      : language === "Python"
+      ? "pip install -r requirements.txt"
+      : "Install dependencies"
   }\n\`\`\`\n\n## Usage\n\n\`\`\`${
-    language === 'JavaScript' || language === 'TypeScript'
-      ? 'javascript'
-      : language === 'Python'
-      ? 'python'
-      : ''
+    language === "JavaScript" || language === "TypeScript"
+      ? "javascript"
+      : language === "Python"
+      ? "python"
+      : ""
   }\n// Example code\n\`\`\`\n\n## Contributing\n\nContributions are welcome!\n\n## License\n\nMIT\n`;
 
-  logReadmeGen('TEMPLATE_CONTENT', 'Generated basic README content', {
+  logReadmeGen("TEMPLATE_CONTENT", "Generated basic README content", {
     contentLength: content.length,
-    lineCount: content.split('\n').length
+    lineCount: content.split("\n").length,
   });
 
   const sections = parseReadmeSections(content);
 
-  logReadmeGen('TEMPLATE_COMPLETE', 'Completed basic README template generation', {
-    sectionCount: sections.length
-  });
+  logReadmeGen(
+    "TEMPLATE_COMPLETE",
+    "Completed basic README template generation",
+    {
+      sectionCount: sections.length,
+    }
+  );
 
   return {
     content,

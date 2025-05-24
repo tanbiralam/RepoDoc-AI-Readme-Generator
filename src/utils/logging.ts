@@ -2,25 +2,47 @@
  * Utility for logging with timestamps and persisting logs to localStorage
  */
 
+interface LogEntry {
+  timestamp: string;
+  stage: string;
+  message: string;
+  data?: Record<string, unknown>;
+}
+
 /**
- * Log a message with a timestamp and store it in localStorage
- * @param message - The message to log
- * @param data - Optional data to include with the log
+ * Utility function to log events with timestamps
+ * Works in both client and server environments
  */
 export const logWithTime = (
-  message: string,
-  data?: Record<string, unknown>
-) => {
+  stage: string,
+  { message, data }: { message: string; data?: Record<string, unknown> }
+): void => {
   const timestamp = new Date().toISOString();
-  const logEntry = { timestamp, message, ...data };
-  console.log(`[${timestamp}] ${message}`, data || "");
+  const logEntry: LogEntry = {
+    timestamp,
+    stage,
+    message,
+    data,
+  };
 
-  // You can also store logs in localStorage for persistence
-  const logs = JSON.parse(
-    localStorage.getItem("readme_generation_logs") || "[]"
+  // Log to console in both environments
+  console.log(
+    `[${timestamp}][${stage}] ${message}`,
+    data ? JSON.stringify(data) : ""
   );
-  logs.push(logEntry);
-  localStorage.setItem("readme_generation_logs", JSON.stringify(logs));
+
+  // Only attempt to use localStorage in browser environment
+  if (typeof window !== "undefined") {
+    try {
+      const logs = JSON.parse(
+        localStorage.getItem("readme_generation_logs") || "[]"
+      );
+      logs.push(logEntry);
+      localStorage.setItem("readme_generation_logs", JSON.stringify(logs));
+    } catch (error) {
+      console.warn("Failed to store log in localStorage:", error);
+    }
+  }
 };
 
 /**
