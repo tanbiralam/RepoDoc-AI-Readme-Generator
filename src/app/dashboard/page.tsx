@@ -56,6 +56,69 @@ export default function Dashboard() {
   const [error, setError] = useState<string | null>(null);
   const [showLogs, setShowLogs] = useState<boolean>(false);
 
+  // Load saved state only once on mount
+  useEffect(() => {
+    const savedState = localStorage.getItem("dashboard_state");
+    if (savedState) {
+      try {
+        const state = JSON.parse(savedState);
+        setSelectedRepo(state.selectedRepo || null);
+        setReadmeResult(state.readmeResult || null);
+        setReadmeContent(state.readmeContent || "");
+      } catch (e) {
+        console.error("Error loading saved state:", e);
+      }
+    }
+  }, []); // Empty dependency array means this only runs once on mount
+
+  // Save state when it changes
+  useEffect(() => {
+    const stateToSave = {
+      selectedRepo,
+      readmeResult,
+      readmeContent,
+    };
+
+    // Only save if we have meaningful state to save
+    if (selectedRepo || readmeResult || readmeContent) {
+      localStorage.setItem("dashboard_state", JSON.stringify(stateToSave));
+    }
+  }, [selectedRepo, readmeResult, readmeContent]);
+
+  // Handle visibility change
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      // Do nothing when tab becomes visible - state is already managed by other effects
+      // This prevents unnecessary reloading
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, []); // No dependencies needed since we're not using any state
+
+  // Handle page unload
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      const stateToSave = {
+        selectedRepo,
+        readmeResult,
+        readmeContent,
+      };
+
+      // Only save if we have meaningful state to save
+      if (selectedRepo || readmeResult || readmeContent) {
+        localStorage.setItem("dashboard_state", JSON.stringify(stateToSave));
+      }
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, [selectedRepo, readmeResult, readmeContent]);
+
   // Check URL for GitHub connection status
   useEffect(() => {
     const url = new URL(window.location.href);
@@ -210,6 +273,8 @@ export default function Dashboard() {
       try {
         const { result, error: aiError } = await generateReadmeWithAI({
           repoName: selectedRepo.name,
+          repoOwner: owner,
+          repoUrl: selectedRepo.html_url,
           repoDescription: selectedRepo.description || "",
           repoLanguage: selectedRepo.language || "",
           packageJson: packageJsonContent || "",

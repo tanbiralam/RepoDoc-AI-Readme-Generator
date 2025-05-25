@@ -22,6 +22,10 @@ export default function RootLayout({
     <html lang="en">
       <head>
         <Script src="https://js.stripe.com/v3/" strategy="beforeInteractive" />
+        <link
+          href="https://fonts.googleapis.com/icon?family=Material+Icons"
+          rel="stylesheet"
+        />
       </head>
       <body className={inter.className}>
         <AuthProvider>
