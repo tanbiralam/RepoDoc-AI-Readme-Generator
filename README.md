@@ -145,7 +145,7 @@ generateReadme(repoDescription)
       console.log('Failed to generate README.');
     }
   });
-### Example 2: Interacting with the GitHub API 
+### Example 2: Interacting with the GitHub API
 
 ```typescript
 import { Octokit } from "@octokit/rest";
