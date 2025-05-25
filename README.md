@@ -1,10 +1,10 @@
 # readmeGenerator 🤖
 
-A powerful tool to automatically generate comprehensive README files for your GitHub repositories using AI. Analyzes your codebase to create informative, well-structured documentation, saving you time and effort.
-
+A powerful tool to automatically generate comprehensive README files for your GitHub repositories using AI. Analyzes your codebase to create informative, well-structured documentation, saving you time and effort. SO
+Tanbir
 [![npm version](https://img.shields.io/npm/v/github-readme-generator)](https://www.npmjs.com/package/github-readme-generator)
-[![license](https://img.shields.io/github/license/USERNAME/readmeGenerator)](https://github.com/USERNAME/readmeGenerator/blob/main/LICENSE)
-![GitHub Actions](https://github.com/USERNAME/readmeGenerator/workflows/Node.js%20CI/badge.svg)
+[![license](https://img.shields.io/github/license/tanbiralam/readmeGenerator)](https://github.com/tanbiralam/readmeGenerator/blob/main/LICENSE)
+![GitHub Actions](https://github.com/tanbiralam/readmeGenerator/workflows/Node.js%20CI/badge.svg)
 ![TypeScript](https://img.shields.io/badge/language-TypeScript-blue.svg)
 
 ## ✨ Features
@@ -19,10 +19,10 @@ A powerful tool to automatically generate comprehensive README files for your Gi
 
 Before you begin, ensure you have the following:
 
-*   Node.js (version 18.0.0 or later): [https://nodejs.org/](https://nodejs.org/)
+*   Node.js (version 20.0.0 or later): [https://nodejs.org/](https://nodejs.org/)
 *   npm or yarn package manager
 *   Supabase account and project: [https://supabase.com/](https://supabase.com/)
-*   GitHub OAuth App configured with a callback URL pointing to your deployed instance (e.g., `http://localhost:3000/api/auth/callback/github`).
+*   GitHub OAuth App configured with a callback URL pointing to your deployed instance (e.g., `http://localhost:3000/api/auth/callback/github`).  Ensure the callback URL matches your development or production environment.
 *   API keys for at least one of these LLMs:
     *   Anthropic Claude: [https://www.anthropic.com/](https://www.anthropic.com/)
     *   OpenAI: [https://openai.com/](https://openai.com/)
@@ -33,7 +33,7 @@ Before you begin, ensure you have the following:
 1.  **Clone the repository:**
 
     ```bash
-    git clone https://github.com/USERNAME/readmeGenerator.git
+    git clone https://github.com/tanbiralam/readmeGenerator.git
     cd readmeGenerator
 2.  **Install dependencies:**
 
@@ -45,27 +45,27 @@ Before you begin, ensure you have the following:
 
     Copy the contents of `.env.example` to a new file named `.env` in the root directory and populate the environment variables:
     # Supabase Configuration
-    NEXT_PUBLIC_SUPABASE_URL=YOUR_SUPABASE_URL  # Your Supabase project URL
-    NEXT_PUBLIC_SUPABASE_ANON_KEY=YOUR_SUPABASE_ANON_KEY # Your Supabase anon key
-    SUPABASE_SERVICE_ROLE_KEY=YOUR_SUPABASE_SERVICE_ROLE_KEY # Your Supabase service role key (for admin tasks)
+    NEXT_PUBLIC_SUPABASE_URL=YOUR_SUPABASE_URL  # Your Supabase project URL (e.g., https://your-project.supabase.co)
+    NEXT_PUBLIC_SUPABASE_ANON_KEY=YOUR_SUPABASE_ANON_KEY # Your Supabase anon key (public key)
+    SUPABASE_SERVICE_ROLE_KEY=YOUR_SUPABASE_SERVICE_ROLE_KEY # Your Supabase service role key (for admin tasks - keep secret!)
 
     # GitHub OAuth Configuration
     GITHUB_ID=YOUR_GITHUB_APP_ID # Your GitHub OAuth App ID
     GITHUB_SECRET=YOUR_GITHUB_APP_SECRET # Your GitHub OAuth App Secret
 
     # AI API Keys (At least one is required)
-    CLAUDE_API_KEY=YOUR_CLAUDE_API_KEY # Anthropic Claude API Key (https://www.anthropic.com/)
-    OPENAI_API_KEY=YOUR_OPENAI_API_KEY # OpenAI API Key (https://platform.openai.com/api-keys)
-    GEMINI_API_KEY=YOUR_GEMINI_API_KEY # Google Gemini API Key (https://ai.google.dev/)
+    CLAUDE_API_KEY=YOUR_CLAUDE_API_KEY # Anthropic Claude API Key (Get it from: https://console.anthropic.com/settings/keys)
+    OPENAI_API_KEY=YOUR_OPENAI_API_KEY # OpenAI API Key (Get it from: https://platform.openai.com/api-keys)
+    GEMINI_API_KEY=YOUR_GEMINI_API_KEY # Google Gemini API Key (Get it from: https://ai.google.dev/)
 
     # Base URL (For local development or production)
     NEXT_PUBLIC_BASE_URL=http://localhost:3000  # Change for production deployment (e.g., https://yourdomain.com)
 
     # Rate Limiting Configuration (Optional, adjust as needed)
     MAX_REQUESTS_PER_MINUTE=60 # Maximum number of API requests allowed per minute
-    **Security Note:** Never commit your `.env` file to version control.  Keep your API keys and secrets safe. Use a tool like Doppler to sync secrets to your local environment and production.
+    **Security Note:** Never commit your `.env` file to version control. Keep your API keys and secrets safe. Use a tool like Doppler to sync secrets to your local environment and production.
 
-4.  **Run database migrations (if applicable):** Since this project uses Supabase, ensure your database is set up correctly.  This often involves running migrations using the Supabase CLI. Refer to the Supabase documentation for details.
+4.  **Run database migrations (if applicable):** This project uses Supabase. Ensure your database is set up correctly.  You might need to define schemas and enable authentication.  Refer to the Supabase documentation for details.  Consider using the Supabase CLI for managing migrations: `supabase db push`
 
 5.  **Start the development server:**
 
@@ -75,7 +75,7 @@ Before you begin, ensure you have the following:
     yarn dev
 6.  **Access the application:** Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-7.  **Verification:** After installation, sign in with one of the available methods and verify that you can fetch repositories from your GitHub account. Check your Supabase project to ensure users are being authenticated correctly.
+7.  **Verification:** After installation, sign in with one of the available methods and verify that you can fetch repositories from your GitHub account. Check your Supabase project to ensure users are being authenticated correctly.  Examine the logs for any errors during startup or authentication.
 
 ## 💻 Usage
 
@@ -83,11 +83,11 @@ Before you begin, ensure you have the following:
 
 2.  **Select a Repository:** Choose a repository from the list. The application will display both public and private repositories accessible to your account.
 
-3.  **Generate README:** Click the "Generate" button. The AI will analyze your repository and generate a README draft.
+3.  **Generate README:** Click the "Generate" button. The AI will analyze your repository and generate a README draft.  This might take a few seconds depending on the repository size and the selected AI model.
 
 4.  **Edit and Preview:** Refine the generated content using the live Markdown editor. Preview the changes in real-time to ensure accuracy and clarity.
 
-5.  **Export/Commit:** Download the generated README as a `.md` file or commit it directly to your GitHub repository.  The commit functionality requires additional setup with the GitHub API (see "Contributing").
+5.  **Export/Commit:** Download the generated README as a `.md` file or commit it directly to your GitHub repository.  The commit functionality requires a properly configured GitHub API token with sufficient permissions.
 
 ### Example 1: Generating README Content with OpenAI
 
@@ -125,9 +125,11 @@ async function generateReadme(repoDetails: string): Promise<string | null> {
     console.error('Error generating README:', error);
 
     // Check for rate limit errors and suggest a retry
-    if (error.response?.status === 429) {
+    if (error.status === 429) {
       console.warn('Rate limit exceeded. Please try again later.');
       // Implement retry logic with exponential backoff
+      await new Promise(resolve => setTimeout(resolve, 60000)); // Wait 60 seconds
+      return generateReadme(repoDetails); // Retry the request
     }
     return null;
   }
@@ -143,7 +145,7 @@ generateReadme(repoDescription)
       console.log('Failed to generate README.');
     }
   });
-### Example 2: Interacting with the GitHub API
+### Example 2: Interacting with the GitHub API 
 
 ```typescript
 import { Octokit } from "@octokit/rest";
@@ -153,7 +155,7 @@ const octokit = new Octokit({
   auth: process.env.GITHUB_TOKEN, // Ensure you have a GitHub token set in your environment
 });
 
-async function getRepoDetails(owner: string, repo: string) {
+async function getRepoDetails(owner: string, repo: string): Promise<any> {
   try {
     // Retrieve repository information
     const { data: repoData } = await octokit.rest.repos.get({
@@ -162,16 +164,25 @@ async function getRepoDetails(owner: string, repo: string) {
     });
 
     // Retrieve the README content (optional)
-    const { data: readmeData } = await octokit.rest.repos.getReadme({
-      owner,
-      repo,
-    });
+    try {
+      const readmeResponse = await octokit.rest.repos.getReadme({
+        owner,
+        repo,
+      });
 
-    // Process the data (e.g., extract description, languages, etc.)
-    console.log("Repository Details:", repoData);
-    // You might want to decode the README content from base64
-    // console.log("README Content:", Buffer.from(readmeData.content, 'base64').toString());
-    return { repoData, readmeData };
+      const readmeData = readmeResponse.data as any;  //added explicit type casting here
+
+      // Process the data (e.g., extract description, languages, etc.)
+      console.log("Repository Details:", repoData);
+      // You might want to decode the README content from base64
+      if (readmeData && readmeData.content) {
+          console.log("README Content:", Buffer.from(readmeData.content, 'base64').toString());
+      }
+      return { repoData, readmeData };
+    } catch (readmeError: any) {
+      console.warn("README not found:", readmeError.message);
+      return { repoData, readmeData: null }; // Handle case where README doesn't exist
+    }
 
   } catch (error: any) {
     console.error("Error fetching repository details:", error);
@@ -217,6 +228,10 @@ async function generateReadmeWithClaude(repoDescription: string): Promise<string
     return response.completion || null;
   } catch (error: any) {
     console.error("Error generating README with Claude:", error);
+
+    if (error instanceof Anthropic.APIError) {
+      console.error("Anthropic API Error:", error.status, error.message);
+    }
     return null;
   }
 }
@@ -233,34 +248,31 @@ generateReadmeWithClaude(repoDesc)
   });
 ## ⚙️ Configuration
 
-The application's behavior can be customized using environment variables. These variables are loaded from the `.env` file.  See the `.env.example` file for a complete list of configurable options.
+The application's behavior can be customized using environment variables. These variables are loaded from the `.env` file. See the `.env.example` file for a complete list of configurable options.
 
 Key configuration areas:
 
-*   **API Keys:**  Specify API keys for the AI models you want to use. At least one API key is required for the AI-powered generation to function.
-*   **GitHub Authentication:** Configure the GitHub OAuth App credentials for user authentication and repository access.
-*   **Supabase:** Set the Supabase project URL and API keys for authentication and data storage.
+- **API Keys:** Specify API keys for the AI models you want to use. At least one API key is required for the AI-powered generation to function.
+- **GitHub Authentication:** Configure the GitHub OAuth App credentials for user authentication and repository access. Ensure the callback URL is correctly set in your GitHub OAuth App configuration.
+- **Supabase:** Set the Supabase project URL and API keys for authentication and data storage. Incorrect Supabase configuration can lead to authentication errors.
+- **Rate Limiting:** Adjust `MAX_REQUESTS_PER_MINUTE` to control the rate at which API requests are made, preventing potential rate limiting errors.
 
 ## 🤝 Contributing
 
 We welcome contributions to improve `readmeGenerator`! To contribute:
 
-1.  Fork the repository.
-2.  Create a new branch for your feature or bug fix.
-3.  Implement your changes, ensuring they adhere to the project's coding style and include appropriate tests.
-4.  Submit a pull request with a clear description of your changes.
+1. Fork the repository: <https://github.com/tanbiralam/readmeGenerator>
+2. Create a new branch for your feature or bug fix.
+3. Implement your changes, ensuring they adhere to the project's coding style and include appropriate tests.
+4. Submit a pull request with a clear description of your changes.
 
-**Note:** Direct commits to the `main` branch are not permitted. All changes must be submitted via pull request.
+**Note:** Direct commits to the `main` branch are not permitted. All changes must be submitted via pull request. Provide detailed information about your changes in the pull request description.
 
 ### Contributing with GitHub API Commit Access
 
 To enable direct commits to GitHub repositories:
 
-1.  Create a personal access token (PAT) with the `repo` scope.
-2.  Add a `GITHUB_TOKEN` environment variable to your `.env` file.
-3.  Use the Octokit library to authenticate and interact with the GitHub API.
-4.  Implement error handling to gracefully manage authorization issues.
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+1. Create a personal access token (PAT) with the `repo` scope.
+2. Add a `GITHUB_TOKEN` environment variable to your `.env` file.
+3. Use the Octokit library to authenticate and interact with the GitHub API.
+4. Implement error handling to gracefully manage authorization issues. Ensure the PAT has the necessary permissions for the target repository.
