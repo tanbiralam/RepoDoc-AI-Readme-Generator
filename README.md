@@ -7,44 +7,44 @@
 
 ---
 
-A powerful and customizable tool to automatically generate professional GitHub README files using AI and advanced integrations. It leverages OpenAI's GPT models alongside multiple AI and API services to create rich, dynamic, and well-structured README content tailored to your project needs.
+readmeGenerator is a powerful AI-driven tool designed to automatically generate professional GitHub README files. By leveraging state-of-the-art AI models like OpenAI GPT-4 alongside integrations with Anthropic, Google Generative AI, and GitHub APIs, it produces rich, context-aware documentation tailored specifically to your projects.
 
 ---
 
 ## ✨ Features
 
-- **AI-powered README generation** using OpenAI GPT-3.5-turbo and GPT-4 models with context-aware prompts.
-- **Multi-source integration** including Anthropic, Google Generative AI, and GitHub API for enriched content.
-- **Interactive UI components** powered by React and Radix UI for editing and previewing README content live.
-- **Syntax highlighting and markdown enhancements** with remark, rehype, and react-syntax-highlighter.
-- **Stripe payment integration** for premium features and usage tracking.
-- **Robust state management and authentication** via Supabase and Next.js for user sessions.
-- **Highly customizable configuration** via environment variables and JSON config files.
-- **Comprehensive error handling and retry logic** for stable API communication.
-- **Built with Next.js 15 and TypeScript** to ensure best performance and developer experience.
+- **AI-powered README generation** using OpenAI GPT-4 and GPT-3.5-turbo with context-aware prompts for high-quality content.
+- **Multi-source AI integration** including Anthropic Claude and Google Generative AI for enhanced and diversified content generation.
+- **GitHub repository metadata fetching** via Octokit REST API to auto-populate project-specific information.
+- **Interactive React UI** with Radix UI tooltips enabling live editing, previewing, and syntax-highlighted markdown rendering.
+- **Syntax highlighting and markdown enhancements** using remark, rehype, and react-syntax-highlighter for readable and styled output.
+- **Stripe payment integration** for managing premium features and usage billing seamlessly.
+- **Secure authentication and state management** powered by Supabase and Next.js for user sessions and data persistence.
+- **Robust error handling and retry logic** across all API calls to ensure reliability and fault tolerance.
+- **Built on Next.js 15 and TypeScript**, providing a scalable and developer-friendly codebase with excellent performance.
 
 ---
 
 ## 📋 Prerequisites
 
-Before installing and running readmeGenerator, ensure you have the following installed and configured:
+Ensure the following are installed and configured before proceeding:
 
 1. **Node.js v18 or higher** — [Download Node.js](https://nodejs.org/)
-2. **npm v9 or higher** (comes with Node.js)
-3. **A GitHub account** and personal access token for API access (with repo scope)
+2. **npm v9 or higher** (bundled with Node.js)
+3. **A GitHub account** with a personal access token (PAT) having `repo` scope — [Create PAT](https://github.com/settings/tokens)
 4. **OpenAI API key** — [Get your API key](https://platform.openai.com/account/api-keys)
-5. **Anthropic API key** — [Create an account](https://www.anthropic.com/)
+5. **Anthropic API key** — [Sign up at Anthropic](https://www.anthropic.com/)
 6. **Google Generative AI API credentials** — [Google Cloud Console](https://console.cloud.google.com/apis/credentials)
-7. **Stripe API keys** for payment integration — [Stripe Dashboard](https://dashboard.stripe.com/apikeys)
-8. **Supabase project** for authentication and database — [Supabase.io](https://supabase.io/)
+7. **Stripe API keys** — [Stripe Dashboard](https://dashboard.stripe.com/apikeys)
+8. **Supabase project** for authentication and database — [Create project on Supabase](https://supabase.io/)
 9. **PostgreSQL database** (managed by Supabase or self-hosted)
-10. **Basic familiarity with environment variables and .env files**
+10. **Basic knowledge of environment variables and `.env` configuration**
 
 ---
 
 ## 🚀 Installation
 
-Follow these step-by-step instructions to get readmeGenerator running locally:
+Follow these step-by-step instructions to set up readmeGenerator locally:
 
 1. **Clone the repository**
 
@@ -57,15 +57,13 @@ cd readmeGenerator
 npm install
 3. **Set up environment variables**
 
-Create a `.env` file in the root directory based on the example below:
-
 ```bash
 cp .env.example .env
-Edit `.env` and fill in your API keys and database credentials.
+Edit the `.env` file and fill in your API keys and database credentials accordingly.
 
 4. **Database setup**
 
-If you are using Supabase, create a new project and note your `SUPABASE_URL` and `SUPABASE_ANON_KEY`. The database schema is managed automatically via migrations or you can run:
+If using Supabase, create a new project and obtain your `SUPABASE_URL` and `SUPABASE_ANON_KEY`. The database schema will be managed automatically via migrations or you can run:
 
 ```bash
 npm run db:migrate
@@ -77,20 +75,20 @@ npm run db:migrate
 npm run dev
 6. **Verify installation**
 
-- Visit `http://localhost:3000` in your browser.
+- Navigate to `http://localhost:3000` in your browser.
 - You should see the readmeGenerator UI.
-- Try generating a sample README by providing a GitHub repo or project details.
-- Check console logs for any errors.
+- Test generating a README by providing a GitHub repository or project details.
+- Check console logs for errors.
 
-If the app loads without errors and README generation completes, your installation is successful.
+If the application loads and README generation works successfully, your installation is complete.
 
 ---
 
 ## 💻 Usage
 
-Below are multiple usage examples demonstrating the core API interactions using TypeScript and best practices.
+Below are multiple examples demonstrating the core API interactions using TypeScript and following current best practices with robust error handling.
 
-### 1. Generate README using OpenAI chat completion (GPT-4)
+### 1. Generate README using OpenAI GPT-4 chat completion
 
 ```typescript
 import { config } from "dotenv";
@@ -99,13 +97,12 @@ import OpenAI from "openai";
 config(); // Load environment variables from .env
 
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+  apiKey: process.env.OPENAI_API_KEY ?? "",
 });
 
-interface ChatRequest {
-  model: 'gpt-4' | 'gpt-3.5-turbo';
-  messages: { role: string; content: string }[];
-  max_tokens?: number;
+interface ChatMessage {
+  role: "system" | "user" | "assistant";
+  content: string;
 }
 
 async function generateReadme(prompt: string): Promise<string> {
@@ -118,22 +115,29 @@ async function generateReadme(prompt: string): Promise<string> {
       ],
       max_tokens: 1500,
     });
-    return response.choices[0].message?.content ?? "";
+
+    const content = response.choices[0]?.message?.content;
+    if (!content) throw new Error("No content received from OpenAI.");
+    return content;
   } catch (error) {
     console.error("OpenAI API error:", error);
-    throw new Error("Failed to generate README");
+    throw new Error("Failed to generate README via OpenAI.");
   }
 }
 
 // Example usage:
 (async () => {
   const prompt = "Generate a professional README for a TypeScript GitHub project named readmeGenerator.";
-  const readmeContent = await generateReadme(prompt);
-  console.log(readmeContent);
+  try {
+    const readme = await generateReadme(prompt);
+    console.log("Generated README:\n", readme);
+  } catch (error) {
+    console.error(error);
+  }
 })();
 ---
 
-### 2. Fetch GitHub repo details via Octokit
+### 2. Fetch GitHub repository details via Octokit
 
 ```typescript
 import { Octokit } from "@octokit/rest";
@@ -142,27 +146,50 @@ const octokit = new Octokit({
   auth: process.env.GITHUB_TOKEN,
 });
 
-async function getRepoInfo(owner: string, repo: string) {
+interface RepoInfo {
+  full_name: string;
+  description: string | null;
+  stargazers_count: number;
+  forks_count: number;
+  open_issues_count: number;
+  html_url: string;
+}
+
+async function getRepoInfo(owner: string, repo: string): Promise<RepoInfo> {
   try {
-    const { data } = await octokit.repos.get({
-      owner,
-      repo,
-    });
-    return data;
+    const { data } = await octokit.repos.get({ owner, repo });
+
+    return {
+      full_name: data.full_name,
+      description: data.description,
+      stargazers_count: data.stargazers_count,
+      forks_count: data.forks_count,
+      open_issues_count: data.open_issues_count,
+      html_url: data.html_url,
+    };
   } catch (error) {
     console.error("GitHub API error:", error);
-    throw new Error("Failed to fetch repository info");
+    throw new Error("Failed to fetch repository info from GitHub.");
   }
 }
 
 // Example usage:
 (async () => {
-  const repoData = await getRepoInfo("tanbiralam", "readmeGenerator");
-  console.log(`Repository: ${repoData.full_name} - ${repoData.description}`);
+  try {
+    const repoData = await getRepoInfo("tanbiralam", "readmeGenerator");
+    console.log(`Repository: ${repoData.full_name}`);
+    console.log(`Description: ${repoData.description}`);
+    console.log(`Stars: ${repoData.stargazers_count}`);
+    console.log(`Forks: ${repoData.forks_count}`);
+    console.log(`Open Issues: ${repoData.open_issues_count}`);
+    console.log(`URL: ${repoData.html_url}`);
+  } catch (error) {
+    console.error(error);
+  }
 })();
 ---
 
-### 3. Retry logic with Axios for Anthropic SDK calls
+### 3. Anthropic API call with retry logic using TypeScript
 
 ```typescript
 import Anthropics from "@anthropic-ai/sdk";
@@ -171,7 +198,11 @@ const anthropic = new Anthropics({
   apiKey: process.env.ANTHROPIC_API_KEY ?? "",
 });
 
-async function callAnthropicWithRetry(prompt: string, retries = 3): Promise<string> {
+async function callAnthropicWithRetry(
+  prompt: string,
+  retries = 3,
+  delayMs = 1000
+): Promise<string> {
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
       const response = await anthropic.completions.create({
@@ -179,46 +210,36 @@ async function callAnthropicWithRetry(prompt: string, retries = 3): Promise<stri
         model: "claude-v1",
         max_tokens_to_sample: 1000,
       });
+      if (!response.completion) throw new Error("No completion returned.");
       return response.completion;
     } catch (error) {
       console.error(`Attempt ${attempt} failed:`, error);
       if (attempt === retries) {
-        throw new Error("Anthropic API request failed after retries");
+        throw new Error("Anthropic API request failed after maximum retries.");
       }
       // Exponential backoff
-      await new Promise((res) => setTimeout(res, attempt * 1000));
+      await new Promise((res) => setTimeout(res, delayMs * attempt));
     }
   }
-  throw new Error("Unexpected error in retry logic");
+  throw new Error("Unexpected error in Anthropic retry logic.");
 }
 
 // Example usage:
 (async () => {
-  const text = await callAnthropicWithRetry("Generate a README introduction paragraph.");
-  console.log(text);
+  try {
+    const text = await callAnthropicWithRetry("Generate a README introduction paragraph.");
+    console.log("Anthropic generated text:\n", text);
+  } catch (error) {
+    console.error(error);
+  }
 })();
 ---
 
 ## ⚙️ Configuration
 
-readmeGenerator is configured via environment variables. Below are the key variables you must set in your `.env` file:
+readmeGenerator requires the following environment variables configured in your `.env` file:
 
-| Variable                  | Description                                                  | Example                                | Required |
-|---------------------------|--------------------------------------------------------------|--------------------------------------|----------|
-| OPENAI_API_KEY            | API key for OpenAI GPT models                                | sk-abc123xyz                         | Yes      |
-| ANTHROPIC_API_KEY         | API key for Anthropic AI                                     | anthropic-xyz123                    | Yes      |
-| GOOGLE_AI_API_KEY         | Google Generative AI API key                                 | AIzaSy...                          | Yes      |
-| GITHUB_TOKEN              | GitHub Personal Access Token (with repo scope)              | ghp_abc1234567890                  | Yes      |
-| STRIPE_SECRET_KEY         | Secret key for Stripe payment integration                    | sk_test_4eC39HqLyjWDarjtT1zdp7dc  | Yes      |
-| SUPABASE_URL              | Supabase project URL                                         | https://xyzcompany.supabase.co    | Yes      |
-| SUPABASE_ANON_KEY         | Supabase anonymous public API key                            | eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9... | Yes      |
-| DATABASE_URL              | PostgreSQL connection string (if self-hosted)                | postgres://user:password@host:5432/dbname | Conditional |
-| NEXT_PUBLIC_APP_URL       | Public URL of the deployed app (for OAuth redirects, etc.)  | http://localhost:3000               | Yes      |
-| NODE_ENV                  | Node environment (development, production)                  | development                       | Yes      |
-
----
-
-### .env.example
-
-```env
-# OpenAI API Key - Get yours from https://platform.openai.com/account/api-keys
+| Variable            | Description                                                | Example                                                      | Required    |
+|---------------------|------------------------------------------------------------|--------------------------------------------------------------|-------------|
+| OPENAI_API_KEY      | API key for OpenAI GPT models                              | sk-abc123xyz                                                 | Yes         |
+| ANTHROPIC_API_KEY
