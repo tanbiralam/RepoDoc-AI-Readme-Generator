@@ -233,12 +233,6 @@ async function callAnthropicWithRetry(
     console.error(error);
   }
 })();
----
-
-
-
-
-
 ## ⚙️ Configuration
 
 readmeGenerator requires the following environment variables configured in your `.env` file:
