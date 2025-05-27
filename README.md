@@ -7,30 +7,30 @@
 
 ---
 
-readmeGenerator is a powerful AI-driven tool designed to automatically generate professional GitHub README files. By leveraging state-of-the-art AI models like OpenAI GPT-4 alongside integrations with Anthropic, Google Generative AI, and GitHub APIs, it produces rich, context-aware documentation tailored specifically to your projects.
+readmeGenerator is a powerful AI-driven tool designed to automatically generate professional GitHub README files tailored to your projects. It harnesses advanced AI models including OpenAI GPT-4, Anthropic Claude, and Google Generative AI, combined with GitHub API metadata, to create rich, context-aware documentation with minimal effort.
 
 ---
 
 ## ✨ Features
 
-- **AI-powered README generation** using OpenAI GPT-4 and GPT-3.5-turbo with context-aware prompts for high-quality content.
-- **Multi-source AI integration** including Anthropic Claude and Google Generative AI for enhanced and diversified content generation.
-- **GitHub repository metadata fetching** via Octokit REST API to auto-populate project-specific information.
-- **Interactive React UI** with Radix UI tooltips enabling live editing, previewing, and syntax-highlighted markdown rendering.
-- **Syntax highlighting and markdown enhancements** using remark, rehype, and react-syntax-highlighter for readable and styled output.
-- **Stripe payment integration** for managing premium features and usage billing seamlessly.
-- **Secure authentication and state management** powered by Supabase and Next.js for user sessions and data persistence.
-- **Robust error handling and retry logic** across all API calls to ensure reliability and fault tolerance.
-- **Built on Next.js 15 and TypeScript**, providing a scalable and developer-friendly codebase with excellent performance.
+- **AI-powered README generation** using OpenAI GPT-4 and GPT-3.5-turbo with context-aware, customizable prompts for precise and high-quality outputs.
+- **Multi-source AI integrations** including Anthropic Claude and Google Generative AI to diversify and enrich generated content.
+- **Automated GitHub repository metadata fetching** via Octokit REST API for dynamic project detail inclusion.
+- **Interactive React UI** with Radix UI tooltips supporting live editing, previewing, and syntax-highlighted markdown rendering for seamless user experience.
+- **Advanced markdown processing** using remark, rehype, and react-syntax-highlighter for beautifully styled and readable README files.
+- **Stripe payment integration** to enable premium feature management and usage billing within the app.
+- **Secure authentication and state management** powered by Supabase and Next.js, ensuring robust session handling and data persistence.
+- **Robust error handling and retry logic** implemented across all API interactions to maximize reliability and fault tolerance.
+- **Built on Next.js 15 and TypeScript**, offering a scalable, maintainable, and developer-friendly codebase with excellent performance.
 
 ---
 
 ## 📋 Prerequisites
 
-Ensure the following are installed and configured before proceeding:
+Before installing and running readmeGenerator, ensure you have the following:
 
 1. **Node.js v18 or higher** — [Download Node.js](https://nodejs.org/)
-2. **npm v9 or higher** (bundled with Node.js)
+2. **npm v9 or higher** (comes bundled with Node.js)
 3. **A GitHub account** with a personal access token (PAT) having `repo` scope — [Create PAT](https://github.com/settings/tokens)
 4. **OpenAI API key** — [Get your API key](https://platform.openai.com/account/api-keys)
 5. **Anthropic API key** — [Sign up at Anthropic](https://www.anthropic.com/)
@@ -38,7 +38,7 @@ Ensure the following are installed and configured before proceeding:
 7. **Stripe API keys** — [Stripe Dashboard](https://dashboard.stripe.com/apikeys)
 8. **Supabase project** for authentication and database — [Create project on Supabase](https://supabase.io/)
 9. **PostgreSQL database** (managed by Supabase or self-hosted)
-10. **Basic knowledge of environment variables and `.env` configuration**
+10. **Basic understanding of environment variables and `.env` configuration**
 
 ---
 
@@ -86,7 +86,7 @@ If the application loads and README generation works successfully, your installa
 
 ## 💻 Usage
 
-Below are multiple examples demonstrating the core API interactions using TypeScript and following current best practices with robust error handling.
+Below are multiple TypeScript examples demonstrating core API interactions with robust error handling and current best practices.
 
 ### 1. Generate README using OpenAI GPT-4 chat completion
 
@@ -137,10 +137,13 @@ async function generateReadme(prompt: string): Promise<string> {
 })();
 ---
 
-### 2. Fetch GitHub repository details via Octokit
+### 2. Fetch GitHub repository details via Octokit REST API
 
 ```typescript
 import { Octokit } from "@octokit/rest";
+import { config } from "dotenv";
+
+config(); // Load environment variables from .env
 
 const octokit = new Octokit({
   auth: process.env.GITHUB_TOKEN,
@@ -192,7 +195,10 @@ async function getRepoInfo(owner: string, repo: string): Promise<RepoInfo> {
 ### 3. Anthropic API call with retry logic using TypeScript
 
 ```typescript
+import { config } from "dotenv";
 import Anthropics from "@anthropic-ai/sdk";
+
+config(); // Load environment variables from .env
 
 const anthropic = new Anthropics({
   apiKey: process.env.ANTHROPIC_API_KEY ?? "",
@@ -217,7 +223,7 @@ async function callAnthropicWithRetry(
       if (attempt === retries) {
         throw new Error("Anthropic API request failed after maximum retries.");
       }
-      // Exponential backoff
+      // Exponential backoff before retrying
       await new Promise((res) => setTimeout(res, delayMs * attempt));
     }
   }
@@ -233,11 +239,8 @@ async function callAnthropicWithRetry(
     console.error(error);
   }
 })();
+---
+
 ## ⚙️ Configuration
 
-readmeGenerator requires the following environment variables configured in your `.env` file:
-
-| Variable            | Description                                                | Example                                                      | Required    |
-|---------------------|------------------------------------------------------------|--------------------------------------------------------------|-------------|
-| OPENAI_API_KEY      | API key for OpenAI GPT models                              | sk-abc123xyz                                                 | Yes         |
-| ANTHROPIC_API_KEY
+readmeGenerator requires the following environment variables configured in your `.
