@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import Stripe from "stripe";
-import crypto from "crypto";
 
 // Initialize Stripe with proper error handling
 const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
@@ -10,7 +9,7 @@ if (!stripeSecretKey) {
 }
 
 const stripe = stripeSecretKey
-  ? new Stripe(stripeSecretKey, { apiVersion: "2024-06-20" })
+  ? new Stripe(stripeSecretKey, { apiVersion: "2025-03-31.basil" })
   : null;
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;

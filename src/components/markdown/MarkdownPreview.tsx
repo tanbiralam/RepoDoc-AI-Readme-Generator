@@ -4,10 +4,12 @@ import remarkGfm from "remark-gfm";
 import remarkToc from "remark-toc";
 import remarkEmoji from "remark-emoji";
 import { markdownComponents } from "./MarkdownComponents";
+import { ReadmeSection } from "@/types";
 
 interface MarkdownPreviewProps {
   content: string;
   className?: string;
+  sections?: ReadmeSection[];
 }
 
 const preprocessMarkdown = (content: string): string => {
@@ -44,6 +46,8 @@ const preprocessMarkdown = (content: string): string => {
 export default function MarkdownPreview({
   content,
   className = "",
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  sections,
 }: MarkdownPreviewProps) {
   const processedContent = preprocessMarkdown(content);
 

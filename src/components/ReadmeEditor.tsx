@@ -1,17 +1,20 @@
 import { useState, useEffect, useRef } from "react";
 import MarkdownEditor from "./markdown/MarkdownEditor";
 import MarkdownPreview from "./markdown/MarkdownPreview";
+import { ReadmeSection } from "@/types";
 
 interface ReadmeEditorProps {
   readmeContent: string;
   onChange: (content: string) => void;
   onToggleFullScreen?: (isFullScreen: boolean) => void;
+  sections?: ReadmeSection[];
 }
 
 export default function ReadmeEditor({
   readmeContent,
   onChange,
   onToggleFullScreen,
+  sections,
 }: ReadmeEditorProps) {
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [content, setContent] = useState<string>(readmeContent);
@@ -116,7 +119,7 @@ export default function ReadmeEditor({
           Edit
         </button>
       </div>
-      <MarkdownPreview content={content} className="p-4" />
+      <MarkdownPreview content={content} className="p-4" sections={sections} />
     </div>
   );
 }

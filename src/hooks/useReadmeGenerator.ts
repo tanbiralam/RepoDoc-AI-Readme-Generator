@@ -37,8 +37,11 @@ export const useReadmeGenerator = () => {
    */
   const handleRepoSelect = (repo: GitHubRepo) => {
     logWithTime(`Repository selected: ${repo.name}`, {
-      repoId: repo.id,
-      repoFullName: repo.full_name,
+      message: `Repository selected: ${repo.name}`,
+      data: {
+        repoId: repo.id,
+        repoFullName: repo.full_name,
+      },
     });
     setSelectedRepo(repo);
     setReadmeResult(null);
@@ -61,19 +64,28 @@ export const useReadmeGenerator = () => {
       logWithTime(
         "Cannot generate README: No repository selected or user not logged in",
         {
-          hasSelectedRepo: !!selectedRepo,
-          isUserLoggedIn: !!user,
+          message:
+            "Cannot generate README: No repository selected or user not logged in",
+          data: {
+            hasSelectedRepo: !!selectedRepo,
+            isUserLoggedIn: !!user,
+          },
         }
       );
       return;
     }
 
+    let loadingToastId = "";
+
     if (!canGenerateReadme()) {
       const errorMessage = `You've reached your limit of ${plan.readme_generations_limit} README generations for your ${plan.name} plan. Please upgrade to generate more READMEs.`;
       logWithTime("Cannot generate README: Generation limit reached", {
-        plan: plan.name,
-        limit: plan.readme_generations_limit,
-        remaining: readmeGenerationsRemaining,
+        message: "Cannot generate README: Generation limit reached",
+        data: {
+          plan: plan.name,
+          limit: plan.readme_generations_limit,
+          remaining: readmeGenerationsRemaining,
+        },
       });
       setError(errorMessage);
       showWarning(errorMessage);
@@ -82,21 +94,29 @@ export const useReadmeGenerator = () => {
 
     try {
       logWithTime("Starting README generation process", {
-        repoName: selectedRepo.name,
-        repoId: selectedRepo.id,
-        repoFullName: selectedRepo.full_name,
+        message: "Starting README generation process",
+        data: {
+          repoName: selectedRepo.name,
+          repoId: selectedRepo.id,
+          repoFullName: selectedRepo.full_name,
+        },
       });
 
-      const loadingToastId = showLoading("Generating README...");
+      loadingToastId = showLoading("Generating README...");
       setGeneratingReadme(true);
       setError(null);
 
       // Extract owner and repo name
       const [owner, repo] = selectedRepo.full_name.split("/");
-      logWithTime("Extracted repository info", { owner, repo });
+      logWithTime("Extracted repository info", {
+        message: "Extracted repository info",
+        data: { owner, repo },
+      });
 
       // Get package.json content if available
-      logWithTime("Fetching package.json content");
+      logWithTime("Fetching package.json content", {
+        message: "Fetching package.json content",
+      });
       const { content: packageJsonContent } = await getPackageJson(
         owner,
         repo,
@@ -104,12 +124,17 @@ export const useReadmeGenerator = () => {
       );
 
       logWithTime("Package.json fetch result", {
-        hasPackageJson: !!packageJsonContent,
-        packageJsonLength: packageJsonContent ? packageJsonContent.length : 0,
+        message: "Package.json fetch result",
+        data: {
+          hasPackageJson: !!packageJsonContent,
+          packageJsonLength: packageJsonContent ? packageJsonContent.length : 0,
+        },
       });
 
       // Get current README.md content if available
-      logWithTime("Fetching current README.md content");
+      logWithTime("Fetching current README.md content", {
+        message: "Fetching current README.md content",
+      });
       const { content: currentReadmeContent } = await getReadmeContent(
         owner,
         repo,
@@ -117,17 +142,23 @@ export const useReadmeGenerator = () => {
       );
 
       logWithTime("Current README.md fetch result", {
-        hasReadme: !!currentReadmeContent,
-        readmeLength: currentReadmeContent ? currentReadmeContent.length : 0,
+        message: "Current README.md fetch result",
+        data: {
+          hasReadme: !!currentReadmeContent,
+          readmeLength: currentReadmeContent ? currentReadmeContent.length : 0,
+        },
       });
 
       // Generate README using AI
       logWithTime("Sending data to AI for README generation", {
-        repoName: selectedRepo.name,
-        hasDescription: !!selectedRepo.description,
-        hasLanguage: !!selectedRepo.language,
-        hasPackageJson: !!packageJsonContent,
-        hasCurrentReadme: !!currentReadmeContent,
+        message: "Sending data to AI for README generation",
+        data: {
+          repoName: selectedRepo.name,
+          hasDescription: !!selectedRepo.description,
+          hasLanguage: !!selectedRepo.language,
+          hasPackageJson: !!packageJsonContent,
+          hasCurrentReadme: !!currentReadmeContent,
+        },
       });
 
       // Try generating the README with AI first
@@ -140,14 +171,21 @@ export const useReadmeGenerator = () => {
           currentReadme: currentReadmeContent || "",
           topics: selectedRepo.topics || [],
           isPrivate: selectedRepo.private || false,
+          repoOwner: owner,
+          repoUrl:
+            selectedRepo.html_url ||
+            `https://github.com/${selectedRepo.full_name}`,
         });
 
         if (aiError) throw aiError;
 
         if (result) {
           logWithTime("README generated successfully using AI", {
-            contentLength: result.content.length,
-            sectionCount: result.sections?.length || 0,
+            message: "README generated successfully using AI",
+            data: {
+              contentLength: result.content.length,
+              sectionCount: result.sections?.length || 0,
+            },
           });
 
           setReadmeResult(result);
@@ -159,12 +197,18 @@ export const useReadmeGenerator = () => {
 
           // Increment the readme generation count
           if (user) {
-            logWithTime("Incrementing README generation count");
+            logWithTime("Incrementing README generation count", {
+              message: "Incrementing README generation count",
+            });
             const { success } = await incrementReadmeGeneration(user.id);
             if (success) {
               await refreshSubscription();
               logWithTime(
-                "README generation count incremented and subscription refreshed"
+                "README generation count incremented and subscription refreshed",
+                {
+                  message:
+                    "README generation count incremented and subscription refreshed",
+                }
               );
             } else {
               console.error("Failed to increment README generation count");
@@ -176,7 +220,13 @@ export const useReadmeGenerator = () => {
       } catch (aiError) {
         logWithTime(
           "Error generating README with AI. Using fallback template.",
-          { error: aiError }
+          {
+            message:
+              "Error generating README with AI. Using fallback template.",
+            data: {
+              errorDetails: aiError,
+            },
+          }
         );
         console.error("Error generating README with AI:", aiError);
 
@@ -192,8 +242,11 @@ export const useReadmeGenerator = () => {
         );
 
         logWithTime("Basic fallback template generated", {
-          contentLength: basicResult.content.length,
-          sectionCount: basicResult.sections?.length || 0,
+          message: "Basic fallback template generated",
+          data: {
+            contentLength: basicResult.content.length,
+            sectionCount: basicResult.sections?.length || 0,
+          },
         });
 
         setReadmeResult(basicResult);
@@ -202,13 +255,21 @@ export const useReadmeGenerator = () => {
         // Still increment the generation count for the fallback
         if (user) {
           logWithTime(
-            "Incrementing README generation count for fallback generation"
+            "Incrementing README generation count for fallback generation",
+            {
+              message:
+                "Incrementing README generation count for fallback generation",
+            }
           );
           const { success } = await incrementReadmeGeneration(user.id);
           if (success) {
             await refreshSubscription();
             logWithTime(
-              "README generation count incremented and subscription refreshed for fallback"
+              "README generation count incremented and subscription refreshed for fallback",
+              {
+                message:
+                  "README generation count incremented and subscription refreshed for fallback",
+              }
             );
           } else {
             console.error(
@@ -218,7 +279,12 @@ export const useReadmeGenerator = () => {
         }
       }
     } catch (error) {
-      logWithTime("Error in README generation process", { error });
+      logWithTime("Error in README generation process", {
+        message: "Error in README generation process",
+        data: {
+          errorDetails: error,
+        },
+      });
       console.error("Error generating README:", error);
 
       // Hide the loading toast and show error
