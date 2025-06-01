@@ -6,59 +6,96 @@ import { createMiddlewareClient } from "@supabase/auth-helpers-nextjs";
  * Middleware to handle authentication sessions and security headers
  */
 export async function middleware(req: NextRequest) {
-  // Create the response
+  // Create the response with CORS headers for auth endpoints
   const res = NextResponse.next();
 
   // Create a Supabase client for the middleware
   const supabase = createMiddlewareClient({ req, res });
 
-  // Refresh session if expired - required for Server Components when using auth
-  await supabase.auth.getSession();
+  try {
+    // Refresh session if expired - required for Server Components when using auth
+    const { error } = await supabase.auth.getSession();
 
-  // Add security headers to all responses
+    if (error) {
+      console.error("Middleware session refresh error:", error);
+    }
 
-  // For development, we'll disable CSP to avoid issues
-  // In production, you would want to enable a proper CSP
+    // Add security headers to all responses
+    // Content Security Policy
+    res.headers.set(
+      "Content-Security-Policy",
+      [
+        "default-src 'self'",
+        "script-src 'self' https://js.stripe.com 'unsafe-inline' 'unsafe-eval'",
+        "style-src 'self' 'unsafe-inline'",
+        "img-src 'self' data: https:",
+        "connect-src 'self' https://*.supabase.co https://api.openai.com https://generativelanguage.googleapis.com https://api.anthropic.com https://api.stripe.com http://localhost:* ws://localhost:*",
+        "frame-src https://js.stripe.com",
+        "font-src 'self' data:",
+        "base-uri 'self'",
+        "form-action 'self'",
+      ].join("; ")
+    );
 
-  // Comment out the CSP for now to fix authentication issues
+    // Prevent clickjacking attacks
+    res.headers.set("X-Frame-Options", "DENY");
 
-  res.headers.set(
-    "Content-Security-Policy",
-    "default-src 'self'; script-src 'self' https://js.stripe.com 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://*.supabase.co https://api.openai.com https://generativelanguage.googleapis.com https://api.anthropic.com https://api.stripe.com http://localhost:* ws://localhost:*; frame-src https://js.stripe.com; font-src 'self' data:;"
-  );
+    // Prevent MIME type sniffing
+    res.headers.set("X-Content-Type-Options", "nosniff");
 
-  // Prevent clickjacking attacks
-  res.headers.set("X-Frame-Options", "DENY");
+    // Enable strict XSS protection
+    res.headers.set("X-XSS-Protection", "1; mode=block");
 
-  // Prevent MIME type sniffing
-  res.headers.set("X-Content-Type-Options", "nosniff");
+    // Prevent information leakage
+    res.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
 
-  // Enable strict XSS protection
-  res.headers.set("X-XSS-Protection", "1; mode=block");
+    // Enable HSTS (HTTP Strict Transport Security)
+    res.headers.set(
+      "Strict-Transport-Security",
+      "max-age=31536000; includeSubDomains; preload"
+    );
 
-  // Prevent information leakage
-  res.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+    // Prevent browser features that might be security risks
+    res.headers.set(
+      "Permissions-Policy",
+      "camera=(), microphone=(), geolocation=(), interest-cohort=()"
+    );
 
-  // Enable HSTS (HTTP Strict Transport Security)
-  res.headers.set(
-    "Strict-Transport-Security",
-    "max-age=31536000; includeSubDomains; preload"
-  );
+    // For auth callback endpoints, ensure proper handling
+    if (req.nextUrl.pathname.startsWith("/auth/callback")) {
+      const searchParams = req.nextUrl.searchParams;
+      const code = searchParams.get("code");
 
-  // Prevent browser features that might be security risks
-  res.headers.set(
-    "Permissions-Policy",
-    "camera=(), microphone=(), geolocation=(), interest-cohort=()"
-  );
+      // Validate the presence of required parameters
+      if (!code) {
+        return NextResponse.redirect(
+          new URL("/error?message=Invalid+auth+callback", req.url)
+        );
+      }
+    }
 
-  return res;
+    return res;
+  } catch (error) {
+    console.error("Middleware error:", error);
+    // Return the response even if there's an error to avoid breaking the application
+    return res;
+  }
 }
 
 // Define which paths this middleware should run on
 export const config = {
   matcher: [
-    // Apply to all routes except static files, api routes that need different headers, and _next
-    // For development, we'll be more selective to avoid issues with Next.js hot reloading
-    "/((?!_next|api|favicon.ico|.*\\.(?:jpg|jpeg|gif|png|svg)).*)",
+    /*
+     * Match all request paths except for the ones starting with:
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     * - public folder
+     * But include:
+     * - /auth/* (auth endpoints)
+     * - /api/* (API endpoints)
+     */
+    "/((?!_next/static|_next/image|favicon.ico).*)",
+    "/auth/:path*",
   ],
 };
