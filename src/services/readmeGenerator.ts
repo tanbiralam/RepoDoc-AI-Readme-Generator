@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   ReadmeGenerationRequest,
   ReadmeGenerationResult,
@@ -301,21 +302,50 @@ export const generateBasicReadmeTemplate = (
     language: language || "unknown",
   });
 
-  const content = `# ${repoName}\n\n${
-    description ? description + "\n\n" : ""
-  }## Features\n\n- Feature 1\n- Feature 2\n- Feature 3\n\n## Installation\n\n\`\`\`bash\n${
+  // Installation command based on language
+  const installCommand =
     language === "JavaScript" || language === "TypeScript"
       ? "npm install"
       : language === "Python"
       ? "pip install -r requirements.txt"
-      : "Install dependencies"
-  }\n\`\`\`\n\n## Usage\n\n\`\`\`${
+      : "Install dependencies";
+
+  // Example code language
+  const codeLanguage =
     language === "JavaScript" || language === "TypeScript"
       ? "javascript"
       : language === "Python"
       ? "python"
-      : ""
-  }\n// Example code\n\`\`\`\n\n## Contributing\n\nContributions are welcome!\n\n## License\n\nMIT\n`;
+      : "";
+
+  const content = `# ${repoName}
+
+${description ? description + "\n\n" : ""}## Features
+
+- Feature 1
+- Feature 2
+- Feature 3
+
+## Installation
+
+\`\`\`bash
+${installCommand}
+\`\`\`
+
+## Usage
+
+\`\`\`${codeLanguage}
+// Example code
+\`\`\`
+
+## Contributing
+
+Contributions are welcome!
+
+## License
+
+MIT
+`;
 
   logReadmeGen("TEMPLATE_CONTENT", "Generated basic README content", {
     contentLength: content.length,

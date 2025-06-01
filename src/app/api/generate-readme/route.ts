@@ -8,14 +8,11 @@ import {
   parseReadmeSections,
   generateBasicReadmeTemplate as generateTemplate,
 } from "@/services/readmeGenerator";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { openAI } from "@/lib/openai";
 import { rateLimit } from "@/lib/rateLimit";
 
 // Initialize API key from environment variables
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-
-// Initialize AI client
-const geminiAI = GEMINI_API_KEY ? new GoogleGenerativeAI(GEMINI_API_KEY) : null;
+const OPENAI_API_KEY = process.env.OPEN_AI_API_KEY;
 
 /**
  * API route handler for README generation
@@ -47,19 +44,19 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if API key is available
-    if (!GEMINI_API_KEY || !geminiAI) {
-      logWithTime("CONFIG_ERROR", { message: "Gemini API key is missing" });
+    if (!OPENAI_API_KEY || !openAI) {
+      logWithTime("CONFIG_ERROR", { message: "OpenAI API key is missing" });
       return NextResponse.json(
         {
           error:
-            "Gemini API key is not configured. Please add GEMINI_API_KEY to environment variables.",
+            "OpenAI API key is not configured. Please add OPEN_AI_API_KEY to environment variables.",
         },
         { status: 500 }
       );
     }
 
     logWithTime("MODEL", {
-      message: "Using Gemini model for README generation",
+      message: "Using OpenAI model for README generation",
     });
 
     // Parse request body
@@ -97,7 +94,6 @@ export async function POST(request: NextRequest) {
       repoDescription,
       repoLanguage,
       packageJson,
-      mainFiles,
       currentReadme,
     } = body;
 
@@ -120,8 +116,6 @@ export async function POST(request: NextRequest) {
         language: repoLanguage || "not specified",
         hasPackageJson: !!packageJson,
         packageJsonSize: packageJson?.length || 0,
-        hasMainFiles: !!mainFiles?.length,
-        mainFilesCount: mainFiles?.length || 0,
         hasCurrentReadme: !!currentReadme,
         currentReadmeSize: currentReadme?.length || 0,
       },
@@ -129,7 +123,7 @@ export async function POST(request: NextRequest) {
 
     // Construct the prompt for README generation
     logWithTime("PROMPT_BUILD", {
-      message: "Building prompt for Gemini model",
+      message: "Building prompt for OpenAI model",
     });
     const prompt = buildReadmeGenerationPrompt(body);
 
@@ -141,27 +135,39 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Generate README with Gemini
+    // Generate README with OpenAI
     let content = "";
 
     try {
-      logWithTime("GEMINI_CALL", {
-        message: "Calling Gemini API",
-        data: { model: "gemini-2.0-flash" },
+      logWithTime("OPENAI_CALL", {
+        message: "Calling OpenAI API",
+        data: { model: "gpt-4.1-mini" },
       });
       const aiCallStartTime = Date.now();
 
       // Initialize model and generate content
-      const geminiModel = geminiAI.getGenerativeModel({
-        model: "gemini-2.0-flash",
+      const completion = await openAI.chat.completions.create({
+        model: "gpt-4.1-mini",
+        messages: [
+          {
+            role: "system",
+            content:
+              "You are a senior developer creating production-quality documentation.",
+          },
+          {
+            role: "user",
+            content: prompt,
+          },
+        ],
+        temperature: 0.7,
+        max_tokens: 2000,
       });
-      const result = await geminiModel.generateContent(prompt);
-      const response = result.response;
-      content = response.text();
+
+      content = completion.choices[0]?.message?.content || "";
 
       const aiCallDuration = Date.now() - aiCallStartTime;
-      logWithTime("GEMINI_RESPONSE", {
-        message: `Received response from Gemini in ${aiCallDuration}ms`,
+      logWithTime("OPENAI_RESPONSE", {
+        message: `Received response from OpenAI in ${aiCallDuration}ms`,
         data: {
           contentLength: content.length,
           contentPreview: content.substring(0, 200) + "...",
@@ -170,11 +176,11 @@ export async function POST(request: NextRequest) {
 
       // Check if we got a valid response
       if (!content || content.trim().length === 0) {
-        throw new Error("Empty response from Gemini API");
+        throw new Error("Empty response from OpenAI API");
       }
     } catch (aiError) {
-      logWithTime("GEMINI_ERROR", {
-        message: "Error calling Gemini API",
+      logWithTime("OPENAI_ERROR", {
+        message: "Error calling OpenAI API",
         data: {
           error: aiError instanceof Error ? aiError.message : String(aiError),
           stack: aiError instanceof Error ? aiError.stack : undefined,
@@ -191,7 +197,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           result: basicTemplate,
-          error: `Error calling Gemini API: ${
+          error: `Error calling OpenAI API: ${
             aiError instanceof Error ? aiError.message : String(aiError)
           }`,
         },
@@ -218,7 +224,7 @@ export async function POST(request: NextRequest) {
 
     const totalDuration = Date.now() - requestStartTime;
     logWithTime("SUCCESS", {
-      message: `Successfully generated README with Gemini in ${totalDuration}ms`,
+      message: `Successfully generated README with OpenAI in ${totalDuration}ms`,
       data: {
         totalTime: totalDuration,
         contentLength: content.length,
@@ -293,7 +299,7 @@ export async function POST(request: NextRequest) {
       {
         result: basicTemplate,
         error:
-          "Failed to generate README with Gemini. Using basic template instead.",
+          "Failed to generate README with OpenAI. Using basic template instead.",
       },
       { status: 500 }
     );

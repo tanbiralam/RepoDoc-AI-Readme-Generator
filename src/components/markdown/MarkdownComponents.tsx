@@ -123,12 +123,13 @@ export const markdownComponents: Components = {
   ),
   // Add styles for paragraphs - Dark theme
   p: ({ children, ...props }: React.HTMLAttributes<HTMLParagraphElement>) => {
-    // Check if the paragraph contains only a code block
+    // Check if the paragraph contains only a code block or SyntaxHighlighter
     const childrenArray = React.Children.toArray(children);
     if (
       childrenArray.length === 1 &&
       React.isValidElement(childrenArray[0]) &&
-      childrenArray[0].type === "code"
+      (childrenArray[0].type === "code" ||
+        childrenArray[0].type === SyntaxHighlighter)
     ) {
       return children;
     }

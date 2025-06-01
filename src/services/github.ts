@@ -205,7 +205,7 @@ export const commitReadmeToRepo = async (
   repo: string,
   content: string,
   token: string,
-  message: string = "Update README.md via GitHub README Generator"
+  message: string = "Update README.md via RepoDoc"
 ): Promise<{ success: boolean; error: Error | null }> => {
   try {
     const octokit = new Octokit({ auth: token });
@@ -224,13 +224,17 @@ export const commitReadmeToRepo = async (
       }
     } catch (error) {
       // If file doesn't exist, sha will remain undefined
+      throw error;
     }
 
-    // Remove any unnecessary markdown formatting
+    // Remove any unnecessary markdown formatting while preserving code blocks
     const cleanContent = content
-      .replace(/^```markdown\s*/gm, "") // Remove opening markdown blocks
-      .replace(/\s*```\s*$/gm, "") // Remove closing markdown blocks
-      .trim(); // Clean up any extra whitespace
+      // Only clean up specific patterns while preserving code blocks
+      .replace(/^```markdown\s*\n([\s\S]*?)\n```$/gm, "$1") // Remove outer markdown wrapper if present
+      .replace(/\[triple-backtick\]/g, "```") // Replace placeholders
+      .replace(/```(\w+)?\s*\n\s*```/g, "```$1\n```") // Fix empty code blocks
+      .replace(/\n{3,}/g, "\n\n") // Normalize multiple newlines
+      .trim();
 
     // Create or update the README.md file
     await octokit.repos.createOrUpdateFileContents({
@@ -243,7 +247,7 @@ export const commitReadmeToRepo = async (
     });
 
     return { success: true, error: null };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error committing README to repo:", error);
     return { success: false, error: error as Error };
   }
