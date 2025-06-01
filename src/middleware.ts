@@ -21,12 +21,11 @@ export async function middleware(req: NextRequest) {
   // In production, you would want to enable a proper CSP
 
   // Comment out the CSP for now to fix authentication issues
-  /*
+
   res.headers.set(
     "Content-Security-Policy",
     "default-src 'self'; script-src 'self' https://js.stripe.com 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://*.supabase.co https://api.openai.com https://generativelanguage.googleapis.com https://api.anthropic.com https://api.stripe.com http://localhost:* ws://localhost:*; frame-src https://js.stripe.com; font-src 'self' data:;"
   );
-  */
 
   // Prevent clickjacking attacks
   res.headers.set("X-Frame-Options", "DENY");
