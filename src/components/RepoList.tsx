@@ -74,7 +74,7 @@ export default function RepoList({
     } else {
       loadUserRepos(1);
     }
-  }, [searchTerm]);
+  }, [currentPage, loadUserRepos, searchTerm]);
 
   const goToNextPage = () => {
     if (hasNextPage) {

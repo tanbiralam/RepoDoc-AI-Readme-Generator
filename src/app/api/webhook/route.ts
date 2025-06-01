@@ -16,13 +16,13 @@ const stripe = stripeSecretKey
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
 // Constant-time string comparison to prevent timing attacks
-function secureCompare(a: string, b: string): boolean {
-  if (a.length !== b.length) {
-    return false;
-  }
+// function secureCompare(a: string, b: string): boolean {
+//   if (a.length !== b.length) {
+//     return false;
+//   }
 
-  return crypto.timingSafeEqual(Buffer.from(a, "utf8"), Buffer.from(b, "utf8"));
-}
+//   return crypto.timingSafeEqual(Buffer.from(a, "utf8"), Buffer.from(b, "utf8"));
+// }
 
 // Validate UUID format
 function isValidUUID(uuid: string): boolean {

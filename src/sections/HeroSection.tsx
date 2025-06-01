@@ -129,8 +129,8 @@ export default function HeroSection() {
             >
               Transform your GitHub repositories with stunning, professional
               README files. Our AI analyzes your code and generates
-              comprehensive documentation that showcases your project's true
-              potential.
+              comprehensive documentation that showcases your project&apos;s
+              true potential.
             </motion.p>
 
             <motion.div
