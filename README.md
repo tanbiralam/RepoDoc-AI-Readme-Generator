@@ -2,8 +2,7 @@
 
 [![npm version](https://img.shields.io/npm/v/github-readme-generator?color=blue&label=npm)](https://www.npmjs.com/package/github-readme-generator)  
 [![License: MIT](https://img.shields.io/github/license/tanbiralam/readmeGenerator)](https://github.com/tanbiralam/readmeGenerator/blob/main/LICENSE)  
-[![Build Status](https://github.com/tanbiralam/readmeGenerator/actions/workflows/ci.yml/badge.svg)](https://github.com/tanbiralam/readmeGenerator/actions)  
-![TypeScript](https://img.shields.io/badge/language-TypeScript-blue.svg)
+
 
 ---
 
@@ -13,9 +12,7 @@ readmeGenerator is a powerful AI-driven tool designed to automatically generate 
 
 ## ✨ Features
 
-- **AI-powered README generation** using OpenAI GPT-4 and GPT-3.5-turbo with context-aware, customizable prompts for precise and high-quality outputs.
-- **Multi-source AI integrations** including Anthropic Claude and Google Generative AI to diversify and enrich generated content.
-- **Automated GitHub repository metadata fetching** via Octokit REST API for dynamic project detail inclusion.
+- **AI-powered README generation** using OpenAI GPT-4 and GPT-3.5-turbo with context-aware, customizable prompts for precise and high-quality outputs.- **Automated GitHub repository metadata fetching** via Octokit REST API for dynamic project detail inclusion.
 - **Interactive React UI** with Radix UI tooltips supporting live editing, previewing, and syntax-highlighted markdown rendering for seamless user experience.
 - **Advanced markdown processing** using remark, rehype, and react-syntax-highlighter for beautifully styled and readable README files.
 - **Stripe payment integration** to enable premium feature management and usage billing within the app.
