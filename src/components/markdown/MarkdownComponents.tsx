@@ -127,7 +127,10 @@ export const markdownComponents: Components = {
 
     const hasNonTextChild = childrenArray.some(
       (child) =>
-        React.isValidElement(child) && child.props.node?.type !== "text"
+        React.isValidElement(child) &&
+        typeof child === "object" &&
+        "type" in child &&
+        child.type !== "text"
     );
 
     if (hasNonTextChild) {
