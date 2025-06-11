@@ -1,7 +1,6 @@
 export { default as DashboardHeader } from "./DashboardHeader";
 export { default as ErrorMessage } from "./ErrorMessage";
 export { default as RepositoryPanel } from "./RepositoryPanel";
-export { default as DebugLogs } from "./DebugLogs";
 export { default as GitHubConnectionView } from "./GitHubConnectionView";
 export { default as ReadmeEditorView } from "./ReadmeEditorView";
 export { default as ReadmeGenerationView } from "./ReadmeGenerationView";

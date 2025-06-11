@@ -123,23 +123,17 @@ export const markdownComponents: Components = {
   ),
   // Add styles for paragraphs - Dark theme
   p: ({ children, ...props }: React.HTMLAttributes<HTMLParagraphElement>) => {
-    // Check if the children contain a code block or SyntaxHighlighter
     const childrenArray = React.Children.toArray(children);
-    const hasCodeBlock = childrenArray.some(
+
+    const hasNonTextChild = childrenArray.some(
       (child) =>
-        React.isValidElement(child) &&
-        (child.type === "code" ||
-          child.type === SyntaxHighlighter ||
-          (typeof child.type === "function" &&
-            child.type.name === "SyntaxHighlighter"))
+        React.isValidElement(child) && child.props.node?.type !== "text"
     );
 
-    // If there's a code block, return children directly without wrapping in p
-    if (hasCodeBlock) {
+    if (hasNonTextChild) {
       return <>{children}</>;
     }
 
-    // Otherwise wrap in p tag as normal
     return (
       <p
         className="text-gray-300 mb-4 leading-relaxed whitespace-pre-wrap"

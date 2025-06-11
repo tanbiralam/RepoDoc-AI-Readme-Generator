@@ -26,7 +26,7 @@ export interface SubscriptionPlan {
 
 // README generation limits for different subscription tiers
 export const README_GENERATION_LIMITS = {
-  FREE: 5,
+  FREE: 3,
   PRO: Infinity,
 };
 

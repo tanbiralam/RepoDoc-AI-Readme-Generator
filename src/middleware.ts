@@ -22,20 +22,20 @@ export async function middleware(req: NextRequest) {
 
     // Add security headers to all responses
     // Content Security Policy
-    res.headers.set(
-      "Content-Security-Policy",
-      [
-        "default-src 'self'",
-        "script-src 'self' https://js.stripe.com 'unsafe-inline' 'unsafe-eval'",
-        "style-src 'self' 'unsafe-inline'",
-        "img-src 'self' data: https:",
-        "connect-src 'self' https://*.supabase.co https://api.openai.com https://generativelanguage.googleapis.com https://api.anthropic.com https://api.stripe.com http://localhost:* ws://localhost:*",
-        "frame-src https://js.stripe.com",
-        "font-src 'self' data:",
-        "base-uri 'self'",
-        "form-action 'self'",
-      ].join("; ")
-    );
+    // res.headers.set(
+    //   "Content-Security-Policy",
+    //   [
+    //     "default-src 'self'",
+    //     "script-src 'self' https://js.stripe.com 'unsafe-inline' 'unsafe-eval'",
+    //     "style-src 'self' 'unsafe-inline'",
+    //     "img-src 'self' data: https:",
+    //     "connect-src 'self' https://*.supabase.co https://api.openai.com https://generativelanguage.googleapis.com https://api.anthropic.com https://api.stripe.com http://localhost:* ws://localhost:*",
+    //     "frame-src https://js.stripe.com",
+    //     "font-src 'self' data:",
+    //     "base-uri 'self'",
+    //     "form-action 'self'",
+    //   ].join("; ")
+    // );
 
     // Prevent clickjacking attacks
     res.headers.set("X-Frame-Options", "DENY");

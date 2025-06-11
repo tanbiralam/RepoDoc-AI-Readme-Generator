@@ -42,78 +42,26 @@ export const buildReadmeGenerationPrompt = (
 
   // Core system instructions with proper formatting
   const getSystemInstructions = (): string => {
-    return `You are a senior developer creating production-quality documentation. Generate a README.md that follows these EXACT requirements:
+    return `You are an expert technical writer creating a README.md. Your goal is to produce a document that is clear, concise, and easy for anyone to understand.
 
 ## CRITICAL RULES:
-- Use ACTUAL repository URL: ${getRepoUrl()}
-- NO placeholder text like "your_repository_url" or "your_api_key"
-- Badge URLs must match the actual repository name: ${request.repoName}
-- All code examples must use current API versions and best practices
-- Include realistic, working examples that developers can copy-paste
+- Use the ACTUAL repository URL: ${getRepoUrl()}
+- NO placeholder text like "your_repository_url" or "your_api_key".
+- All installation and usage instructions should be simple and clear.
 
 ## REQUIRED SECTIONS (in order):
-1. # ${request.repoName} [with appropriate emoji]
-2. Badges (npm, license, build status, etc.)
-3. Brief description (2-3 sentences explaining what it actually does)
-4. ## ✨ Features (specific, not generic)
-5. ## 📋 Prerequisites  
-6. ## 🚀 Installation
-7. ## 💻 Usage (with multiple examples)
-8. ## ⚙️ Configuration
-9. ## 🤝 Contributing
-10. ## 📄 License
+1.  **# \${request.repoName}** [with an appropriate emoji]
+2.  **Badges** (if applicable, e.g., license, build status)
+3.  **Brief description** (2-3 sentences explaining the project's purpose)
+4.  **## ✨ Features** (A high-level list of key features)
+5.  **## 🚀 Installation** (Simple, step-by-step instructions)
+6.  **## 💻 Usage** (Explain how to use the application, not the code)
+7.  **## 🤝 Contributing** (Optional: if you have contribution guidelines)
+8.  **## 📄 License**
 
 ## FORMATTING REQUIREMENTS:
-- Use proper markdown syntax
-- Code blocks must use triple backticks with language specification
-- Keep numbered lists clean and properly indented
-- Use consistent emoji usage in headers
-- Maintain professional but approachable tone
-
-## INSTALLATION SECTION FORMAT:
-Structure the installation section exactly like this:
-
-1. **Clone the repository**
-[triple-backtick]bash
-git clone ${getCloneUrl()}
-cd ${request.repoName}
-[triple-backtick]
-
-2. **Install dependencies**
-[triple-backtick]bash
-npm install
-[triple-backtick]
-
-3. **Set up environment variables**
-[triple-backtick]bash
-cp .env.example .env
-[triple-backtick]
-
-Note: Replace [triple-backtick] with actual triple backticks in the output.`;
-  };
-
-  // API best practices section
-  const getAPIBestPractices = (): string => {
-    const currentYear = new Date().getFullYear();
-    return `## CURRENT API BEST PRACTICES (${currentYear}):
-- OpenAI: Use 'chat.completions.create()' with gpt-4 or gpt-3.5-turbo
-- Include proper error handling with try-catch blocks
-- Show rate limiting and retry logic
-- Use environment variable validation
-- Include TypeScript types where applicable
-- Always validate API responses before using data`;
-  };
-
-  // Code example requirements
-  const getCodeExampleRequirements = (): string => {
-    return `## CODE EXAMPLE REQUIREMENTS:
-- Every example must be syntactically correct and runnable
-- Include proper imports/requires at the top
-- Show comprehensive error handling patterns
-- Add clear comments explaining key concepts
-- Use TypeScript examples where applicable
-- Demonstrate both basic and advanced usage patterns
-- Include at least 3 complete, working examples`;
+- Use standard markdown syntax.
+- Keep the tone professional but friendly.`;
   };
 
   // Package.json analysis instructions
@@ -169,31 +117,21 @@ ${request.currentReadme}`;
     return `## VALIDATION CHECKLIST:
 Your README must pass these checks:
 ✅ All URLs are real and functional (no placeholders)
-✅ Code examples are syntactically correct and runnable
-✅ Environment variables are properly documented
-✅ Installation steps are clear and testable
-✅ Badge URLs match the actual repository
-✅ Features are specific and actionable
-✅ At least 3 complete code examples included
-✅ Error handling demonstrated in examples
-✅ TypeScript types included where relevant
-✅ Current API patterns used (not deprecated methods)
-✅ Proper markdown formatting throughout
-✅ Consistent emoji usage in headers
+✅ Installation steps are clear and correct.
+✅ The description accurately reflects the project.
+✅ Proper markdown formatting is used throughout.
 
 ## OUTPUT REQUIREMENTS:
-- 2000-4000 characters for comprehensive coverage
-- Professional formatting with consistent style
-- Immediately usable by developers
-- No "TODO" or "Coming Soon" sections
-- All example code must be copy-pasteable`;
+- Generate a README that is around 1000-2000 characters.
+- It should be professional and immediately usable.
+- Focus on clarity and ease of understanding.`;
   };
 
   // Final generation instruction
   const getFinalInstruction = (): string => {
     return `Generate the complete README.md content now. Start with "# ${
       request.repoName
-    }" and create production-ready documentation.
+    }" and create production-ready documentation. The document should end after the "License" section. Do not add any conversational closings or "thank you" notes.
 
 IMPORTANT: In your output, use actual triple backticks (not the word or escaped versions) for all code blocks.
 
@@ -204,8 +142,6 @@ Repository clone URL to use: ${getCloneUrl()}`;
   const sections = [
     buildRepoInfo(),
     getSystemInstructions(),
-    getAPIBestPractices(),
-    getCodeExampleRequirements(),
     getPackageJsonInstructions(),
     getEnvVariableInstructions(),
     getExistingReadmeInstructions(),

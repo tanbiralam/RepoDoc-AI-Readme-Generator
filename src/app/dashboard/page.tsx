@@ -14,8 +14,8 @@ import {
   DashboardHeader,
   ErrorMessage,
   RepositoryPanel,
-  MainContentPanel,
   DashboardFooter,
+  MainContentPanel,
 } from "@/components/dashboard";
 import {
   showGithubConnectedToast,

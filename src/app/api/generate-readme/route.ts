@@ -152,7 +152,7 @@ export async function POST(request: NextRequest) {
           {
             role: "system",
             content:
-              "You are a senior developer creating production-quality documentation.",
+              "You are an expert technical writer specializing in clear, concise, and high-quality README files for software projects. Your goal is to create documentation that is easy to understand for both technical and non-technical audiences. Avoid overly long code snippets; instead, provide brief, illustrative examples where necessary. Focus on the project's features, setup, and usage.",
           },
           {
             role: "user",
@@ -160,7 +160,7 @@ export async function POST(request: NextRequest) {
           },
         ],
         temperature: 0.7,
-        max_tokens: 2000,
+        max_tokens: 4000,
       });
 
       content = completion.choices[0]?.message?.content || "";
