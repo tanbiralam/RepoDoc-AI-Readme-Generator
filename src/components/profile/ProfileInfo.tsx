@@ -11,7 +11,7 @@ export default function ProfileInfo({ user }: ProfileInfoProps) {
   return (
     <div className="p-6">
       <div className="flex items-start">
-        <div className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-full w-16 h-16 flex items-center justify-center font-bold text-xl shadow-lg shadow-indigo-500/20">
+        <div className="bg-blue-600 text-white rounded-full w-16 h-16 flex items-center justify-center font-bold text-xl shadow-lg shadow-blue-500/20">
           {user.full_name
             ? user.full_name.charAt(0).toUpperCase()
             : user.email.charAt(0).toUpperCase()}
@@ -31,7 +31,7 @@ export default function ProfileInfo({ user }: ProfileInfoProps) {
       </div>
 
       <div className="border-t border-gray-800 pt-6 mt-6">
-        <h4 className="text-sm font-medium text-indigo-400 uppercase tracking-wider mb-3">
+        <h4 className="text-sm font-medium text-blue-400 uppercase tracking-wider mb-3">
           Account Details
         </h4>
         <dl className="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">

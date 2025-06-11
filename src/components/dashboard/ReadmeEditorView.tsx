@@ -27,7 +27,7 @@ export default function ReadmeEditorView({
       }`}
     >
       <div
-        className={`bg-gray-900/50 backdrop-blur-sm rounded-xl shadow-lg border border-gray-800 overflow-hidden transition-all duration-300 hover:shadow-indigo-500/5 ${
+        className={`bg-gray-900/50 backdrop-blur-sm rounded-xl shadow-lg border border-gray-800 overflow-hidden transition-all duration-300 hover:shadow-blue-500/5 ${
           isEditorFullScreen
             ? "!bg-transparent !backdrop-blur-none !shadow-none !border-none !m-0 !p-0 !rounded-none"
             : ""
@@ -37,7 +37,7 @@ export default function ReadmeEditorView({
           <div className="border-b border-gray-700 px-6 py-4 bg-gray-800/30">
             <h3 className="font-medium text-gray-100 flex items-center">
               <svg
-                className="w-5 h-5 mr-2 text-indigo-400"
+                className="w-5 h-5 mr-2 text-blue-400"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -63,10 +63,10 @@ export default function ReadmeEditorView({
       </div>
 
       {!isEditorFullScreen && (
-        <div className="bg-gray-900/50 backdrop-blur-sm rounded-xl shadow-lg border border-gray-800 p-6 transition-all duration-300 hover:shadow-indigo-500/5">
+        <div className="bg-gray-900/50 backdrop-blur-sm rounded-xl shadow-lg border border-gray-800 p-6 transition-all duration-300 hover:shadow-blue-500/5">
           <h3 className="font-medium text-gray-100 mb-4 flex items-center">
             <svg
-              className="w-5 h-5 mr-2 text-indigo-400"
+              className="w-5 h-5 mr-2 text-blue-400"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"

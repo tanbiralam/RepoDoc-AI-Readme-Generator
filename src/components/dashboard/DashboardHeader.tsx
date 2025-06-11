@@ -11,7 +11,7 @@ export default function DashboardHeader({ user }: DashboardHeaderProps) {
       <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6">
         <div className="space-y-3">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+            <div className="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center shadow-lg">
               <svg
                 className="w-6 h-6 text-white"
                 fill="none"

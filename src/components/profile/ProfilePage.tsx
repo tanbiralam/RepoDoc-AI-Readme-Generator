@@ -41,7 +41,7 @@ export default function ProfilePage() {
   if (authLoading || loading) {
     return (
       <div className="flex justify-center items-center min-h-screen bg-gray-950">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
       </div>
     );
   }
@@ -57,13 +57,13 @@ export default function ProfilePage() {
         <div className="flex items-center mb-8">
           <button
             onClick={() => router.back()}
-            className="mr-4 p-2 text-gray-400 hover:text-indigo-400 hover:bg-gray-800 rounded-full transition-colors"
+            className="mr-4 p-2 text-gray-400 hover:text-blue-400 hover:bg-gray-800 rounded-full transition-colors"
             aria-label="Go back"
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
           <div>
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-indigo-400 to-purple-400 text-transparent bg-clip-text">
+            <h1 className="text-2xl font-bold bg-white text-transparent bg-clip-text">
               {user.full_name ? `${user.full_name}'s Profile` : "Profile"}
             </h1>
             <p className="mt-1 text-gray-400 text-sm">
@@ -76,7 +76,7 @@ export default function ProfilePage() {
           {/* Profile Information */}
           <div className="bg-gray-900 border border-gray-800 shadow-xl rounded-lg overflow-hidden">
             <div className="px-6 py-4 border-b border-gray-800">
-              <h2 className="text-lg font-medium text-indigo-400">
+              <h2 className="text-lg font-medium text-blue-400">
                 Profile Information
               </h2>
             </div>
@@ -86,7 +86,7 @@ export default function ProfilePage() {
           {/* Subscription Details */}
           <div className="bg-gray-900 border border-gray-800 shadow-xl rounded-lg overflow-hidden">
             <div className="px-6 py-4 border-b border-gray-800">
-              <h2 className="text-lg font-medium text-indigo-400">
+              <h2 className="text-lg font-medium text-blue-400">
                 Subscription Details
               </h2>
             </div>
@@ -99,7 +99,7 @@ export default function ProfilePage() {
           {/* Usage Stats */}
           <div className="bg-gray-900 border border-gray-800 shadow-xl rounded-lg overflow-hidden">
             <div className="px-6 py-4 border-b border-gray-800">
-              <h2 className="text-lg font-medium text-indigo-400">
+              <h2 className="text-lg font-medium text-blue-400">
                 Usage Statistics
               </h2>
             </div>
@@ -113,7 +113,7 @@ export default function ProfilePage() {
           {/* Payment History */}
           <div className="bg-gray-900 border border-gray-800 shadow-xl rounded-lg overflow-hidden">
             <div className="px-6 py-4 border-b border-gray-800">
-              <h2 className="text-lg font-medium text-indigo-400">
+              <h2 className="text-lg font-medium text-blue-400">
                 Payment History
               </h2>
             </div>

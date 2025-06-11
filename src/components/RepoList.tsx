@@ -100,7 +100,7 @@ export default function RepoList({
               connectGitHub()
             );
           }}
-          className="mt-4 text-sm text-white bg-indigo-600 hover:bg-indigo-700 px-3 py-2 rounded-md font-medium transition-colors shadow-md shadow-indigo-500/20"
+          className="mt-4 text-sm text-white bg-blue-600 hover:bg-blue-700 px-3 py-2 rounded-md font-medium transition-colors shadow-md shadow-blue-500/20"
         >
           Connect GitHub
         </button>
@@ -114,7 +114,7 @@ export default function RepoList({
         <input
           type="text"
           placeholder="Search repositories..."
-          className="w-full p-2.5 pl-10 text-gray-200 bg-gray-800/80 border border-gray-700 rounded-lg shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-500/30 focus:ring-opacity-50 text-sm placeholder-gray-500 transition-all duration-200"
+          className="w-full p-2.5 pl-10 text-gray-200 bg-gray-800/80 border border-gray-700 rounded-lg shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500/30 focus:ring-opacity-50 text-sm placeholder-gray-500 transition-all duration-200"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
@@ -156,7 +156,7 @@ export default function RepoList({
 
       {loading ? (
         <div className="flex justify-center items-center py-12">
-          <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-indigo-400"></div>
+          <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue-400"></div>
         </div>
       ) : (
         <div className="rounded-lg overflow-hidden bg-gray-800/60 shadow-lg border border-gray-700">
@@ -174,7 +174,7 @@ export default function RepoList({
                     key={repo.id}
                     className={`hover:bg-gray-700/50 transition-colors ${
                       selectedRepo && selectedRepo.id === repo.id
-                        ? "bg-indigo-900/40 border-l-2 border-indigo-400"
+                        ? "bg-blue-900/40 border-l-2 border-blue-400"
                         : ""
                     }`}
                   >
@@ -186,7 +186,7 @@ export default function RepoList({
                         >
                           <div className="flex items-center">
                             <svg
-                              className="h-4 w-4 text-indigo-400 mr-2 flex-shrink-0"
+                              className="h-4 w-4 text-blue-400 mr-2 flex-shrink-0"
                               fill="none"
                               stroke="currentColor"
                               viewBox="0 0 24 24"
@@ -214,7 +214,7 @@ export default function RepoList({
                         </div>
                         <div className="flex flex-shrink-0 ml-2">
                           {repo.language && (
-                            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-indigo-900/40 text-indigo-300 border border-indigo-800">
+                            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-900/40 text-blue-300 border border-blue-800">
                               {repo.language}
                             </span>
                           )}
@@ -283,7 +283,7 @@ export default function RepoList({
                         </button>
                         <span
                           aria-current="page"
-                          className="relative inline-flex items-center px-3 py-1 border border-gray-700 bg-gray-800 text-xs font-medium text-indigo-300"
+                          className="relative inline-flex items-center px-3 py-1 border border-gray-700 bg-gray-800 text-xs font-medium text-blue-300"
                         >
                           {currentPage}
                         </span>

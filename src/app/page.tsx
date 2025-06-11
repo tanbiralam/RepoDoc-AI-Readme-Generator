@@ -3,7 +3,7 @@ import HowItWorksSection from "@/sections/HowItWorksSection";
 import FeaturesSection from "@/sections/FeaturesSection";
 import PricingSection from "@/sections/PricingSection";
 import SecuritySection from "@/sections/SecuritySection";
-import TestimonialsSection from "@/sections/TestimonialsSection";
+// import TestimonialsSection from "@/sections/TestimonialsSection";
 import FAQSection from "@/sections/FAQSection";
 import FooterSection from "@/sections/FooterSection";
 import Navbar from "@/components/Navbar";
@@ -18,7 +18,7 @@ export default function Home() {
         <FeaturesSection />
         <PricingSection />
         <SecuritySection />
-        <TestimonialsSection />
+        {/* <TestimonialsSection /> */}
         <FAQSection />
       </main>
 

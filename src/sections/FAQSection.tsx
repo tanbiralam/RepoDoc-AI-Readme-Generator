@@ -76,11 +76,7 @@ export default function FAQSection() {
       answer:
         "We prioritize your data security. We only access the repository information you explicitly authorize, and we don't store your code or sensitive data. All connections are secured with industry-standard encryption.",
     },
-    {
-      question: "Can I use custom templates?",
-      answer:
-        "Yes, we offer a variety of built-in templates, and premium users can create and save custom templates that match their project's style and branding requirements.",
-    },
+
     {
       question: "How do I push changes to my GitHub repository?",
       answer:

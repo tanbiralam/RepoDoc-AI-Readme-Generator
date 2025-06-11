@@ -60,10 +60,10 @@ const StepItem: React.FC<{
       {index < totalSteps - 1 && (
         <>
           {/* Desktop connector (horizontal) */}
-          <div className="hidden md:block absolute top-7 left-[calc(50%+30px)] w-[calc(100%-60px)] h-0.5 bg-gradient-to-r from-blue-500/20 via-indigo-500/20 to-blue-500/20"></div>
+          <div className="hidden md:block absolute top-7 left-[calc(50%+30px)] w-[calc(100%-60px)] h-0.5 bg-gradient-to-r from-blue-500/20 via-blue-500/20 to-blue-500/20"></div>
 
           {/* Mobile connector (vertical) */}
-          <div className="md:hidden absolute top-14 left-1/2 w-0.5 h-8 bg-gradient-to-b from-blue-500/20 to-indigo-500/20 -z-10"></div>
+          <div className="md:hidden absolute top-14 left-1/2 w-0.5 h-8 bg-gradient-to-b from-blue-500/20 to-blue-500/20 -z-10"></div>
         </>
       )}
     </motion.div>
@@ -106,14 +106,14 @@ export default function HowItWorksSection() {
 
   return (
     <section
-      id="how-it-works"
+      id="howitworks"
       className="relative bg-gray-950 py-24 overflow-hidden"
     >
       {/* Background decorative elements */}
       <div className="absolute inset-0 bg-grid-white/[0.02] bg-[size:60px_60px]" />
       <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-gray-700 to-transparent" />
       <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-gray-700 to-transparent" />
-      <div className="absolute top-1/4 right-0 w-96 h-96 rounded-full bg-indigo-600/10 blur-3xl transform translate-x-1/2"></div>
+      <div className="absolute top-1/4 right-0 w-96 h-96 rounded-full bg-blue-600/10 blur-3xl transform translate-x-1/2"></div>
       <div className="absolute bottom-1/3 left-0 w-96 h-96 rounded-full bg-blue-600/10 blur-3xl transform -translate-x-1/2"></div>
 
       <div className="container relative z-10 mx-auto px-4">
@@ -167,7 +167,7 @@ export default function HowItWorksSection() {
         >
           <Link
             href="/sign-in"
-            className="group inline-flex items-center justify-center rounded-lg bg-gradient-to-br from-blue-600 to-indigo-600 px-6 py-3.5 text-base font-medium text-white shadow-lg transition-all duration-300 hover:from-blue-700 hover:to-indigo-700 hover:shadow-blue-500/25 transform hover:-translate-y-1"
+            className="group inline-flex items-center justify-center rounded-lg bg-gradient-to-br from-blue-600 to-blue-600 px-6 py-3.5 text-base font-medium text-white shadow-lg transition-all duration-300 hover:from-blue-700 hover:to-blue-700 hover:shadow-blue-500/25 transform hover:-translate-y-1"
           >
             Start Generating READMEs
             <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />

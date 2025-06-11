@@ -92,7 +92,7 @@ export default function ExportButtons({
         <button
           onClick={handleDownload}
           disabled={!readmeContent}
-          className="px-4 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-md hover:from-indigo-700 hover:to-purple-700 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 font-medium shadow-sm transition-all duration-200 text-sm"
+          className="px-4 py-2.5 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 font-medium shadow-sm transition-all duration-200 text-sm"
         >
           <svg
             className="w-4 h-4"

@@ -12,10 +12,10 @@ export default function ReadmeGenerationView({
   onGenerateReadme,
 }: ReadmeGenerationViewProps) {
   return (
-    <div className="bg-gray-900/50 backdrop-blur-sm rounded-xl shadow-lg border border-gray-800 p-8 transition-all duration-300 hover:shadow-indigo-500/5 animate-fadeIn">
+    <div className="bg-gray-900/50 backdrop-blur-sm rounded-xl shadow-lg border border-gray-800 p-8 transition-all duration-300 hover:shadow-blue-500/5 animate-fadeIn">
       {generatingReadme ? (
         <div className="py-6 text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-indigo-400 mx-auto"></div>
+          <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-blue-400 mx-auto"></div>
           <h3 className="mt-6 text-lg font-medium text-gray-100">
             Generating README...
           </h3>
@@ -28,7 +28,7 @@ export default function ReadmeGenerationView({
         <>
           <div className="flex flex-col items-center md:flex-row md:items-start md:justify-between gap-6">
             <div className="flex items-center">
-              <div className="h-16 w-16 text-indigo-400 rounded-full bg-indigo-900/30 border border-indigo-700 flex items-center justify-center mr-4">
+              <div className="h-16 w-16 text-blue-400 rounded-full bg-blue-900/30 border border-blue-700 flex items-center justify-center mr-4">
                 <svg
                   className="h-8 w-8"
                   fill="none"
@@ -62,7 +62,7 @@ export default function ReadmeGenerationView({
             <button
               onClick={onGenerateReadme}
               disabled={generatingReadme}
-              className="px-5 py-3 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors shadow-md shadow-indigo-500/20 disabled:opacity-50 disabled:cursor-not-allowed font-medium flex items-center justify-center self-center md:self-start"
+              className="px-5 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors shadow-md shadow-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed font-medium flex items-center justify-center self-center md:self-start"
             >
               <svg
                 className="w-5 h-5 mr-2"
@@ -85,7 +85,7 @@ export default function ReadmeGenerationView({
           <div className="mt-8 p-5 bg-gray-800/60 rounded-lg border border-gray-700">
             <h4 className="text-md font-medium text-gray-100 mb-3 flex items-center">
               <svg
-                className="w-5 h-5 mr-2 text-indigo-400"
+                className="w-5 h-5 mr-2 text-blue-400"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"

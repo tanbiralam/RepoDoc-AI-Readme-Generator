@@ -25,7 +25,7 @@ export default function UsageStats({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
         {/* Current Usage Card */}
         <div className="bg-gray-800/50 border border-gray-800 rounded-lg p-5">
-          <h3 className="text-base font-medium text-indigo-400 mb-4">
+          <h3 className="text-base font-medium text-blue-400 mb-4">
             Current Period Usage
           </h3>
 
@@ -41,7 +41,7 @@ export default function UsageStats({
             <div className="w-full bg-gray-700 rounded-full h-2.5">
               <div
                 className={`h-2.5 rounded-full ${
-                  isPro ? "bg-indigo-500" : "bg-green-500"
+                  isPro ? "bg-blue-500" : "bg-green-500"
                 }`}
                 style={{ width: `${usagePercentage}%` }}
               ></div>
@@ -66,7 +66,7 @@ export default function UsageStats({
 
         {/* Plan Details Card */}
         <div className="bg-gray-800/50 border border-gray-800 rounded-lg p-5">
-          <h3 className="text-base font-medium text-indigo-400 mb-4">
+          <h3 className="text-base font-medium text-blue-400 mb-4">
             Plan Details
           </h3>
 

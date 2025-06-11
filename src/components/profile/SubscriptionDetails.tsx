@@ -25,9 +25,7 @@ export default function SubscriptionDetails({
       <div className="flex items-start">
         <div
           className={`flex-shrink-0 p-2 rounded-lg ${
-            isPro
-              ? "bg-indigo-900/50 text-indigo-300"
-              : "bg-gray-800 text-gray-400"
+            isPro ? "bg-blue-900/50 text-blue-300" : "bg-gray-800 text-gray-400"
           }`}
         >
           {isPro ? <Zap className="h-6 w-6" /> : <Star className="h-6 w-6" />}
@@ -50,7 +48,7 @@ export default function SubscriptionDetails({
       </div>
 
       <div className="mt-6 border-t border-gray-800 pt-6">
-        <h4 className="text-sm font-medium text-indigo-400 uppercase tracking-wider mb-4">
+        <h4 className="text-sm font-medium text-blue-400 uppercase tracking-wider mb-4">
           Plan Features
         </h4>
         <ul className="space-y-3">
@@ -59,7 +57,7 @@ export default function SubscriptionDetails({
               <div
                 className={`flex-shrink-0 p-1 rounded-full ${
                   isPro
-                    ? "text-indigo-300 bg-indigo-900/50"
+                    ? "text-blue-300 bg-blue-900/50"
                     : "text-gray-400 bg-gray-800"
                 }`}
               >
@@ -86,14 +84,14 @@ export default function SubscriptionDetails({
           {isPro ? (
             <button
               onClick={() => router.push("/subscription")}
-              className="px-4 py-2 text-sm font-medium text-indigo-300 bg-indigo-900/30 border border-indigo-700 rounded-md hover:bg-indigo-900/50 transition-colors"
+              className="px-4 py-2 text-sm font-medium text-blue-300 bg-blue-900/30 border border-blue-700 rounded-md hover:bg-blue-900/50 transition-colors"
             >
               Manage Plan
             </button>
           ) : (
             <button
               onClick={handleUpgrade}
-              className="px-4 py-2 text-sm bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-md hover:from-indigo-600 hover:to-purple-600 shadow-lg shadow-indigo-500/20 transition-all duration-200 font-medium"
+              className="px-4 py-2 text-sm bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-md hover:from-blue-600 hover:to-purple-600 shadow-lg shadow-blue-500/20 transition-all duration-200 font-medium"
             >
               Upgrade to Pro
             </button>

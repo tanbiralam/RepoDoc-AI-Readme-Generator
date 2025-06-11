@@ -39,13 +39,18 @@ const Navbar = () => {
 
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center gap-10">
-          {["Features", "Pricing", "FAQ"].map((item) => (
+          {[
+            { text: "How It Works", href: "#howitworks" },
+            { text: "Features", href: "#features" },
+            { text: "Pricing", href: "#pricing" },
+            { text: "FAQ", href: "#faq" },
+          ].map((item) => (
             <Link
-              key={item}
-              href={`#${item.toLowerCase()}`}
+              key={item.text}
+              href={item.href}
               className="relative text-sm font-medium text-white hover:text-blue-400 transition-colors"
             >
-              {item}
+              {item.text}
               <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-500 group-hover:w-full transition-all duration-300" />
             </Link>
           ))}
@@ -100,19 +105,24 @@ const Navbar = () => {
                 <span className="text-2xl font-bold text-white">RepoDoc</span>
               </motion.div>
 
-              {["Features", "Pricing", "FAQ"].map((item, i) => (
+              {[
+                { text: "How It Works", href: "#howitworks" },
+                { text: "Features", href: "#features" },
+                { text: "Pricing", href: "#pricing" },
+                { text: "FAQ", href: "#faq" },
+              ].map((item, i) => (
                 <motion.div
-                  key={item}
+                  key={item.text}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.2 + i * 0.1 }}
                 >
                   <Link
-                    href={`#${item.toLowerCase()}`}
+                    href={item.href}
                     className="text-xl font-medium text-white hover:text-blue-400 transition-colors"
                     onClick={() => setIsMenuOpen(false)}
                   >
-                    {item}
+                    {item.text}
                   </Link>
                 </motion.div>
               ))}
