@@ -92,6 +92,17 @@ export const generateReadmeWithAI = async (
       );
     }
 
+    // Handle rate limit response (status 429)
+    if (response.status === 429) {
+      const error = (data as any)?.error || "Rate limit exceeded";
+      logReadmeGen("RATE_LIMIT", "Rate limit exceeded", {
+        error,
+        limit: (data as any)?.limit,
+        resetTime: (data as any)?.resetTime,
+      });
+      throw new Error(`Rate limiting error: ${error}`);
+    }
+
     // Handle error response (even with 200 status code)
     if ((data as any)?.error && !(data as any)?.result) {
       logReadmeGen("API_ERROR", "API returned error in response body", {
@@ -155,25 +166,12 @@ export const generateReadmeWithAI = async (
       error: null,
     };
   } catch (error) {
-    logReadmeGen("ERROR", "Error generating README with AI", {
+    logReadmeGen("ERROR", "Error in generateReadmeWithAI", {
       error: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined,
     });
-
-    logReadmeGen("FALLBACK", "Falling back to basic README template", {
-      repoName: request.repoName,
-      hasDescription: !!request.repoDescription,
-      language: request.repoLanguage || "unknown",
-    });
-
-    console.error("Error generating README:", error);
     return {
-      result: generateBasicReadmeTemplate(
-        request.repoName,
-        request.repoDescription,
-        request.repoLanguage
-      ),
-      error: error instanceof Error ? error : new Error("Unknown error"),
+      result: null,
+      error: error instanceof Error ? error : new Error(String(error)),
     };
   }
 };

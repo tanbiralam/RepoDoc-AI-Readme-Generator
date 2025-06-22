@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
+import { createClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 
 // Rate limit configuration by subscription tier and endpoint
@@ -37,8 +37,17 @@ export async function rateLimit(
       request.headers.get("x-real-ip") ||
       "unknown";
 
-    // Create Supabase client
-    const supabase = createRouteHandlerClient({ cookies });
+    // Create Supabase admin client with service role
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false,
+        },
+      }
+    );
 
     // TEMPORARY: Check total generations for this IP if this is an AI generation request
     if (type === "AI_GENERATION") {
@@ -120,13 +129,25 @@ export async function rateLimit(
           0
         );
       }
+
+      return null;
     }
 
+    // For non-AI requests, get the session using cookies
+    const cookieStore = cookies();
+    const supabaseAuthToken = await cookieStore.get("sb-access-token")?.value;
+
     // Get the session
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-    const userId = session?.user?.id;
+    let userId = null;
+    if (supabaseAuthToken) {
+      const {
+        data: { user },
+        error: authError,
+      } = await supabase.auth.getUser(supabaseAuthToken);
+      if (!authError && user) {
+        userId = user.id;
+      }
+    }
 
     // Get subscription tier for the user
     let tier = "FREE";
@@ -203,18 +224,12 @@ export async function rateLimit(
         );
       }
 
-      // First request within window, allow it to proceed
+      // First request in new window is allowed
       return null;
     }
 
-    // Record exists and is still within time window
-    // Increment the count with optimistic concurrency control
-    const currentCount = rateLimitRecord.count;
-    const newCount = currentCount + 1;
-
-    // Check if rate limit would be exceeded
-    if (currentCount >= config.limit) {
-      // Rate limit already exceeded
+    // Check if limit has been exceeded
+    if (rateLimitRecord.count >= config.limit) {
       return createRateLimitErrorResponse(
         "Rate limit exceeded",
         config.limit,
@@ -224,97 +239,36 @@ export async function rateLimit(
       );
     }
 
-    // Update the count
+    // Increment the count
     const { error: updateError } = await supabase
       .from("rate_limits")
       .update({
-        count: newCount,
+        count: rateLimitRecord.count + 1,
         updated_at: new Date().toISOString(),
       })
-      .eq("key", key)
-      .eq("count", currentCount); // Optimistic concurrency control
+      .eq("key", key);
 
-    // Handle update error - this could be a concurrency issue
     if (updateError) {
       console.error("Rate limiting update error:", updateError);
-
-      // Try to get the latest count to make a better decision
-      const { data: refreshedRecord, error: refreshError } = await supabase
-        .from("rate_limits")
-        .select("*")
-        .eq("key", key)
-        .single();
-
-      if (refreshError || !refreshedRecord) {
-        // If we can't get the latest record, reject to be safe
-        return createRateLimitErrorResponse(
-          "Rate limiting error",
-          config.limit,
-          config.windowInSeconds,
-          resetTimeDate,
-          0
-        );
-      }
-
-      // Check if the refreshed count exceeds the limit
-      if (refreshedRecord.count >= config.limit) {
-        return createRateLimitErrorResponse(
-          "Rate limit exceeded",
-          config.limit,
-          config.windowInSeconds,
-          new Date(refreshedRecord.reset_time),
-          0
-        );
-      }
-
-      // Even with the concurrency issue, we're still under the limit
-      // Try one more update with the refreshed count
-      const { error: retryError } = await supabase
-        .from("rate_limits")
-        .update({
-          count: refreshedRecord.count + 1,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("key", key);
-
-      if (retryError) {
-        // If retry fails, reject to be safe
-        console.error("Rate limiting retry error:", retryError);
-        return createRateLimitErrorResponse(
-          "Rate limiting error",
-          config.limit,
-          config.windowInSeconds,
-          resetTimeDate,
-          0
-        );
-      }
-    }
-
-    // Calculate remaining requests
-    const remaining = Math.max(0, config.limit - newCount);
-
-    // If we've just hit the limit exactly, return rate limit response
-    if (remaining === 0) {
       return createRateLimitErrorResponse(
-        "Rate limit exceeded",
+        "Rate limiting error",
         config.limit,
         config.windowInSeconds,
-        new Date(rateLimitRecord.reset_time),
-        remaining
+        resetTimeDate,
+        0
       );
     }
 
-    // Request is allowed to proceed
+    // Request is allowed
     return null;
   } catch (error) {
-    console.error("Rate limiting critical error:", error);
-    // For security, reject the request in case of unexpected errors
-    return NextResponse.json(
-      {
-        error: "Rate limiting system error",
-        message: "Unable to process request due to rate limiting system error",
-      },
-      { status: 500 }
+    console.error("Rate limiting error:", error);
+    return createRateLimitErrorResponse(
+      "Rate limiting error",
+      0,
+      0,
+      new Date(),
+      0
     );
   }
 }

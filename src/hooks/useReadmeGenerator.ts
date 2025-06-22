@@ -166,57 +166,81 @@ export const useReadmeGenerator = () => {
       try {
         const { result, error: aiError } = await generateReadmeWithAI({
           repoName: selectedRepo.name,
+          repoOwner: owner,
+          repoUrl: selectedRepo.html_url,
           repoDescription: selectedRepo.description || "",
           repoLanguage: selectedRepo.language || "",
           packageJson: packageJsonContent || "",
           currentReadme: currentReadmeContent || "",
           topics: selectedRepo.topics || [],
           isPrivate: selectedRepo.private || false,
-          repoOwner: owner,
-          repoUrl:
-            selectedRepo.html_url ||
-            `https://github.com/${selectedRepo.full_name}`,
         });
 
-        if (aiError) throw aiError;
+        if (aiError) {
+          // Check if this is a rate limit error
+          if (aiError.message.includes("Rate limit")) {
+            hideToast(loadingToastId);
+            showWarning(aiError.message);
+            setError(aiError.message);
+            return;
+          }
 
-        if (result) {
-          logWithTime("README generated successfully using AI", {
-            message: "README generated successfully using AI",
-            data: {
-              contentLength: result.content.length,
-              sectionCount: result.sections?.length || 0,
-            },
+          // For other errors, fall back to basic template
+          logWithTime(
+            "Error generating README with AI. Using fallback template.",
+            { error: aiError }
+          );
+          console.error("Error generating README with AI:", aiError);
+
+          // Fallback to basic template if AI generation fails
+          const basicResult = generateBasicReadmeTemplate(
+            selectedRepo.name,
+            selectedRepo.description || "",
+            selectedRepo.language || ""
+          );
+
+          logWithTime("Basic fallback template generated", {
+            contentLength: basicResult.content.length,
+            sectionCount: basicResult.sections?.length || 0,
           });
 
-          setReadmeResult(result);
-          setReadmeContent(result.content);
+          setReadmeResult(basicResult);
+          setReadmeContent(basicResult.content);
 
-          // Hide the loading toast and show success
-          hideToast(loadingToastId);
-          showSuccess("README generated successfully!");
-
-          // Increment the readme generation count
+          // Still increment the generation count for the fallback
           if (user) {
-            logWithTime("Incrementing README generation count", {
-              message: "Incrementing README generation count",
-            });
+            logWithTime(
+              "Incrementing README generation count for fallback generation"
+            );
             const { success } = await incrementReadmeGeneration(user.id);
             if (success) {
               await refreshSubscription();
               logWithTime(
-                "README generation count incremented and subscription refreshed",
-                {
-                  message:
-                    "README generation count incremented and subscription refreshed",
-                }
+                "README generation count incremented and subscription refreshed"
               );
             } else {
               console.error("Failed to increment README generation count");
             }
           }
-        } else {
-          throw new Error("AI generation returned no result");
+        } else if (result) {
+          hideToast(loadingToastId);
+          showSuccess("README generated successfully!");
+          setReadmeResult(result);
+          setReadmeContent(result.content);
+
+          // Increment generation count on success
+          if (user) {
+            logWithTime("Incrementing README generation count");
+            const { success } = await incrementReadmeGeneration(user.id);
+            if (success) {
+              await refreshSubscription();
+              logWithTime(
+                "README generation count incremented and subscription refreshed"
+              );
+            } else {
+              console.error("Failed to increment README generation count");
+            }
+          }
         }
       } catch (aiError) {
         logWithTime(

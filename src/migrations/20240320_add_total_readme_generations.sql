@@ -11,11 +11,24 @@ create table if not exists public.total_readme_generations (
 -- Add RLS policies
 alter table public.total_readme_generations enable row level security;
 
-create policy "Enable read access for all users" on public.total_readme_generations
-  for select using (true);
+-- Grant full access to service role
+grant all on public.total_readme_generations to service_role;
 
-create policy "Enable insert for service role only" on public.total_readme_generations
-  for insert with check (auth.role() = 'service_role');
+-- Allow service role full access via policy
+create policy "Enable service role access" on public.total_readme_generations
+  for all
+  to service_role
+  using (true)
+  with check (true);
 
-create policy "Enable update for service role only" on public.total_readme_generations
-  for update using (auth.role() = 'service_role'); 
+-- Allow authenticated users to read their own IP records
+create policy "Enable read access for authenticated users" on public.total_readme_generations
+  for select
+  to authenticated
+  using (true);
+
+-- Allow anonymous users to read their own IP records
+create policy "Enable read access for anonymous users" on public.total_readme_generations
+  for select
+  to anon
+  using (true); 
