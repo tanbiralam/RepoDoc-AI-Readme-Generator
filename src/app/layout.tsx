@@ -26,6 +26,7 @@ export default function RootLayout({
           href="https://fonts.googleapis.com/icon?family=Material+Icons"
           rel="stylesheet"
         />
+        <link rel="icon" href="/window.svg" />
       </head>
       <body className={inter.className}>
         <AuthProvider>
