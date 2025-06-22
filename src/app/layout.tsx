@@ -27,6 +27,11 @@ export default function RootLayout({
           rel="stylesheet"
         />
         <link rel="icon" href="/window.svg" />
+        <script
+          defer
+          data-domain="repodoc.vercel.app"
+          src="https://plausible.io/js/script.js"
+        ></script>
       </head>
       <body className={inter.className}>
         <AuthProvider>

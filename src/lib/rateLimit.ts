@@ -15,6 +15,9 @@ export const RATE_LIMITS = {
   },
 };
 
+// TEMPORARY: Global limit of 3 generations total per IP
+const GLOBAL_GENERATION_LIMIT = 3;
+
 export type RateLimitType = "AI_GENERATION" | "API";
 
 /**
@@ -34,9 +37,90 @@ export async function rateLimit(
       request.headers.get("x-real-ip") ||
       "unknown";
 
-    // Try to get user ID from session for authenticated requests
-    // Create Supabase client with the pattern used in other routes
+    // Create Supabase client
     const supabase = createRouteHandlerClient({ cookies });
+
+    // TEMPORARY: Check total generations for this IP if this is an AI generation request
+    if (type === "AI_GENERATION") {
+      const { data: totalGens, error: totalGensError } = await supabase
+        .from("total_readme_generations")
+        .select("total_count")
+        .eq("ip_address", ip)
+        .single();
+
+      if (totalGensError && totalGensError.code !== "PGRST116") {
+        console.error("Error checking total generations:", totalGensError);
+        return createRateLimitErrorResponse(
+          "Rate limiting error",
+          GLOBAL_GENERATION_LIMIT,
+          0,
+          new Date(),
+          0
+        );
+      }
+
+      const totalCount = totalGens?.total_count || 0;
+
+      // If already at or over limit, reject
+      if (totalCount >= GLOBAL_GENERATION_LIMIT) {
+        return createRateLimitErrorResponse(
+          "Global generation limit reached",
+          GLOBAL_GENERATION_LIMIT,
+          0,
+          new Date(),
+          0
+        );
+      }
+
+      // If this is a new IP, create the record
+      if (!totalGens) {
+        const { error: insertError } = await supabase
+          .from("total_readme_generations")
+          .insert([
+            {
+              ip_address: ip,
+              total_count: 1,
+            },
+          ]);
+
+        if (insertError) {
+          console.error(
+            "Error creating total generations record:",
+            insertError
+          );
+          return createRateLimitErrorResponse(
+            "Rate limiting error",
+            GLOBAL_GENERATION_LIMIT,
+            0,
+            new Date(),
+            0
+          );
+        }
+
+        // First generation allowed
+        return null;
+      }
+
+      // Increment the count
+      const { error: updateError } = await supabase
+        .from("total_readme_generations")
+        .update({
+          total_count: totalCount + 1,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("ip_address", ip);
+
+      if (updateError) {
+        console.error("Error updating total generations:", updateError);
+        return createRateLimitErrorResponse(
+          "Rate limiting error",
+          GLOBAL_GENERATION_LIMIT,
+          0,
+          new Date(),
+          0
+        );
+      }
+    }
 
     // Get the session
     const {

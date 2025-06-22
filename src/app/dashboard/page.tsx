@@ -210,8 +210,10 @@ export default function Dashboard() {
     }
 
     if (!canGenerateReadme()) {
-      const errorMessage = `You've reached your limit of ${plan.readme_generations_limit} README generations for your ${plan.name} plan. Please upgrade to generate more READMEs.`;
-      logWithTime("Cannot generate README: Generation limit reached", {
+      // TEMPORARY: Update error message to reflect global limit
+      const errorMessage =
+        "Due to temporary testing constraints, all users are limited to 3 total README generations, regardless of subscription tier.";
+      logWithTime("Cannot generate README: Global generation limit reached", {
         plan: plan.name,
         limit: plan.readme_generations_limit,
         remaining: readmeGenerationsRemaining,
