@@ -13,7 +13,7 @@ export default function PricingSection() {
       price: "0",
       description: "Perfect for trying out the service",
       features: [
-        "Generate up to 3 READMEs",
+        "Generate up to 2 READMEs",
         "AI-powered content generation",
         "Copy to clipboard",
         "Basic editing features",
