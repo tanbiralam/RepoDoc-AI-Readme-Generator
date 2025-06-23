@@ -1,4 +1,4 @@
-# readmeGenerator 🤖
+# readmeGenerator with AI
 
 [![npm version](https://img.shields.io/npm/v/github-readme-generator?color=blue&label=npm)](https://www.npmjs.com/package/github-readme-generator)  
 [![License: MIT](https://img.shields.io/github/license/tanbiralam/readmeGenerator)](https://github.com/tanbiralam/readmeGenerator/blob/main/LICENSE)  
@@ -11,14 +11,14 @@ readmeGenerator is an AI-powered tool that automatically creates professional, c
 
 ## ✨ Features
 
-- AI-driven README creation using OpenAI GPT-4 and GPT-3.5-turbo with customizable prompts.  
-- Dynamic retrieval of GitHub repository metadata through Octokit REST API.  
-- Interactive React UI featuring Radix UI tooltips, live markdown editing, preview, and syntax highlighting.  
-- Advanced markdown processing with remark, rehype, and react-syntax-highlighter for polished formatting.  
-- Stripe integration for premium features and usage billing.  
-- Secure authentication and session management powered by Supabase and Next.js.  
-- Robust error handling and retry mechanisms on all API calls.  
-- Built with Next.js 15 and TypeScript for performance and scalability.  
+- AI-driven README creation using OpenAI GPT-4 and GPT-3.5-turbo with customizable prompts  
+- Dynamic retrieval of GitHub repository metadata through Octokit REST API  
+- Interactive React UI with Radix UI tooltips, live markdown editing, preview, and syntax highlighting  
+- Advanced markdown processing using remark, rehype, and react-syntax-highlighter for polished formatting  
+- Stripe integration for premium features and usage billing  
+- Secure authentication and session management powered by Supabase and Next.js  
+- Robust error handling and retry mechanisms on all API calls  
+- Built with Next.js 15 and TypeScript for performance and scalability  
 
 ---
 
@@ -51,7 +51,7 @@ Edit `.env` to include your OpenAI API key, Stripe secret key, Supabase credenti
 
 4. **Database setup**
 
-Create a Supabase project and obtain your `SUPABASE_URL` and `SUPABASE_ANON_KEY`. The schema is managed automatically. For migrations, if needed, run:
+Create a Supabase project and obtain your `SUPABASE_URL` and `SUPABASE_ANON_KEY`. The database schema is managed automatically. If you need to run migrations manually, use:
 
 ```bash
 npm run db:migrate
@@ -71,9 +71,9 @@ Navigate to [http://localhost:3000](http://localhost:3000) in your browser to be
 
 ## 💻 Usage
 
-Use the web interface to input your GitHub repository URL or enter your project details manually. The AI engine will generate a tailored, professional README automatically. You can edit the markdown with live preview and syntax highlighting. Once satisfied, save or download your README to include in your project.
+Use the web interface to input your GitHub repository URL or manually enter your project details. The AI engine will generate a tailored, professional README automatically. You can edit the markdown with live preview and syntax highlighting for fine-tuning. Once satisfied, save or download your README to include it in your project repository.
 
-The app supports multiple AI models and enriches your documentation with comprehensive repository insights, making it easy to create detailed, high-quality project documentation quickly.
+The application supports multiple AI models and enriches your documentation with comprehensive repository insights, making it easy to create detailed, high-quality project documentation quickly and effortlessly.
 
 ---
 
@@ -81,16 +81,16 @@ The app supports multiple AI models and enriches your documentation with compreh
 
 Contributions are welcome! To contribute:
 
-- Fork the repository.  
-- Create a feature branch (`git checkout -b feature-name`).  
+- Fork the repository  
+- Create a feature branch (`git checkout -b feature-name`)  
 - Ensure your code follows the existing style and passes linting:
 
 ```bash
 npm run lint
 ```
 
-- Submit a pull request describing your changes.  
-- For major changes, please open an issue first to discuss.
+- Submit a pull request describing your changes  
+- For major changes, open an issue first to discuss  
 
 ---
 
