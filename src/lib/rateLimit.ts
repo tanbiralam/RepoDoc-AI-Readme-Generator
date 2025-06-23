@@ -167,7 +167,7 @@ export async function rateLimit(
 
     // Get rate limit configuration based on type and tier
     const config =
-      type === "AI_GENERATION"
+      type === ("AI_GENERATION" as RateLimitType)
         ? RATE_LIMITS.AI_GENERATION[
             tier as keyof typeof RATE_LIMITS.AI_GENERATION
           ] || RATE_LIMITS.AI_GENERATION.FREE
