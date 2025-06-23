@@ -18,12 +18,23 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const clarityProjectId = process.env.NEXT_PUBLIC_CLARITY_PROJECT_ID;
-
   return (
     <html lang="en">
       <head>
         <Script src="https://js.stripe.com/v3/" strategy="beforeInteractive" />
+        <Script
+          defer
+          data-domain="repodoc.vercel.app"
+          src="https://plausible.io/js/script.file-downloads.hash.outbound-links.pageview-props.revenue.tagged-events.js"
+          strategy="afterInteractive"
+        />
+        <Script id="plausible-setup" strategy="afterInteractive">
+          {`
+            window.plausible = window.plausible || function() { 
+              (window.plausible.q = window.plausible.q || []).push(arguments) 
+            }
+          `}
+        </Script>
         <link
           href="https://fonts.googleapis.com/icon?family=Material+Icons"
           rel="stylesheet"
@@ -33,20 +44,7 @@ export default function RootLayout({
       <body className={inter.className}>
         <AuthProvider>
           <SubscriptionProvider>
-            <ToastProvider>
-              {children}
-              {clarityProjectId && (
-                <Script id="clarity-script" strategy="afterInteractive">
-                  {`
-                    (function(c,l,a,r,i,t,y){
-                        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
-                        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
-                        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
-                    })(window, document, "clarity", "script", "${clarityProjectId}");
-                  `}
-                </Script>
-              )}
-            </ToastProvider>
+            <ToastProvider>{children}</ToastProvider>
           </SubscriptionProvider>
         </AuthProvider>
       </body>
