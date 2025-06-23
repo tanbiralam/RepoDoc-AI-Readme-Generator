@@ -7,12 +7,12 @@ export async function GET(request: NextRequest) {
   const code = requestUrl.searchParams.get("code");
   const redirectTo = requestUrl.searchParams.get("redirect_to") || "/dashboard";
   const isConnection = requestUrl.searchParams.get("connect") === "github";
-  const isDirectGitHubLogin =
-    requestUrl.searchParams.get("direct_github_login") === "true";
+  // const isDirectGitHubLogin =
+  //   requestUrl.searchParams.get("direct_github_login") === "true";
   const userId = requestUrl.searchParams.get("user"); // Capture userId from the query string
-  const error = requestUrl.searchParams.get("error");
-  const errorCode = requestUrl.searchParams.get("error_code");
-  const errorDescription = requestUrl.searchParams.get("error_description");
+  // const error = requestUrl.searchParams.get("error");
+  // const errorCode = requestUrl.searchParams.get("error_code");
+  // const errorDescription = requestUrl.searchParams.get("error_description");
 
   // Create a detailed log of all query parameters for debugging
   const allParams: Record<string, string> = {};
@@ -21,58 +21,55 @@ export async function GET(request: NextRequest) {
   });
 
   // Log all parameters for debugging
-  console.log("AUTH CALLBACK: Full request details", {
-    url: request.url,
-    allParams,
-    code: code ? "exists" : "missing",
-    redirectTo,
-    isConnection,
-    isDirectGitHubLogin,
-    userId,
-    error,
-    errorCode,
-    errorDescription,
-  });
+  // console.log("AUTH CALLBACK: Full request details", {
+  //   url: request.url,
+  //   allParams,
+  //   code: code ? "exists" : "missing",
+  //   redirectTo,
+  //   isConnection,
+  //   isDirectGitHubLogin,
+  //   userId,
+  //   error,
+  //   errorCode,
+  //   errorDescription,
+  // });
 
   // Process the redirectTo URL to ensure all query parameters are preserved
   let processedRedirectTo = redirectTo;
   if (requestUrl.searchParams.get("github_connection") === "success") {
-    console.log(
-      "AUTH CALLBACK: Adding github_connection parameter to redirect URL"
-    );
+    // console.log(
+    //   "AUTH CALLBACK: Adding github_connection parameter to redirect URL"
+    // );
     processedRedirectTo += processedRedirectTo.includes("?")
       ? "&github_connection=success"
       : "?github_connection=success";
   }
 
   try {
-    // Initialize Supabase client with properly awaited cookies
-    const cookieStore = cookies();
-    const supabase = createRouteHandlerClient({
-      cookies: () => Promise.resolve(cookieStore),
-    });
+    // Initialize Supabase client with cookies
+    const supabase = createRouteHandlerClient({ cookies });
 
     if (code) {
-      console.log("AUTH CALLBACK: Exchanging code for session with Supabase");
+      // console.log("AUTH CALLBACK: Exchanging code for session with Supabase");
 
       // Get existing session before code exchange
       const { data: existingSessionData } = await supabase.auth.getSession();
-      console.log("AUTH CALLBACK: Existing session before code exchange:", {
-        hasSession: !!existingSessionData.session,
-        provider: existingSessionData.session?.user?.app_metadata?.provider,
-        userId: existingSessionData.session?.user?.id,
-        matchesExpectedUser: existingSessionData.session?.user?.id === userId,
-      });
+      // console.log("AUTH CALLBACK: Existing session before code exchange:", {
+      //   hasSession: !!existingSessionData.session,
+      //   provider: existingSessionData.session?.user?.app_metadata?.provider,
+      //   userId: existingSessionData.session?.user?.id,
+      //   matchesExpectedUser: existingSessionData.session?.user?.id === userId,
+      // });
 
       // Exchange the code for a session
-      console.log("AUTH CALLBACK: Attempting to exchange code");
+      // console.log("AUTH CALLBACK: Attempting to exchange code");
       const { data, error } = await supabase.auth.exchangeCodeForSession(code);
 
       if (error) {
-        console.error(
-          "AUTH CALLBACK: Error exchanging code for session:",
-          error.message
-        );
+        // console.error(
+        //   "AUTH CALLBACK: Error exchanging code for session:",
+        //   error.message
+        // );
         return NextResponse.redirect(
           `${requestUrl.origin}/error?message=${encodeURIComponent(
             error.message
@@ -80,14 +77,14 @@ export async function GET(request: NextRequest) {
         );
       }
 
-      console.log("AUTH CALLBACK: Successfully exchanged code for session", {
-        userId: data.session?.user?.id,
-        hasSession: !!data.session,
-        provider: data.session?.user?.app_metadata?.provider,
-        providerToken: data.session?.provider_token ? "exists" : "missing",
-        isConnection,
-        isDirectGitHubLogin,
-      });
+      // console.log("AUTH CALLBACK: Successfully exchanged code for session", {
+      //   userId: data.session?.user?.id,
+      //   hasSession: !!data.session,
+      //   provider: data.session?.user?.app_metadata?.provider,
+      //   providerToken: data.session?.provider_token ? "exists" : "missing",
+      //   isConnection,
+      //   isDirectGitHubLogin,
+      // });
 
       // Only proceed with GitHub API calls if this is a GitHub login or connection
       if (
@@ -105,11 +102,11 @@ export async function GET(request: NextRequest) {
 
           if (response.ok) {
             const githubUser = await response.json();
-            console.log("AUTH CALLBACK: Got GitHub user data:", {
-              id: githubUser.id,
-              login: githubUser.login,
-              email: githubUser.email,
-            });
+            // console.log("AUTH CALLBACK: Got GitHub user data:", {
+            //   id: githubUser.id,
+            //   login: githubUser.login,
+            //   email: githubUser.email,
+            // });
 
             // Common GitHub identity data
             const githubIdentityData = {
@@ -171,9 +168,9 @@ export async function GET(request: NextRequest) {
                   );
                 }
 
-                console.log(
-                  "AUTH CALLBACK: Successfully created GitHub identity"
-                );
+                // console.log(
+                //   "AUTH CALLBACK: Successfully created GitHub identity"
+                // );
 
                 // Only update the profile after successfully creating the GitHub identity
                 const { error: profileError } = await supabase
@@ -367,7 +364,7 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    console.log("AUTH CALLBACK: Redirecting to:", processedRedirectTo);
+    // console.log("AUTH CALLBACK: Redirecting to:", processedRedirectTo);
     return NextResponse.redirect(
       new URL(processedRedirectTo, requestUrl.origin)
     );

@@ -6,7 +6,7 @@ import { cookies } from "next/headers";
 export const RATE_LIMITS = {
   // AI generation endpoints
   AI_GENERATION: {
-    FREE: { limit: 5, windowInSeconds: 3600 }, // 5 requests per hour for free tier
+    FREE: { limit: 2, windowInSeconds: 3600 }, // 5 requests per hour for free tier
     PRO: { limit: 50, windowInSeconds: 3600 }, // 50 requests per hour for pro tier
   },
   // General API endpoints
@@ -16,7 +16,7 @@ export const RATE_LIMITS = {
 };
 
 // TEMPORARY: Global limit of 3 generations total per IP
-const GLOBAL_GENERATION_LIMIT = 3;
+const GLOBAL_GENERATION_LIMIT = 20;
 
 export type RateLimitType = "AI_GENERATION" | "API";
 
@@ -134,8 +134,8 @@ export async function rateLimit(
     }
 
     // For non-AI requests, get the session using cookies
-    const cookieStore = cookies();
-    const supabaseAuthToken = await cookieStore.get("sb-access-token")?.value;
+    const cookieStore = await cookies();
+    const supabaseAuthToken = cookieStore.get("sb-access-token")?.value;
 
     // Get the session
     let userId = null;

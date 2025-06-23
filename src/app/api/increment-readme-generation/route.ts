@@ -88,7 +88,7 @@ export async function POST(request: NextRequest) {
     // Check if user has reached their limit based on subscription tier
     // This is a secondary check in addition to the client-side check
     const tierLimits = {
-      FREE: 3,
+      FREE: 2,
       PRO: Infinity,
     };
 

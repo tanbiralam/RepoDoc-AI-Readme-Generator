@@ -187,10 +187,10 @@ export default function Dashboard() {
   }, []);
 
   const handleRepoSelect = (repo: GitHubRepo) => {
-    logWithTime(`Repository selected: ${repo.name}`, {
-      repoId: repo.id,
-      repoFullName: repo.full_name,
-    });
+    // logWithTime(`Repository selected: ${repo.name}`, {
+    //   repoId: repo.id,
+    //   repoFullName: repo.full_name,
+    // });
     setSelectedRepo(repo);
     setReadmeResult(null);
     setReadmeContent("");
@@ -199,20 +199,20 @@ export default function Dashboard() {
 
   const handleGenerateReadme = async () => {
     if (!selectedRepo || !user) {
-      logWithTime(
-        "Cannot generate README: No repository selected or user not logged in",
-        {
-          hasSelectedRepo: !!selectedRepo,
-          isUserLoggedIn: !!user,
-        }
-      );
+      // logWithTime(
+      //   "Cannot generate README: No repository selected or user not logged in",
+      //   {
+      //     hasSelectedRepo: !!selectedRepo,
+      //     isUserLoggedIn: !!user,
+      //   }
+      // );
       return;
     }
 
     if (!canGenerateReadme()) {
       // TEMPORARY: Update error message to reflect global limit
       const errorMessage =
-        "Due to temporary testing constraints, all users are limited to 3 total README generations, regardless of subscription tier.";
+        "Due to temporary testing constraints, all users are limited to 2 total README generations, regardless of subscription tier.";
       logWithTime("Cannot generate README: Global generation limit reached", {
         plan: plan.name,
         limit: plan.readme_generations_limit,
@@ -223,53 +223,53 @@ export default function Dashboard() {
     }
 
     try {
-      logWithTime("Starting README generation process", {
-        repoName: selectedRepo.name,
-        repoId: selectedRepo.id,
-        repoFullName: selectedRepo.full_name,
-      });
+      // logWithTime("Starting README generation process", {
+      //   repoName: selectedRepo.name,
+      //   repoId: selectedRepo.id,
+      //   repoFullName: selectedRepo.full_name,
+      // });
 
       setGeneratingReadme(true);
       setError(null);
 
       // Extract owner and repo name
       const [owner, repo] = selectedRepo.full_name.split("/");
-      logWithTime("Extracted repository info", { owner, repo });
+      // logWithTime("Extracted repository info", { owner, repo });
 
       // Get package.json content if available
-      logWithTime("Fetching package.json content");
+      // logWithTime("Fetching package.json content");
       const { content: packageJsonContent } = await getPackageJson(
         owner,
         repo,
         githubToken || undefined
       );
 
-      logWithTime("Package.json fetch result", {
-        hasPackageJson: !!packageJsonContent,
-        packageJsonLength: packageJsonContent ? packageJsonContent.length : 0,
-      });
+      // logWithTime("Package.json fetch result", {
+      //   hasPackageJson: !!packageJsonContent,
+      //   packageJsonLength: packageJsonContent ? packageJsonContent.length : 0,
+      // });
 
       // Get current README.md content if available
-      logWithTime("Fetching current README.md content");
+      // logWithTime("Fetching current README.md content");
       const { content: currentReadmeContent } = await getReadmeContent(
         owner,
         repo,
         githubToken || undefined
       );
 
-      logWithTime("Current README.md fetch result", {
-        hasReadme: !!currentReadmeContent,
-        readmeLength: currentReadmeContent ? currentReadmeContent.length : 0,
-      });
+      // logWithTime("Current README.md fetch result", {
+      //   hasReadme: !!currentReadmeContent,
+      //   readmeLength: currentReadmeContent ? currentReadmeContent.length : 0,
+      // });
 
       // Generate README using AI
-      logWithTime("Sending data to AI for README generation", {
-        repoName: selectedRepo.name,
-        hasDescription: !!selectedRepo.description,
-        hasLanguage: !!selectedRepo.language,
-        hasPackageJson: !!packageJsonContent,
-        hasCurrentReadme: !!currentReadmeContent,
-      });
+      // logWithTime("Sending data to AI for README generation", {
+      //   repoName: selectedRepo.name,
+      //   hasDescription: !!selectedRepo.description,
+      //   hasLanguage: !!selectedRepo.language,
+      //   hasPackageJson: !!packageJsonContent,
+      //   hasCurrentReadme: !!currentReadmeContent,
+      // });
 
       // Try generating the README with AI first
       try {
@@ -288,29 +288,29 @@ export default function Dashboard() {
         if (aiError) throw aiError;
 
         if (result) {
-          logWithTime("README generated successfully using AI", {
-            contentLength: result.content.length,
-            sectionCount: result.sections?.length || 0,
-          });
+          // logWithTime("README generated successfully using AI", {
+          //   contentLength: result.content.length,
+          //   sectionCount: result.sections?.length || 0,
+          // });
 
           setReadmeResult(result);
           setReadmeContent(result.content);
 
           // Increment the readme generation count
           if (user) {
-            logWithTime("Incrementing README generation count");
+            // logWithTime("Incrementing README generation count");
             await incrementReadmeGeneration(user.id);
             refreshSubscription();
-            logWithTime("README generation count incremented");
+            // logWithTime("README generation count incremented");
           }
         } else {
           throw new Error("AI generation returned no result");
         }
       } catch (aiError) {
-        logWithTime(
-          "Error generating README with AI. Using fallback template.",
-          { error: aiError }
-        );
+        // logWithTime(
+        //   "Error generating README with AI. Using fallback template.",
+        //   { error: aiError }
+        // );
         console.error("Error generating README with AI:", aiError);
 
         // Fallback to basic template if AI generation fails
@@ -320,26 +320,26 @@ export default function Dashboard() {
           selectedRepo.language || ""
         );
 
-        logWithTime("Basic fallback template generated", {
-          contentLength: basicResult.content.length,
-          sectionCount: basicResult.sections?.length || 0,
-        });
+        // logWithTime("Basic fallback template generated", {
+        //   contentLength: basicResult.content.length,
+        //   sectionCount: basicResult.sections?.length || 0,
+        // });
 
         setReadmeResult(basicResult);
         setReadmeContent(basicResult.content);
 
         // Still increment the generation count for the fallback
         if (user) {
-          logWithTime(
-            "Incrementing README generation count for fallback generation"
-          );
+          // logWithTime(
+          //   "Incrementing README generation count for fallback generation"
+          // );
           await incrementReadmeGeneration(user.id);
           refreshSubscription();
-          logWithTime("README generation count incremented for fallback");
+          // logWithTime("README generation count incremented for fallback");
         }
       }
     } catch (error) {
-      logWithTime("Error in README generation process", { error });
+      // logWithTime("Error in README generation process", { error });
       console.error("Error generating README:", error);
       setError("Failed to generate README. Please try again.");
     } finally {

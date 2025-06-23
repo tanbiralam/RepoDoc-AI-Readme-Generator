@@ -12,8 +12,10 @@ export async function GET(request: NextRequest) {
     }
 
     // Use await with cookies() to fix the warning
-    const cookieStore = cookies();
-    const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+    const cookieStore = await cookies();
+    const supabase = createRouteHandlerClient({
+      cookies: () => Promise.resolve(cookieStore),
+    });
 
     // Verify user is authenticated
     const {

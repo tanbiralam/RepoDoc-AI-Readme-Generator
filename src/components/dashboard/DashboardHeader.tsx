@@ -52,7 +52,7 @@ export default function DashboardHeader({ user }: DashboardHeaderProps) {
               />
             </svg>
             <span>
-              Temporary Testing Mode: All users are currently limited to 3 total
+              Temporary Testing Mode: All users are currently limited to 2 total
               README generations, regardless of subscription tier.
             </span>
           </Alert>

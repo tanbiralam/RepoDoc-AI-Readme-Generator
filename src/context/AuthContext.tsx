@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
 import {
@@ -51,15 +52,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       sessionFromEvent?: import("@supabase/supabase-js").Session | null
     ) => {
       if (isRefreshing) {
-        console.log("AuthContext: refreshUser already in progress, skipping.");
+        // console.log("AuthContext: refreshUser already in progress, skipping.");
         return;
       }
       setIsRefreshing(true);
 
       try {
-        console.log("AuthContext: Beginning full user refresh", {
-          sessionSource: sessionFromEvent ? "event" : "fetch",
-        });
+        // console.log("AuthContext: Beginning full user refresh", {
+        //   sessionSource: sessionFromEvent ? "event" : "fetch",
+        // });
         setLoading(true); // Ensure loading is true at the start of a refresh
 
         const { data: sessionData, error: sessionError } =
@@ -67,7 +68,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         if (sessionError) throw sessionError;
 
         if (!sessionData.session) {
-          console.log("AuthContext: No session found during refresh");
+          // console.log("AuthContext: No session found during refresh");
           setUser(null);
           setGithubToken(null);
           setHasGithubConnection(false);
@@ -91,7 +92,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           throw profileError;
         }
 
-        console.log("AuthContext: Fetched profile data:", { profileData });
+        // console.log("AuthContext: Fetched profile data:", { profileData });
 
         const { data: githubIdentity, error: githubError } = await supabase
           .from("github_identities")
@@ -106,9 +107,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           );
           // Don't throw, proceed without it if it fails for some reason (e.g. RLS)
         }
-        console.log("AuthContext: Fetched GitHub identity data:", {
-          githubIdentity,
-        });
+        // console.log("AuthContext: Fetched GitHub identity data:", {
+        //   githubIdentity,
+        // });
 
         // Construct UserProfile directly here
         // This part needs to replicate the logic from getCurrentUser or simplify it.
@@ -122,10 +123,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             // Ensure all UserProfile fields are covered
           };
           setUser(combinedUser);
-          console.log(
-            "AuthContext: User state set from profileData:",
-            combinedUser
-          );
+          // console.log(
+          //   "AuthContext: User state set from profileData:",
+          //   combinedUser
+          // );
         } else {
           // Profile doesn't exist. This is a critical state.
           // Ideally, a profile should be created upon sign-up.
@@ -169,9 +170,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             authUser.app_metadata?.provider === "github")
         );
         setHasGithubConnection(githubConnected);
-        console.log("AuthContext: GitHub connection status:", {
-          githubConnected,
-        });
+        // console.log("AuthContext: GitHub connection status:", {
+        //   githubConnected,
+        // });
 
         if (
           githubConnected &&
@@ -179,12 +180,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         ) {
           const token =
             githubIdentity?.access_token || sessionData.session.provider_token;
-          console.log(
-            "AuthContext: Found GitHub token, proceeding to validate."
-          );
+          // console.log(
+          //   "AuthContext: Found GitHub token, proceeding to validate."
+          // );
 
           try {
-            console.log("Testing GitHub token validity");
+            // console.log("Testing GitHub token validity");
             const response = await fetch("https://api.github.com/user", {
               headers: {
                 Authorization: `Bearer ${token}`,
@@ -193,7 +194,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             });
 
             if (response.ok) {
-              console.log("GitHub token is valid");
+              // console.log("GitHub token is valid");
               setGithubToken(token);
               const userData = await response.json();
               setHasPrivateRepoAccess(userData.plan?.private_repos > 0);
@@ -232,9 +233,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             // If no token, but was previously connected via profileData, retain hasGithubConnection true from above.
           }
         } else {
-          console.log(
-            "AuthContext: No GitHub token or connection details found for token validation."
-          );
+          // console.log(
+          //   "AuthContext: No GitHub token or connection details found for token validation."
+          // );
           setGithubToken(null);
           setHasPrivateRepoAccess(false);
           // If no token, but was previously connected via profileData, retain hasGithubConnection true from above.
@@ -274,14 +275,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log("AuthProvider: Auth state changed:", {
-        event,
-        sessionToken: session?.access_token?.slice(-5),
-      });
+      // console.log("AuthProvider: Auth state changed:", {
+      //   event,
+      //   sessionToken: session?.access_token?.slice(-5),
+      // });
 
       // Skip refresh for visibility change events
       if (document.visibilityState === "hidden") {
-        console.log("AuthProvider: Skipping refresh for hidden tab");
+        // console.log("AuthProvider: Skipping refresh for hidden tab");
         return;
       }
 
@@ -295,14 +296,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           // Only refresh if we don't have a user or if the session user ID is different
           const currentUser = user as UserProfile | null;
           if (!currentUser || currentUser.id !== session.user.id) {
-            console.log(
-              "AuthProvider: Refreshing user data due to auth state change"
-            );
+            // console.log(
+            //   "AuthProvider: Refreshing user data due to auth state change"
+            // );
             refreshUser(session);
           } else {
-            console.log(
-              "AuthProvider: Skipping refresh - user data already present"
-            );
+            // console.log(
+            //   "AuthProvider: Skipping refresh - user data already present"
+            // );
           }
         } else if (event === "INITIAL_SESSION" && !session) {
           // Initial check, no session found.
@@ -323,7 +324,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     });
 
     return () => {
-      console.log("AuthProvider: Cleaning up auth subscription");
+      // console.log("AuthProvider: Cleaning up auth subscription");
       subscription.unsubscribe();
     };
   }, [user, refreshUser]); // Add user and refreshUser to dependencies
