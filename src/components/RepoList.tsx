@@ -54,9 +54,18 @@ export default function RepoList({
     [githubToken, itemsPerPage]
   );
 
+  // Effect for initial load and page changes
   useEffect(() => {
     loadUserRepos(currentPage);
-  }, [githubToken, currentPage, loadUserRepos]);
+  }, [currentPage, loadUserRepos]);
+
+  // Separate effect for handling search
+  useEffect(() => {
+    if (searchTerm !== "") {
+      setCurrentPage(1);
+      loadUserRepos(1);
+    }
+  }, [searchTerm, loadUserRepos]);
 
   const filteredRepos = currentPagedRepos.filter(
     (repo) =>
@@ -67,14 +76,6 @@ export default function RepoList({
       (repo.language &&
         repo.language.toLowerCase().includes(searchTerm.toLowerCase()))
   );
-
-  useEffect(() => {
-    if (currentPage !== 1) {
-      setCurrentPage(1);
-    } else {
-      loadUserRepos(1);
-    }
-  }, [currentPage, loadUserRepos, searchTerm]);
 
   const goToNextPage = () => {
     if (hasNextPage) {

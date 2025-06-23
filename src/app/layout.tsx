@@ -27,16 +27,22 @@ export default function RootLayout({
           rel="stylesheet"
         />
         <link rel="icon" href="/window.svg" />
-        <script
-          defer
-          data-domain="repodoc.vercel.app"
-          src="https://plausible.io/js/script.js"
-        ></script>
       </head>
       <body className={inter.className}>
         <AuthProvider>
           <SubscriptionProvider>
-            <ToastProvider>{children}</ToastProvider>
+            <ToastProvider>
+              {children}
+              <Script id="clarity-script" strategy="afterInteractive">
+                {`
+            (function(c,l,a,r,i,t,y){
+                c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+                t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+                y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+            })(window, document, "clarity", "script", "${process.env.NEXT_PUBLIC_CLARITY_PROJECT_ID}");
+          `}
+              </Script>
+            </ToastProvider>
           </SubscriptionProvider>
         </AuthProvider>
       </body>
