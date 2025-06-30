@@ -151,6 +151,27 @@ export default function HeroSection() {
                 No credit card required
               </div>
             </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: 0.4 }}
+              className="mt-4"
+            >
+              <a
+                href="https://www.producthunt.com/products/repodoc-ai-readme-generator?embed=true&utm_source=badge-featured&utm_medium=badge&utm_source=badge-repodoc&#0045;ai&#0045;readme&#0045;generator"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <img
+                  src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=983937&theme=dark&t=1751273205180"
+                  alt="RepoDoc | AI Readme Generator - I suck at writing READMEs I built a tool that does it for me"
+                  width="250"
+                  height="54"
+                  style={{ width: "250px", height: "54px" }}
+                />
+              </a>
+            </motion.div>
           </div>
 
           {/* Right Column - Code editor mockup */}
