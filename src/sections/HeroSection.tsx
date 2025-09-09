@@ -93,7 +93,7 @@ export default function HeroSection() {
                   <Star className="relative h-4 w-4 text-blue-400 fill-blue-400/20" />
                 </div>
                 <span className="text-sm font-semibold bg-gradient-to-r from-blue-200 to-purple-200 bg-clip-text text-transparent">
-                  No Repository data has been stored in out db.
+                  No Repository data has been stored in our db.
                 </span>
               </div>
             </motion.div>
